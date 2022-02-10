@@ -34,3 +34,4 @@ do
         fi
     fi
 done < $1
+chmod -R g+w $home/app/storage
