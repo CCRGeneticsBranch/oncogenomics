@@ -18,26 +18,26 @@ git clone git@github.com:CCRGeneticsBranch/oncogenomics.git
 
 There are several config files needed to modified. The template files can be found:
 
-app/config/database.template.php: Laravel database config file
-app/config/site.template.php: Site specific config file
-app/config/session.template.php: Laravel session config file
+- app/config/database.template.php: Laravel database config file
+- app/config/site.template.php: Site specific config file
+- app/config/session.template.php: Laravel session config file
 
 Please save them to:
 
-app/config/database.php
-app/config/site.php
-app/config/session.php
+- app/config/database.php
+- app/config/site.php
+- app/config/session.php
 
 #### Data directories
 
 Users also need to create or assign softlinks to the following locations
 
-app/storage/project_data: Preprocessed project data
-app/storage/ProcessedResults: Pipeline results
-app/storage/GSEA: GSEA results
-app/storage/signout: Case signout folder
-app/bin: location of internal tools
-public/ref: Genome/transcriptome reference files
+- app/storage/project_data: Preprocessed project data
+- app/storage/ProcessedResults: Pipeline results
+- app/storage/GSEA: GSEA results
+- app/storage/signout: Case signout folder
+- app/bin: location of internal tools
+- public/ref: Genome/transcriptome reference files
 
 #### Setup for Khanlab
 
