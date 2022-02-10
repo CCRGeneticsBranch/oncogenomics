@@ -3235,16 +3235,21 @@ class VarAnnotation {
 			if ($qci_data != null) {
 				Log::info("has qci data");
 				$key = "$row->left_chr/$row->right_chr:$row->left_position/$row->right_position";
+				$key_tso = "$row->left_chr:$row->left_position";
 				if (array_key_exists($key, $qci_data)) {
 					$qci_row = $qci_data[$key];
 					$row->{"qci_assessment"} = $qci_row[0];
 					$row->{"qci_actionability"} = $qci_row[1];
 					$row->{"qci_nooactionability"} = $qci_row[2];
-				} else {
+				} elseif (array_key_exists($key_tso, $qci_data)) {
+					$qci_row = $qci_data[$key_tso];
+					$row->{"qci_assessment"} = $qci_row[0];
+					$row->{"qci_actionability"} = $qci_row[1];
+					$row->{"qci_nooactionability"} = $qci_row[2];
+				} else {	
 					$row->{"qci_assessment"} = "";
 					$row->{"qci_actionability"} = "";
-					$row->{"qci_nooactionability"} = "";
-
+					$row->{"qci_nooactionability"} = "";				
 				}				
 			}
 			foreach ($user_filter_list as $list_name => $gene_list) {

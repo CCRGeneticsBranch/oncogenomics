@@ -6,3 +6,62 @@ The mission of the Oncogenomics Section is to harness the power of high throughp
 Oncogenomics has two versions: NIH internal site(available on NIH network): https://oncogenomics.ccr.cancer.gov/ Public site: https://clinomics.ccr.cancer.gov/
 
 Tutorial is available on https://hsienchao-chou.gitbook.io/oncogenomics
+
+### installation
+
+Oncogenomics is a PHP Laravel 4.2 based web application. The code can be cloned to any PHP environment:
+```
+git clone git@github.com:CCRGeneticsBranch/oncogenomics.git
+```
+
+#### Config files
+
+There are several config files needed to modified. The template files can be found:
+
+app/config/database.template.php: Laravel database config file
+app/config/site.template.php: Site specific config file
+app/config/session.template.php: Laravel session config file
+
+Please save them to:
+
+app/config/database.php
+app/config/site.php
+app/config/session.php
+
+#### Data directories
+
+Users also need to create or assign softlinks to the following locations
+
+app/storage/project_data: Preprocessed project data
+app/storage/ProcessedResults: Pipeline results
+app/storage/GSEA: GSEA results
+app/storage/signout: Case signout folder
+app/bin: location of internal tools
+public/ref: Genome/transcriptome reference files
+
+#### Setup for Khanlab
+
+For website setup at Khanlab, please run the following command:
+
+1. Internal development site:
+```
+install.sh /var/www/html/onco.data/config/dev.conf
+```
+
+2. Internal production site:
+```
+install.sh /var/www/html/onco.data/config/prod.conf
+```
+
+3. Public site:
+```
+install.sh /var/www/html/onco.data/config/pub.conf
+```
+
+#### Folder permission
+
+Please make sure app/storage folder has group write permission
+```
+chmod -R g+w app/storage
+```
+
