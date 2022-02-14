@@ -5,7 +5,7 @@
 {{ HTML::style('packages/smartmenus-1.0.0-beta1/css/sm-core-css.css') }}
 {{ HTML::style('packages/smartmenus-1.0.0-beta1/css/sm-blue/sm-blue.css') }}    
 {{ HTML::style('css/bootstrap.min.css') }}
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 {{ HTML::script('packages/smartmenus-1.0.0-beta1/jquery.smartmenus.min.js') }}
 
 

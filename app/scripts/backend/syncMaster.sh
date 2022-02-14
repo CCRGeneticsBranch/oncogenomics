@@ -5,7 +5,7 @@ script_path=`dirname $script_file`
 html_home=`realpath ${script_path}/../../../..`
 script_home_dev=${html_home}/clinomics_dev/app/scripts/backend
 script_home_production=${html_home}/clinomics/app/scripts/backend
-data_home=${html_home}/clinomics/app/storage/data
+data_home=${html_home}/onco.data/metadata
 
 #clinomics_master_file=$data_home/Sequencing_Tracking_Master_clinomics.txt
 #khanlab_master_file=$data_home/Sequencing_Tracking_Master.txt

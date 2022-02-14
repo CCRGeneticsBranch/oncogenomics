@@ -4,7 +4,7 @@
 {{ HTML::style('packages/w2ui/w2ui-1.4.min.css')}}
 {{ HTML::style('packages/d3/d3.tip.css') }}
 
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 {{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}
 {{ HTML::script('packages/yadcf-0.8.8/jquery.dataTables.yadcf.js')}}
 {{ HTML::script('js/bootstrap.min.js') }}

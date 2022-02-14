@@ -757,7 +757,7 @@ foreach my $patient_dir (@patient_dirs) {
 						$inserted = 1;
 					}
 				} catch {
-					push(@errors, "$patient_id\t$case_id\tantigen\t$_");
+					push(@errors, "$patient_id\t$case_id\tNeoAntigen\t$_");
 				};				
 			}	
 			if ($inserted) {
@@ -991,8 +991,8 @@ sub insertNeoAntigen {
 	}
 	close(INFILE);
 	close(ANTIGEN_FILE);
-	push(@errors, "$patient_id\t$case_id\tAntigen\tSQLLoader");
-	return 0;
+	#push(@errors, "$patient_id\t$case_id\tNeoAntigen\tSQLLoader");
+	return 1;
 }
 
 sub insertAntigen {

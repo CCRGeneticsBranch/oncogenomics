@@ -5,7 +5,7 @@
 {{ HTML::style('packages/canvasXpress/css/canvasXpress.css') }}
 {{ HTML::style('css/heatmap.css') }}
 
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 {{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}
 {{ HTML::script('packages/yadcf-0.8.8/jquery.dataTables.yadcf.js')}}
 {{ HTML::script('js/bootstrap.min.js') }}

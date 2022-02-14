@@ -4,7 +4,7 @@
 {{ HTML::style('css/bootstrap.min.css') }}
 {{ HTML::style('css/light-bootstrap-dashboard.css') }}
 
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 {{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}
 {{ HTML::script('packages/jquery-easyui/jquery.easyui.min.js') }}
 {{ HTML::script('packages/Buttons-1.0.0/js/dataTables.buttons.min.js') }}

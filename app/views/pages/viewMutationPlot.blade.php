@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 
 {{ HTML::style('packages/muts-needle-plot/build/muts-needle-plot.css') }}
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 <style>
 
 text {
