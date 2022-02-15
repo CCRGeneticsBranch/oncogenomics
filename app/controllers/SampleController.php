@@ -726,7 +726,7 @@ class SampleController extends BaseController {
 						$gene = $gene_ids[$target_type];
 						//$row_data[] = round($value, 2);
 						$value_url = round($value, 2);
-						if ($include_link)
+						if ($include_link && $count_type != "Feature Count")
 							//$value_url = round($value, 2);
 							$value_url = "<a id='$sample_id$gene' href='#' onclick=\"showExp(this, '$symbol', '$sample_name', '$target_type')\">".round($value, 2)."</a>";
 						$row_data[] = $value_url;

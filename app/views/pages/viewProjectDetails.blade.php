@@ -63,6 +63,7 @@ a.boxclose{
 	var survival_meta_list = {{$survival_meta_list}};
 	var survival_diags = {{$survival_diags}};
 	var attr_values = {};
+	var my_sp = null;
 
 	$(document).ready(function() {
 		$("#loadingSummary").css("display","block");
@@ -552,7 +553,8 @@ a.boxclose{
 		$("#survival_status").css("display","none");
 		$("#survival_panel").css("visibility","hidden");
 		var url = '{{url("/getSurvivalData/$project->id")}}' + '/' + encodeURIComponent(encodeURIComponent(filter_attr_name1)) + '/' + encodeURIComponent(encodeURIComponent(filter_attr_value1)) + '/' + encodeURIComponent(encodeURIComponent(filter_attr_name2)) + '/' + encodeURIComponent(encodeURIComponent(filter_attr_value2)) + '/' + encodeURIComponent(encodeURIComponent(group_by_attr_name1)) + '/' + encodeURIComponent(encodeURIComponent(group_by_attr_name2)) + '/' + mutation_values;
-		console.log(url);
+		console.log(url);		
+
 		$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {	
 				$("#loadingAllSurvival").css("display","none");
 				$("#survival_panel").css("visibility","visible");
@@ -565,18 +567,26 @@ a.boxclose{
 					$("#message_row").css("display","none");
 					$("#plot_row").css("display","block");
 				}
-				if (survival_data.hasOwnProperty('overall')) {
+				if (survival_data.hasOwnProperty('overall')) {										
 					$("#overall_survival_plot").css("display","block");
-					showSurvivalPlot("overall_survival_plot", "Overall Survival" , survival_data.overall);
+					$("#overall_col").css("display","block");
+					showSurvivalPlot("overall_survival_plot", "Overall Survival" , survival_data.overall);					
 				}
-				else
+				else {
 					$("#overall_survival_plot").css("display","none");
+					$("#overall_col").css("display","none");
+				}
 				if (survival_data.hasOwnProperty('event_free')) {
-					$("#event_free_survival_plot").css("display","block");
+					//$("#event_free_survival_plot").css("display","block");
+					$("#event_free_col").css("display","block");
 					showSurvivalPlot("event_free_survival_plot", "Event Free Survival" , survival_data.event_free);
 				}
-				else
+				else {
 					$("#event_free_survival_plot").css("display","none");
+					$("#event_free_col").css("display","none");	
+					//$("#overall_col").addClass("col-md-12");
+					//$("#overall_col").removeClass("col-md-6");					
+				}
 				//showSurvivalCutoffPlot(user_plot, "User Defined Survival", "Exp cutoff: " + survival_data.user_data.cutoff + ", P-value :" + selected_pvalue, survival_data.user_data.high_num, survival_data.user_data.low_num, survival_data.user_data.data);
 			}
 		});
@@ -641,7 +651,7 @@ a.boxclose{
 			if (series_size <= 2 && cat == "NoValue") series[series.length-1].color = "black";
 		}		
 		
-		Highcharts.chart(div, {
+		my_sp=Highcharts.chart(div, {
 			credits: false,
 		    title: {
 		        text: title
@@ -1114,12 +1124,12 @@ a.boxclose{
 							</div>
 						</div>						
 						<div id="plot_row" class="row">
-							<div class="col-md-6">
+							<div id="overall_col" class="col-md-6">
 								<div class="card">
 									<div id='overall_survival_plot' style="height:450;width=100%"></div>
 								</div>								
 							</div>
-							<div class="col-md-6">
+							<div  id="event_free_col" class="col-md-6">
 								<div class="card">							
 									<div id='event_free_survival_plot' style="height:450;width=100%"></div>
 								</div>

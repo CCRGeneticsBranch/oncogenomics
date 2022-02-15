@@ -316,7 +316,7 @@ class Patient extends Eloquent {
 					$row->symbol = $fields[$symbol_idx];
 					$row->gene = $fields[$symbol_idx];
 					$row->target_type = $target_type;
-					$row->value = $fields[$value_idx];
+					$row->value = log10($fields[$value_idx]+1)/log10(2);
 				}
 				$rows[] = $row;
 			}

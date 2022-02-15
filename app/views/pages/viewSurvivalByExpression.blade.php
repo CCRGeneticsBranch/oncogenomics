@@ -317,10 +317,11 @@
 									</select>
 									<H5  style="display:inline">&nbsp;&nbsp;Diagnosis:</H5>
 									<select id="selSurvDiagnosis" class="form-control surv" style="display:inline;width:150px">
+										<option value="any">All Data</option>
 										@foreach ($survival_diagnosis as $diag)
 											<option value="{{$diag}}">{{$diag}}</option>
 										@endforeach										
-										<option value="any">All Data</option>
+										
 									</select>
 									@if ($show_search == "Y")
 									<H5  style="display:inline">&nbsp;&nbsp;Gene:</H5>
