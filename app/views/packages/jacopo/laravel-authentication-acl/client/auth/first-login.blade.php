@@ -3,7 +3,7 @@
 User login
 @stop
 @section('content')
-{{ HTML::script('packages/smartmenus-1.0.0-beta1/libs/jquery/jquery.js') }}
+{{ HTML::script('js/jquery-3.6.0.min.js') }}
 <style>
     input.pw { 
         font-family: 'password';
