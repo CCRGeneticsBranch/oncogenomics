@@ -39,7 +39,7 @@
         {{-- Start footer scripts --}}
         @yield('before_footer_scripts')
 
-        {{ HTML::script('packages/jacopo/laravel-authentication-acl/js/vendor/jquery-1.10.2.min.js') }}                
+        {{ HTML::script('js/jquery-3.6.0.min.js') }}                
         {{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}        
         {{ HTML::script('packages/jacopo/laravel-authentication-acl/js/vendor/bootstrap.min.js') }}
         @yield('footer_scripts')

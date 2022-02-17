@@ -12,7 +12,6 @@
     {{ HTML::style('packages/jacopo/laravel-authentication-acl/css/strength.css') }}
     {{ HTML::style('//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css') }}
     {{ HTML::style('packages/jacopo/laravel-authentication-acl/css/fonts.css') }}
-     {{ HTML::style('https://code.jquery.com/jquery-3.4.1.min.js') }}
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -131,7 +130,7 @@
     </div>
 </div>
   {{-- Js files --}}
-  {{ HTML::script('packages/jacopo/laravel-authentication-acl/js/vendor/jquery-1.10.2.min.js') }}
+  {{ HTML::script('js/jquery-3.6.0.min.js') }}
   {{ HTML::script('packages/jacopo/laravel-authentication-acl/js/vendor/password_strength/strength.js') }}
 
   <script>

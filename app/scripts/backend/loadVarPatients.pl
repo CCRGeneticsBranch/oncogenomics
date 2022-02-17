@@ -66,7 +66,7 @@ Options:
   -c  <string>  Upload specified case
   -a            Append annotation column table
   -g            Remove noncoding variants (annotated by AVIA)
-  -t  <string>  Load type: (all,fusion,variants,tier,annotation,qc,cnv,antigen,exp,burden,genotyping,tcell_extrect), default: $load_type
+  -t  <string>  Load type: (all,fusion,variants,tier,annotation,qc,cnv,antigen,exp,burden,genotyping,tcell_extrect,qci), default: $load_type
   -n  <string>  Canonical transcript list file (default: $canonical_trans_list)
   -x            Update expression data
   -k            Assign case id using case name.
@@ -139,6 +139,8 @@ my $sth_tier = $dbh->prepare("insert into /*+ APPEND */ var_tier values(?,?,?,?,
 my $sth_sample_cases = $dbh->prepare("update sample_cases set case_id=? where patient_id=? and case_id=?");
 my $sth_tier_avia = $dbh->prepare("insert into /*+ APPEND */ var_tier_avia values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci values(?,?,?,?,?,?,?,?,?)");
+my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci_annotation values(?,?,?,?,?,?,?,?,?,?,?)");
+my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci_summary values(?,?,?,?,?)");
 my $sth_cnv = $dbh->prepare("insert into var_cnv values(?,?,?,?,?,?,?,?,?,?)");
 my $sth_cnvkit = $dbh->prepare("insert into var_cnvkit values(?,?,?,?,?,?,?,?,?,?)");
 my $sth_cnvtso = $dbh->prepare("insert into var_cnvtso values(?,?,?,?,?,?,?,?,?)");
@@ -543,11 +545,13 @@ foreach my $patient_dir (@patient_dirs) {
 
 		foreach my $file (@files) {
 			if ($file =~ /QCI-final.txt/ || $file =~ /.qci.txt/) {
-				#try {
-					&insertQCI($case_id, $patient_id, $file);
-				#} catch {
-				#	push(@errors, "$patient_id\t$case_id\tQCI\t$_");
-				#}
+					if ($load_type eq "all" || $load_type eq "qci") {
+						try {	
+								&insertQCI($case_id, $patient_id, $file);
+						} catch {
+							push(@errors, "$patient_id\t$case_id\tQCI\t$_");
+						}
+					}
 			}
 			if ($file =~ /.*\.(germline|somatic|rnaseq|variants|hotspot|splice)$/) {
 				my $type = $1;				
