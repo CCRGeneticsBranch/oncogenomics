@@ -2120,7 +2120,7 @@ padding: 8px;
 			return true;
 		if ($('#ckQCITier4').is(":checked") && value.substring(0,1)=="4")
 			return true;
-		if ($('#ckQCINoTier').is(":checked") && value=="")
+		if ($('#ckQCINoTier').is(":checked") && (value=="" || value=="N/A"))
 			return true;
 		return false;
 	}

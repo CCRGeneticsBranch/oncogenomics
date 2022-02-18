@@ -139,8 +139,8 @@ my $sth_tier = $dbh->prepare("insert into /*+ APPEND */ var_tier values(?,?,?,?,
 my $sth_sample_cases = $dbh->prepare("update sample_cases set case_id=? where patient_id=? and case_id=?");
 my $sth_tier_avia = $dbh->prepare("insert into /*+ APPEND */ var_tier_avia values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci values(?,?,?,?,?,?,?,?,?)");
-my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci_annotation values(?,?,?,?,?,?,?,?,?,?,?)");
-my $sth_var_qci = $dbh->prepare("insert /*+ APPEND */ into var_qci_summary values(?,?,?,?,?)");
+my $sth_var_qci_annotation = $dbh->prepare("insert /*+ APPEND */ into var_qci_annotation values(?,?,?,?,?,?,?,?,?,?,?)");
+my $sth_var_qci_summary = $dbh->prepare("insert /*+ APPEND */ into var_qci_summary values(?,?,?,?,?)");
 my $sth_cnv = $dbh->prepare("insert into var_cnv values(?,?,?,?,?,?,?,?,?,?)");
 my $sth_cnvkit = $dbh->prepare("insert into var_cnvkit values(?,?,?,?,?,?,?,?,?,?)");
 my $sth_cnvtso = $dbh->prepare("insert into var_cnvtso values(?,?,?,?,?,?,?,?,?)");
@@ -543,12 +543,18 @@ foreach my $patient_dir (@patient_dirs) {
 			}			
 		}
 
+		if ($load_type eq "all" || $load_type eq "qci") {
+			$dbh->do("delete var_qci_annotation where case_id = '$case_id' and patient_id = '$patient_id'");
+			$dbh->do("delete var_qci_summary where case_id = '$case_id' and patient_id = '$patient_id'");
+		}
+
 		foreach my $file (@files) {
 			if ($file =~ /QCI-final.txt/ || $file =~ /.qci.txt/) {
 					if ($load_type eq "all" || $load_type eq "qci") {
 						try {	
 								&insertQCI($case_id, $patient_id, $file);
 						} catch {
+							print "$_\n";
 							push(@errors, "$patient_id\t$case_id\tQCI\t$_");
 						}
 					}
@@ -940,29 +946,46 @@ $dbh->disconnect();
 
 sub insertQCI {
 	my ($case_id, $patient_id, $file) = @_;
-	print "=====>processing QCI annotation\n";
+	print "=====>processing QCI annotation\n";	
+	my $file_base = basename($file);
 	print "$file\n";
-	my $report_summary_file = "$dir$patient_id/$case_id/report_summary.txt";
-	print "$report_summary_file\n";
-	$dbh->do("delete var_qci where case_id = '$case_id' and patient_id = '$patient_id'");
-	open (INFILE, "$file") or return;
-	open (SUMMARY_FILE, ">$report_summary_file") or return;
+	#TSO
+	my $type = "";
+	my $sample_id = "";
+	if ($file_base =~ /QCI-final\.txt/) {
+		$type="TSO";
+		($sample_id)=$file_base =~ /(.*)_QCI-final\.txt/;
+	}
+	if ($file_base =~ /qci\.txt/) {
+		($sample_id,$type)=$file_base =~ /(.*)\.(germline|somatic|rnaseq|variants|hotspot|splice|fusion|fusions)\.qci\.txt/;	
+	}
+
+	if (exists $sample_alias{$sample_id}) {
+		$sample_id = $sample_alias{$sample_id};
+	}
+	
+	open (INFILE, '<:encoding(UTF-8)',"$file") or return;
+	#open (SUMMARY_FILE, ">$report_summary_file") or return;
+	my $summary = "";
 	while(<INFILE>) {		
 		chomp;
 		my @fields = split(/\t/);		
 		if ($#fields == 6) {
 			next if ($fields[0] eq "Chromosome");
 			my ($chr, $pos, $ass, $ref, $alt, $act, $nooact) = @fields;
-			$sth_var_qci->execute($patient_id, $case_id, $chr, $pos, $ref, $alt, $ass, $act, $nooact);
+			$sth_var_qci_annotation->execute($patient_id, $case_id, $sample_id, $type, $chr, $pos, $ref, $alt, $ass, $act, $nooact);
 		} else {
 			if (/^(?!TMB)/ && /^(?!Report Summary)/) {
-				print SUMMARY_FILE $_."\n";
+				#print SUMMARY_FILE $_."\n";
+				$summary = $summary.$_."\n";
 			}
 
 		}	
 	}
 	close(INFILE);
-	close(SUMMARY_FILE);
+	#close(SUMMARY_FILE);
+	#print "$summary\n";	
+	$sth_var_qci_summary->execute($patient_id, $case_id, $sample_id, $type, $summary);
 	$dbh->commit();
 	return 1;
 }

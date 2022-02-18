@@ -425,10 +425,18 @@ class SampleController extends BaseController {
 		Log::info("sample cases:" . json_encode($sample_types));
 		$project = Project::getProject($project_id);
 		$report_data = "";
-		$report_file = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/report_summary.txt";
-		Log::info("report_file : $report_file");
-		if (file_exists($report_file))
-			$report_data = file_get_contents($report_file);
+		$summary_rows = VarAnnotation::getQCISummary($patient_id, $case_id);
+		foreach ($summary_rows as $summary_row) {
+			if ($summary_row->type != "TSO") {
+				$report_data = $report_data."<H5>Sample: $summary_row->sample_id</H5><H5>Type: ".ucfirst($summary_row->type)."</H5><br>";
+			}			
+			$report_data = $report_data.$summary_row->summary."<hr><br>";
+		}
+
+		//$report_file = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/report_summary.txt";
+		//Log::info("report_file : $report_file");
+		//if (file_exists($report_file))
+		//	$report_data = $report_data.file_get_contents($report_file);
 
 		// check ChIPseq bw files
 		$chip_bws = array();

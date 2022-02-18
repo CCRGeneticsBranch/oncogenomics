@@ -2198,7 +2198,7 @@ class VarAnnotation {
 			$ref_clause = " and ref='$ref'";
 		if ($ref == "fusion")
 			$ref_clause = " and (ref='fusion' or ref='rearrangement')";
-		$sql = "select * from var_qci where patient_id = '$patient_id' and case_id = '$case_id' $ref_clause";
+		$sql = "select * from var_qci_annotation where patient_id = '$patient_id' and case_id = '$case_id' $ref_clause";
 		$rows = DB::select($sql);
 		Log::info($sql);
 		$qci_data = array();
@@ -2647,6 +2647,14 @@ class VarAnnotation {
 		if ($func == "splicing" || strpos($exonicfunc,"stopgain") !== FALSE || substr($exonicfunc, 0, 10) == "frameshift" || $exonicfunc == "nonframeshift insertion" || $exonicfunc == "nonframeshift deletion" || $exonicfunc == "stoploss")
 			return 'Y';
 		return '';
+	}
+
+	static function getQCISummary($patient_id, $case_id="any") {
+		$case_condition = "";
+		if ($case_id != "any")
+			$case_condition = " and case_id='$case_id'";
+		$rows = DB::select("select * from var_qci_summary where patient_id='$patient_id' $case_condition");
+		return $rows;
 	}
 
 	static function getCohortClass($cohort_value) {
