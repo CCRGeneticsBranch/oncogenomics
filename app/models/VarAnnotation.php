@@ -1042,7 +1042,7 @@ class VarAnnotation {
 
 			}
 		} else {
-			$qci_data = VarAnnotation::getQCI($patient_id, $case_id);
+			$qci_data = VarAnnotation::getQCI($patient_id, $case_id, "any", $type);
 			if (count($qci_data) == 0)
 				$qci_data = null;
 		}
@@ -2192,7 +2192,7 @@ class VarAnnotation {
 		return $rows;
 	}
 
-	static function getQCI($patient_id, $case_id, $ref="any") {
+	static function getQCI($patient_id, $case_id, $ref="any", $type="somatic") {
 		$ref_clause = "";
 		if ($ref != "any")
 			$ref_clause = " and ref='$ref'";
@@ -2203,8 +2203,12 @@ class VarAnnotation {
 		Log::info($sql);
 		$qci_data = array();
 		foreach ($rows as $row) {
+			if ($type == "germline" && $row->type != "germline")
+				continue;				
+			if ($type != "germline" && $row->type == "germline")
+				continue;				
 			$key = implode(":", array($row->chromosome, $row->position));
-			$qci_data[$key] = array($row->qci_assessment, $row->qci_actionability, $row->qci_nooactionability);
+			$qci_data[$key] = array($row->qci_assessment, $row->qci_actionability, $row->qci_nooactionability,$row->type);
 		}
 		return $qci_data;
 
