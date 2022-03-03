@@ -805,17 +805,19 @@ foreach my $patient_dir (@patient_dirs) {
 		}
 
 		#for Manoj's RSEM data. Filter out genes not defined in our pipeline
-		my @exp_dirs = grep { -d } glob $case_dir."*";
-		foreach my $d (@exp_dirs) {
-			$d = &formatDir($d);
-			my $folder_name = basename($d);
-			my $rsem_file = $dir.$patient_id."/$case_id/$folder_name/RSEM/$folder_name.rsem.genes.results";
-			#print("processing RSEM file $rsem_file\n");
-			if (-e $rsem_file) {
-				my $rsem_filtered_file = $dir.$patient_id."/$case_id/$folder_name/RSEM/${folder_name}.rsem_ENS.genes.results";
-				my $filter_cmd = "perl ${script_dir}/filterRSEM.pl $rsem_file > $rsem_filtered_file";
-				print("$filter_cmd\n");
-				system($filter_cmd);
+		if ($load_type eq "all") {
+			my @exp_dirs = grep { -d } glob $case_dir."*";
+			foreach my $d (@exp_dirs) {
+				$d = &formatDir($d);
+				my $folder_name = basename($d);
+				my $rsem_file = $dir.$patient_id."/$case_id/$folder_name/RSEM/$folder_name.rsem.genes.results";
+				#print("processing RSEM file $rsem_file\n");
+				if (-e $rsem_file) {
+					my $rsem_filtered_file = $dir.$patient_id."/$case_id/$folder_name/RSEM/${folder_name}.rsem_ENS.genes.results";
+					my $filter_cmd = "perl ${script_dir}/filterRSEM.pl $rsem_file > $rsem_filtered_file";
+					print("$filter_cmd\n");
+					system($filter_cmd);
+				}
 			}
 		}
 

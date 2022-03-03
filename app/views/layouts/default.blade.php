@@ -13,8 +13,8 @@
 {{ HTML::script('js/onco.js') }}
 
 <style>
-li {
-  z-index:1000;
+.sm-blue li {
+  z-index:9999;
 }
 </style>
 <script type="text/javascript">

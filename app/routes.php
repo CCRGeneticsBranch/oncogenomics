@@ -63,6 +63,10 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getCNVTSO/{project_id}/{patient_id}/{case_id}'            , 'VarController@getCNVTSO'  );
 	Route::get('/viewVarQC/{project_id}/{patient_id}/{case_id}',  'VarQCController@viewVarQC');
 	Route::get('/viewProjectQC/{project_id}',  'VarQCController@viewProjectQC');
+	Route::get('/getProjectQCI/{project_id}/{type}',  'ProjectController@getProjectQCI');
+	Route::get('/viewQCITypeProjectDetail/{project_id}/{type}',  'ProjectController@viewQCITypeProjectDetail');
+	
+	
 
 	
 });

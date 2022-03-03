@@ -16,7 +16,6 @@
 {{ HTML::style('packages/fancyBox/source/jquery.fancybox.css') }}
 {{ HTML::style('packages/muts-needle-plot/build/muts-needle-plot.css') }}
 {{ HTML::style('css/heatmap.css') }}
-{{ HTML::style('packages/canvasXpress/css/canvasXpress.css') }}
 {{ HTML::style('packages/bootstrap-switch-master/dist/css/bootstrap3/bootstrap-switch.css') }}
 {{ HTML::style('css/filter.css') }}
 {{ HTML::style('packages/tooltipster-master/dist/css/tooltipster.bundle.min.css') }}

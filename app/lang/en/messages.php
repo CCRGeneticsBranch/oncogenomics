@@ -145,6 +145,7 @@ return array(
 	"germline_message" => "Germline mutations",
 	"somatic_message" => "Somatic mutations",
 	"rnaseq_message" => "RNAseq mutations",
+	"QCI_message" => "QCI annotation",
 	"variants_message" => "Mutations from unpaired samples or patients' family",
 	"circos" => "Circos",
 	"coveragePlot" => "Coverage",
@@ -158,5 +159,7 @@ return array(
 	"qci_nooactionability" => "QCI Nof1 Actionability",
 	"left_trans" => "Canonical left trans",
 	"right_trans" => "Canonical right trans",
+	"QCI" => "QCI",
+	"TSO" => "TSO"
 
 );

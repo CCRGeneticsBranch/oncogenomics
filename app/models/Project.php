@@ -1089,8 +1089,10 @@ class Project extends Eloquent {
 	}
 
    	public function getVarCount() {
-   		$rows = DB::select("select count(*) as cnt,type from var_samples v, project_patients p where project_id=$this->id and p.patient_id=v.patient_id group by type order by type");
+   		$rows = DB::select("select count(*) as cnt,type from var_samples v, project_cases p where project_id=$this->id and p.patient_id=v.patient_id group by type order by type");
    		$var_count = array("germline" => 0, "somatic" => 0, "rnaseq" => 0, "variants" => 0);
+   		if ($this->hasQCI())
+   			$var_count = array("QCI"=>1, "germline" => 0, "somatic" => 0, "rnaseq" => 0, "variants" => 0);
    		foreach ($rows as $row) {
    			$var_count[$row->type] = $row->cnt;
    		}
@@ -1108,6 +1110,31 @@ class Project extends Eloquent {
    		return ($rows[0]->cnt > 0);
    	}
 
+
+   	public function hasQCI() {
+   		$sql="select count(*) as cnt from var_qci_annotation q,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and p.project_id=$this->id";
+		Log::info($sql);
+		return DB::select($sql);
+
+   	}
+
+   	public function getQCITypes() {
+   		$sql="select distinct type from var_qci_annotation q,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and p.project_id=$this->id and type <> 'fusions'";
+		Log::info($sql);
+		$rows = DB::select($sql);
+		$qci_types = array();
+		foreach($rows as $row)
+			$qci_types[] = $row->type;
+		return $qci_types;
+
+   	}
+
+   	public function getQCI($type) {
+   		$sql="select gene,q.qci_assessment,q.qci_actionability,count(distinct q.patient_id) as patient_count from var_qci_annotation q,var_sample_avia a,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and p.project_id=$this->id and q.patient_id=a.patient_id and q.type='$type' and q.case_id=a.case_id and q.chromosome=a.chromosome and q.position=a.start_pos and q.ref not in ('fusion','rearrangement','gene_rearrangement') group by gene,qci_assessment,q.qci_actionability order by gene";
+		Log::info($sql);
+		return DB::select($sql);
+
+   	}
    	public function getVarGeneTier($type, $meta_type = "any", $meta_value="any", $annotation="AVIA", $maf=1, $min_total_cov=0, $vaf=0, $tier_table="var_tier_avia") {
 
 		$meta_from = "";
@@ -1254,7 +1281,7 @@ class Project extends Eloquent {
 
    	public function hasMutation() {
    		if (!isset($this->has_mutation)) {
-   			$rows = DB::select("select count(*) as cnt from var_cases c, project_patients p where p.project_id=$this->id and c.patient_id=p.patient_id and type in ('germline','somatic','rnaseq','variants')");
+   			$rows = DB::select("select count(*) as cnt from var_cases c, project_patients p where p.project_id=$this->id and c.patient_id=p.patient_id and type in ('germline','somatic','rnaseq','variants')");   			
    			$this->has_mutation = ($rows[0]->cnt > 0);
    		}
    		return $this->has_mutation;

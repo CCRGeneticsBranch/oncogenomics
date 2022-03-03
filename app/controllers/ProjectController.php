@@ -1023,13 +1023,36 @@ class ProjectController extends BaseController {
 		return View::make('pages/viewFusionProjectDetail', ['project_id' =>$project_id, 'setting' => $setting, 'filter_definition' => $filter_definition]);
 	}
 
+	public function getProjectQCI($project_id, $type) {
+		$project = Project::getProject($project_id);
+		$qci_data = $project->getQCI($type);
+		return $this->getDataTableJson($qci_data);
+	}
+
+	public function viewQCITypeProjectDetail($project_id, $type) {
+		$filter_definition = array();
+		$filter_lists = UserGeneList::getDescriptions($type);
+		foreach ($filter_lists as $list_name => $desc) {
+			$filter_definition[$list_name] = $desc;
+		}
+		$project = Project::getProject($project_id);
+
+		return View::make('pages/viewQCITypeProjectDetail', ['project_id' => $project_id, 'type' => $type, 'filter_definition' => $filter_definition]);
+	}
+
 	public function viewVarProjectDetail($project_id, $type, $diagnosis = "Any") {
 		$filter_definition = array();
 		$filter_lists = UserGeneList::getDescriptions($type);
 		foreach ($filter_lists as $list_name => $desc) {
 			$filter_definition[$list_name] = $desc;
 		}
+		$project = Project::getProject($project_id);
+
 		$setting = UserSetting::getSetting("page.$type");
+		if ($type == "QCI") {
+			$types = $project->getQCITypes();			
+			return View::make('pages/viewQCIProjectDetail', ['project' => $project, 'types' => $types, 'filter_definition' => $filter_definition]);
+		}
 		$diag_counts = Project::getDiagnosisCount($project_id);
 		$total_patients = 0;
 		foreach ($diag_counts as $diag_count) {
@@ -1037,7 +1060,7 @@ class ProjectController extends BaseController {
 		}
 		$diag_counts = array_merge(array((object) array('diagnosis' => 'Any', 'patient_count' => $total_patients)), $diag_counts);
 
-		$project = Project::getProject($project_id);
+		
 
 		//$meta = $project->getMetaData();
 		$meta_list = $project->getProperty("survival_meta_list");		

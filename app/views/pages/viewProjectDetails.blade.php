@@ -478,7 +478,7 @@ a.boxclose{
 		@foreach ( $project->getVarCount() as $type => $cnt)
 			@if ($cnt > 0)
 				url = '{{url("/viewVarProjectDetail/$project->id/$type")}}';
-				tab_urls['{{Lang::get("messages.$type")}}'] = url;
+				tab_urls['{{Lang::get("messages.$type")}}'] = url;				
 				//addTab('{{$type}} mutation', url);
 			@endif
 		@endforeach
