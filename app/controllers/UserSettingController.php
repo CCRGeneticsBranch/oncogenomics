@@ -42,10 +42,10 @@ class UserSettingController extends BaseController {
 		$projects = User::getCurrentUserProjects();
 		$default_project = UserSetting::getSetting("default_project", false);
 		$default_annotation = UserSetting::getSetting("default_annotation", false);
-		$high_conf = UserSetting::getSetting("high_conf", true, true);
+		$high_confs = UserSetting::getHighConfSetting();
 		Log::info(json_encode($default_project));
 		//Log::info($default_annotation);
-		return View::make('pages/viewUserSetting', ['high_conf' => $high_conf, 'default_project' => $default_project, 'default_annotation' => $default_annotation, 'projects' => $projects, 'gene_list' => $gene_list_json, 'user_id' => $user_id, 'user_name' => $user_name]);
+		return View::make('pages/viewUserSetting', ['high_confs' => $high_confs, 'default_project' => $default_project, 'default_annotation' => $default_annotation, 'projects' => $projects, 'gene_list' => $gene_list_json, 'user_id' => $user_id, 'user_name' => $user_name]);
 	}
 	public function syncClinomics() {
 		Log::info("SYNC CLINOMICS NOW");

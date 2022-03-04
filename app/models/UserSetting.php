@@ -33,6 +33,20 @@ class UserSetting extends Eloquent {
 		return null;
 	}
 
+	static public function getHighConfSetting() {
+		$rows = DB::select("select * from user_setting where user_id=1 and attr_name like 'high_conf%'");
+		$settings = array();
+		foreach($rows as $row) {
+			if ($row->attr_value == null || $row->attr_value == "null")
+				break;
+			$name = str_replace("high_conf_", "", $row->attr_name);
+			if ($name == "high_conf")
+				$name = "Khanlab";
+			$settings[ucfirst($name)] = json_decode($row->attr_value);			
+		}		
+		return $settings;
+	}
+
 	static public function getDescriptions($type) {
 		$user_filter_list = array();
 		try {

@@ -2,7 +2,7 @@
 @section('content')
 
 {{ HTML::style('packages/Buttons-1.0.0/css/buttons.dataTables.min.css') }}
-{{ HTML::style('packages/jquery-easyui/themes/default/easyui.css') }}
+{{ HTML::style('packages/jquery-easyui/themes/bootstrap/easyui.css') }}
 
 {{ HTML::script('js/bootstrap.min.js') }}
 {{ HTML::script('packages/jquery-easyui/jquery.easyui.min.js') }}
@@ -75,21 +75,28 @@
 			saveSetting('default_annotation', $('#selAnnotation').val());
 		});
 
-		$("#btnSaveSystem").click(function() {	
-			var url = '{{url("/saveSystemSetting/high_conf")}}';
-			
-			var config_data = { maf : +$("#maf").val(), 
-								germline_total_cov : +$("#germline_total_cov").val(), 
-								germline_fisher : +$("#germline_fisher").val(), 
-								germline_vaf : +$("#germline_vaf").val(), 
-								somatic_panel_total_cov : +$("#somatic_panel_total_cov").val(), 
-								somatic_panel_normal_total_cov : +$("#somatic_panel_normal_total_cov").val(), 
-								somatic_panel_vaf : +$("#somatic_panel_vaf").val(), 
-								somatic_exome_total_cov : +$("#somatic_exome_total_cov").val(), 
-								somatic_exome_normal_total_cov : +$("#somatic_exome_normal_total_cov").val(), 
-								somatic_exome_vaf : +$("#somatic_exome_vaf").val() 
-							}
-			console.log(JSON.stringify(config_data));			
+		$(".bthHighConf").click(function() {			
+			var name = $(this).attr("id");
+			name = name.replace(".btnSaveSystem", "");
+			var config_data = {  maf : $("#" + name + "_maf").val(), 
+						germline_total_cov : $("#" + name + "_germline_total_cov").val(), 
+						germline_fisher : $("#" + name + "_germline_fisher").val(), 
+						germline_vaf : $("#" + name + "_germline_vaf").val(), 
+						somatic_panel_total_cov : $("#" + name + "_somatic_panel_total_cov").val(), 
+						somatic_panel_normal_total_cov : $("#" + name + "_somatic_panel_normal_total_cov").val(), 
+						somatic_panel_vaf : $("#" + name + "_somatic_panel_vaf").val(), 
+						somatic_exome_total_cov : $("#" + name + "_somatic_exome_total_cov").val(), 
+						somatic_exome_normal_total_cov : $("#" + name + "_somatic_exome_normal_total_cov").val(), 
+						somatic_exome_vaf : $("#" + name + "_somatic_exome_vaf").val() 
+					};
+			var attr_id = "high_conf";
+			if (name != "Khanlab")
+				attr_id = "high_conf_" + name.toLowerCase();
+			var url = '{{url("/saveSystemSetting/")}}' + '/' + attr_id;
+			console.log(url);
+			console.log(JSON.stringify(config_data));
+			//return;
+
 			$.ajax({ url: url, async: true, type: 'POST', dataType: 'text', data: config_data, success: function(data) {
 					if (data == "NoUserID")
 						alert("Please login first!");
@@ -342,7 +349,7 @@
 </div>
 
 <div id="out_container" class="easyui-panel" data-options="border:false" style="width:100%;height:100%;padding:5px;border-width:1px">	
-	<div id="tabVar" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:true,border:false,headerWidth:100" style="width:100%;height:100%;padding:5px;overflow:visible;border-width:1px">
+	<div id="tabVar" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:false,headerWidth:100" style="width:100%;height:100%;padding:5px;overflow:visible;border-width:1px">
 		<div title="Gene List">
 			<div class="container-fluid" style="padding:10px">
 				<div class="row">
@@ -406,8 +413,114 @@
 		</div>
 		@if (User::isSuperAdmin()) 
 		<div title="System">
-			<div id="tabVar" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:true,border:false,headerWidth:100" style="width:100%;height:100%;padding:5px;overflow:visible;border-width:1px">
-				<div title="Broadcast message">					
+			<div id="tabVar" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,false:true,border:false,headerWidth:100" style="width:100%;height:100%;padding:5px;overflow:visible;border-width:1px">				
+				<div title="High confidence setting">
+					<div id="tabHighConf" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,false:true,border:false,headerWidth:100" style="width:100%;height:100%;padding:5px;overflow:visible;border-width:1px">
+						@foreach ($high_confs as $high_conf_name => $high_conf)
+							<div title="{{$high_conf_name}}">
+								<div class="container-fluid" style="padding:10px">
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>MAF:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_maf" value="{{$high_conf->maf}}" ></input>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Germline Total Coverage:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_germline_total_cov" value="{{$high_conf->germline_total_cov}}" ></input>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Germline Fisher Score:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_germline_fisher" value="{{$high_conf->germline_fisher}}" ></input>
+										</div>				
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Germline VAF:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_germline_vaf" value="{{$high_conf->germline_vaf}}" ></input>
+										</div>				
+									</div>
+									<hr>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Somatic - Panel Total Coverage:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_somatic_panel_total_cov" value="{{$high_conf->somatic_panel_total_cov}}" ></input>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Somatic - Panel Normal Coverage:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_somatic_panel_normal_total_cov" value="{{$high_conf->somatic_panel_normal_total_cov}}" ></input>
+										</div>				
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Somatic - Panel VAF:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_somatic_panel_vaf" value="{{$high_conf->somatic_panel_vaf}}" ></input>
+										</div>				
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Somatic - Exome Total Coverage:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_somatic_exome_total_cov" value="{{$high_conf->somatic_exome_total_cov}}" ></input>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label>Somatic - Exome Normal Coverage:</label>
+										</div>	
+										<div class="col-md-2">
+											<input type='text' id="{{$high_conf_name}}_somatic_exome_normal_total_cov" value="{{$high_conf->somatic_exome_normal_total_cov}}" ></input>
+										</div>				
+									</div>
+									<div class="row">
+										<div class="col-md-1"></div>
+										<div class="col-md-2">
+											<label for="{{$high_conf_name}}_somatic_exome_vaf">Somatic - Exome VAF:</label>
+										</div>	
+										<div class="col-md-2">
+											<input class=form-control" type='text' id="{{$high_conf_name}}_somatic_exome_vaf" value="{{$high_conf->somatic_exome_vaf}}" ></input>
+										</div>				
+									</div>
+									<hr>
+									<a href="#" id="{{$high_conf_name}}.btnSaveSystem" class="btn btn-success bthHighConf" >Save</a>
+									<br>
+						
+								</div>
+							</div>
+							@endforeach
+						</div>
+						<br>
+					</div>
+					<div title="Broadcast message">
 					<form action="broadcast" method="post">
 						<div class="container-fluid" style="padding:10px">
 							<label for="selAnnotation">Message:</label>
@@ -417,104 +530,6 @@
 						</div>						
 					</form>
 				</div>
-				<div title="High confidence setting">
-					<div class="container-fluid" style="padding:10px">
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>MAF:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="maf" value="{{$high_conf->maf}}" ></input>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Germline Total Coverage:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="germline_total_cov" value="{{$high_conf->germline_total_cov}}" ></input>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Germline Fisher Score:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="germline_fisher" value="{{$high_conf->germline_fisher}}" ></input>
-							</div>				
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Germline VAF:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="germline_vaf" value="{{$high_conf->germline_vaf}}" ></input>
-							</div>				
-						</div>
-						<hr>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Panel Total Coverage:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_panel_total_cov" value="{{$high_conf->somatic_panel_total_cov}}" ></input>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Panel Normal Coverage:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_panel_normal_total_cov" value="{{$high_conf->somatic_panel_normal_total_cov}}" ></input>
-							</div>				
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Panel VAF:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_panel_vaf" value="{{$high_conf->somatic_panel_vaf}}" ></input>
-							</div>				
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Exome Total Coverage:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_exome_total_cov" value="{{$high_conf->somatic_exome_total_cov}}" ></input>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Exome Normal Coverage:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_exome_normal_total_cov" value="{{$high_conf->somatic_exome_normal_total_cov}}" ></input>
-							</div>				
-						</div>
-						<div class="row">
-							<div class="col-md-1"></div>
-							<div class="col-md-2">
-								<label>Somatic - Exome VAF:</label>
-							</div>	
-							<div class="col-md-2">
-								<input type='text' id="somatic_exome_vaf" value="{{$high_conf->somatic_exome_vaf}}" ></input>
-							</div>				
-						</div>
-						<hr>
-						<a href="#" id="btnSaveSystem" class="btn btn-success" >Save</a>
-						<br>
-						<br>
-					</div>
 				</div>
 			</div>
 		</div>

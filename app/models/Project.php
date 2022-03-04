@@ -1129,6 +1129,10 @@ class Project extends Eloquent {
 
    	}
 
+   	public function isCOMPASS() {
+   		return ($this->ispublic == 9);
+   	}
+   	
    	public function getQCI($type) {
    		$sql="select gene,q.qci_assessment,q.qci_actionability,count(distinct q.patient_id) as patient_count from var_qci_annotation q,var_sample_avia a,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and p.project_id=$this->id and q.patient_id=a.patient_id and q.type='$type' and q.case_id=a.case_id and q.chromosome=a.chromosome and q.position=a.start_pos and q.ref not in ('fusion','rearrangement','gene_rearrangement') group by gene,qci_assessment,q.qci_actionability order by gene";
 		Log::info($sql);

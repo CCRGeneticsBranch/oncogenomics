@@ -955,7 +955,7 @@ sub insertQCI {
 	my $type = "";
 	my $sample_id = "";
 	if ($file_base =~ /QCI-final\.txt/) {
-		$type="TSO";
+		$type="variants";
 		($sample_id)=$file_base =~ /(.*)_QCI-final\.txt/;
 	}
 	if ($file_base =~ /qci\.txt/) {

@@ -1032,7 +1032,9 @@ class VarAnnotation {
 			$project = Project::getProject($project_id);
 			if ($project != null) {
 				$meta_list = $project->getProperty("survival_meta_list");		
-				$patient_meta = $project->getPatientMetaData(true, false, false, $meta_list);				
+				$patient_meta = $project->getPatientMetaData(true, false, false, $meta_list);
+				if ($project->hasQCI())
+					$qci_data = VarAnnotation::getQCIByGene($project_id, $gene_id, $type);
 			}
 			// get all patient's diagnosis 
 			else {
@@ -1220,7 +1222,7 @@ class VarAnnotation {
 
 			#QCI annotation for TSO500
 			if ($qci_data != null) {
-				$qci_key = implode(":", array($var->chromosome, $var->start_pos));
+				$qci_key = implode(":", array($var->patient_id, $var->case_id,$var->chromosome, $var->start_pos));
 				$var->qci_assessment = '';
 				$var->{'qci_assessment'} = '';
 				$var->{'qci_actionability'} = '';				
@@ -2207,12 +2209,33 @@ class VarAnnotation {
 				continue;				
 			if ($type != "germline" && $row->type == "germline")
 				continue;				
-			$key = implode(":", array($row->chromosome, $row->position));
+			$key = implode(":", array($row->patient_id, $row->case_id, $row->chromosome, $row->position));
 			$qci_data[$key] = array($row->qci_assessment, $row->qci_actionability, $row->qci_nooactionability,$row->type);
 		}
 		return $qci_data;
 
 	}
+
+	static function getQCIByGene($project_id, $gene, $type="somatic") {
+		$ref = "";
+		$ref_clause = "";
+		if ($ref != "any")
+			$ref_clause = " and ref='$ref'";
+		if ($ref == "fusion")
+			$ref_clause = " and (ref='fusion' or ref='rearrangement')";
+		$sql = "select q.* from var_qci_annotation q,var_sample_avia a,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and 
+p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.gene='$gene' and q.case_id=a.case_id and q.chromosome=a.chromosome and q.position=a.start_pos and q.ref not in ('fusion','rearrangement','gene_rearrangement') ";
+		$rows = DB::select($sql);
+		Log::info($sql);
+		$qci_data = array();
+		foreach ($rows as $row) {
+			$key = implode(":", array($row->patient_id, $row->case_id, $row->chromosome, $row->position));
+			$qci_data[$key] = array($row->qci_assessment, $row->qci_actionability, $row->qci_nooactionability,$row->type);
+		}
+		return $qci_data;
+
+	}
+
 	function postProcessVarData($variances, $project_id, $type, $found_hotspots=null) {
 		$time_start = microtime(true);
 		$project = Project::getProject($project_id);
@@ -3246,8 +3269,8 @@ class VarAnnotation {
 			//user defined filters
 			if ($qci_data != null) {
 				Log::info("has qci data");
-				$key = "$row->left_chr/$row->right_chr:$row->left_position/$row->right_position";
-				$key_tso = "$row->left_chr:$row->left_position";
+				$key = "$row->patient_id:$row->case_id:$row->left_chr/$row->right_chr:$row->left_position/$row->right_position";
+				$key_tso = "$row->patient_id:$row->case_id:$row->left_chr:$row->left_position";
 				if (array_key_exists($key, $qci_data)) {
 					$qci_row = $qci_data[$key];
 					$row->{"qci_assessment"} = $qci_row[0];

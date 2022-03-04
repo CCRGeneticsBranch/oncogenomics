@@ -229,8 +229,14 @@ padding: 8px;
 	var diagnosis_list = [];
 	var aa_pos_list = [];
 	var aa_poses;	
-	var first_loading = true;
-	var high_conf_setting = {{json_encode(UserSetting::getSetting("high_conf", true, true))}};
+	var first_loading = true;	
+	var high_conf_settings = [];
+	var high_conf_setting;
+	@foreach ( UserSetting::getHighConfSetting() as $config_name => $high_conf)
+		console.log('{{$config_name}}');
+		high_conf_settings['{{$config_name}}'] = {{json_encode($high_conf)}};
+	@endforeach;
+	//{{json_encode(UserSetting::getSetting("high_conf", true, true))}};
 
 	var filter_list = null;
 	var filter_settings = [];
@@ -455,14 +461,15 @@ padding: 8px;
 					doFilter();
 					$('#lblSignoutCount').text(var_list.length);
 				});
-				
-				$('#btnHighConf').on('change', function() {
+
+				$('.highConf').on('change', function() {
 					checking_high_conf = true;
 					if ($('#ckHighConf').is(":checked")) {
 						showAll();
-						$('#ckHighConf').prop("checked", true);
+						$('#ckHighConf').prop("checked", true);						
 						pause_filtering = true;
 						showSignout();
+						high_conf_setting = high_conf_settings[$('#selHighConf').val()];
 						$('#freq_max').numberbox("setValue", high_conf_setting.maf);
 						@if ($type == "germline")
 							$('#total_cov_min').numberbox("setValue", high_conf_setting.germline_total_cov);
@@ -478,7 +485,9 @@ padding: 8px;
 								$('#vaf_min').numberbox("setValue", high_conf_setting.somatic_panel_vaf);
 			        		@endif
 			        	@endif
-			        	pause_filtering = false;			        	
+			        	pause_filtering = false;
+			        	if ($(this).attr('id') == "selHighConf")
+			        		$('#btnHighConf').addClass('active');     	
 			        } else {
 			        	hideSignout();
 			        }			        
@@ -1604,9 +1613,14 @@ padding: 8px;
 		if (show_signout) {
 			tier_html +='&nbsp;<a id="high_conf_definition" target=_blank href="{{url('/images/HighConf.pdf')}}" title="High confident variants definitions" class="mytooltip"><img src={{url("images/help.png")}}></img></a>' + 
 					'&nbsp;<span class="btn-group filter_btn" id="high_conf" data-toggle="buttons">' +
-					'	<label id="btnHighConf" class="btn btn-default">' +
+					'	<label id="btnHighConf" class="btn btn-default highConf">' +
 					'		<input id="ckHighConf" type="checkbox" autocomplete="off">High Conf' +
 					'	</label>' +
+					'	<select id="selHighConf" class="form-control highConf" style="display:inline-block;width:auto;height:auto;padding: 6px 4px;">' +
+					@foreach ( UserSetting::getHighConfSetting() as $config_name => $high_conf)
+							'<option value="{{$config_name}}" {{($project->isCOMPASS() && $config_name == "Compass")? "selected" : ""}}>{{$config_name}}</option>' +						
+					@endforeach
+					'	</select>' +
 					'</span>';
 		}
 		tier_html += '<td><span id="QCIfilter" style="display:none">QCI:&nbsp;' +

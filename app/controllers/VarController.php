@@ -147,7 +147,7 @@ class VarController extends BaseController {
 		$new_avia_cnt = VarAnnotation::getNewAIVAVariantCount($patient_id, $case_id, $type);
 		//$has_exome = false;  
 		$has_exome = $patient->hasExome($case_id);     
-        return View::make('pages/viewVarDetail', ['with_header' => 0, 'project_id' => $project_id, 'patient' => $patient, 'patient_id' => $patient_id, 'sample_id' => $sample_id, 'exp_type' => $exp_type, 'case_id' => $case_id, 'has_exome' => $has_exome, 'gene_id' => 'null', 'status' => $status, 'type' => $type, 'filter_definition' => $filter_definition, 'setting' => $setting, 'show_columns' => json_encode($show_columns), 'var_list' => $var_list, 'update_setting' => true, 'new_avia_cnt' => $new_avia_cnt, 'other_info' => $other_info]);
+        return View::make('pages/viewVarDetail', ['with_header' => 0, 'project' => $project, 'project_id' => $project_id, 'patient' => $patient, 'patient_id' => $patient_id, 'sample_id' => $sample_id, 'exp_type' => $exp_type, 'case_id' => $case_id, 'has_exome' => $has_exome, 'gene_id' => 'null', 'status' => $status, 'type' => $type, 'filter_definition' => $filter_definition, 'setting' => $setting, 'show_columns' => json_encode($show_columns), 'var_list' => $var_list, 'update_setting' => true, 'new_avia_cnt' => $new_avia_cnt, 'other_info' => $other_info]);
 	}
 
 	/**
@@ -250,7 +250,7 @@ class VarController extends BaseController {
 		}
 
 
-        return View::make('pages/viewVarDetail', ['with_header' => "$with_header", 'project_id' => $project_id, 'patient' => null, 'patient_id' => $patient_id, 'sample_id' => 'null', 'exp_type' => 'null', 'case_id' => 'null', 'has_exome' => false, 'gene_id' => $gene_id, 'tier_type' => $tier_type, 'tier' => $tier, 'status' => 'null', 'type' => $type, 'filter_definition' => $filter_definition, 'setting' => $setting, 'show_columns' => json_encode($show_columns), 'var_list' => $var_list, 'update_setting' => false, 'meta_type' => $meta_type, 'meta_value' => $meta_value, 'meta' => $meta]);
+        return View::make('pages/viewVarDetail', ['with_header' => "$with_header", 'project' => $project, 'project_id' => $project_id, 'patient' => null, 'patient_id' => $patient_id, 'sample_id' => 'null', 'exp_type' => 'null', 'case_id' => 'null', 'has_exome' => false, 'gene_id' => $gene_id, 'tier_type' => $tier_type, 'tier' => $tier, 'status' => 'null', 'type' => $type, 'filter_definition' => $filter_definition, 'setting' => $setting, 'show_columns' => json_encode($show_columns), 'var_list' => $var_list, 'update_setting' => false, 'meta_type' => $meta_type, 'meta_value' => $meta_value, 'meta' => $meta]);
 	}
 
 	/**

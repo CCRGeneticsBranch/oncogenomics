@@ -87,47 +87,62 @@ div.toolbar {
 
 </style>    
 <script type="text/javascript">
-	var tab_urls = [];
-	var loaded_list = [];
-
 	$(document).ready(function() {
-		@foreach ( $types as $type)
-			//console.log('{{url("/viewQCITypeProjectDetail/$project->id/$type")}}');
-			tab_urls["tab{{Lang::get("messages.$type")}}"] = '{{url("/viewQCITypeProjectDetail/$project->id/$type")}}';
-		@endforeach		
+		var url = '{{url("/getProjectQCI/$project_id/$type")}}';
+		
+		console.log(url);		
+		$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {				
+				var data = JSON.parse(data);				
+				
+				showTable(data, 'tblQCI_{{$type}}');					
+				$("#loading").css("display","none");	
+				$("#tableArea").css("display","block");
 
-		$('.easyui-tabs').tabs({
-			onSelect:function(title) {
-				console.log(title);
-				tab = $('#tabQCI').tabs('getSelected');
-				var id = tab.panel('options').id;
-				console.log(id);
-				showFrameHtml(id);	
-		   }
-		});	
-		console.log("tab{{Lang::get("messages.$types[0]")}}");
-
-		showFrameHtml("tab{{Lang::get("messages.$types[0]")}}");
+				/*				
+				for (var i=user_list_idx;i<data.cols.length;i++) {
+					filter_list[data.cols[i].title] = i;
+					hide_cols.tblSplice.push(i);
+				}
+				*/
+				//onco_filter = new OncoFilter(Object.keys(filter_list), null, function() {doFilter();});	
+				//doFilter();		
+			}			
+		});
 	});
 
-	function showFrameHtml(id) {
-		if (loaded_list.indexOf(id) == -1) {
-			var url = tab_urls[id];
-			if (url != undefined) {
-				var html = '<iframe scrolling="no" frameborder="0"  src="' + url + '" style="width:100%;height:85%;overflow:none;border-width:0px"></iframe>';
-				$('#' + id).html(html);
-				console.log('#' + id);
-				console.log(html);
-				loaded_list.push(id);
-			}
-		}
-	}	
+	function showTable(data, tblId) {
+		var root_url="{{url()}}";
+		data.cols[0].render = function(data, type, row){
+			return "<a target=_blank href='" + root_url + "/viewVarAnnotationByGene/{{$project_id}}/" + data + "/{{($type=="TSO")?"variants":$type}}'>"+ data + "</a>";
+		};
+		var tbl = $('#' + tblId).DataTable( {
+				"data": data.data,
+				"columns": data.cols,
+				"ordering":    true,
+				"order": [[ 3, "desc" ]],
+				"deferRender": true,
+				"lengthMenu": [[20, 40, 60], [20, 40, 60]],
+				"pageLength":  20,
+				"pagingType":  "simple_numbers",			
+				//"dom": '<"toolbar">lfrtip',
+			});		
+	};	
 	
 
 </script>
-<div id="tabQCI" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false" style="width:100%;padding:5px;border-width:0px">
-		@foreach ( $types as $type)
-			<div id="tab{{Lang::get("messages.$type")}}" title="{{Lang::get("messages.$type")}}" data-options="tools:'#{{$type}}_mutation_help'" style="width:98%;padding:5px;overflow:auto">				
-			</div>				
-		@endforeach
+<div style="display:none;">	
+	<div id="filter_definition" style="display:none;width:800px;height=600px">
+		<H4>
+		The definition of filters:<HR>
+		</H4>
+		<table>
+			@foreach ($filter_definition as $filter_name=>$content)
+			<tr valign="top"><td><font color="blue">{{$filter_name}}:</font></td><td>{{$content}}</td></tr>
+			@endforeach
+		</table>
+
+	</div>
 </div>
+<div id='loading'><img src='{{url('/images/ajax-loader.gif')}}'></img></div>
+<div id='tableArea' style="height:98%;width:98%;padding:10px;overflow:hidden;display:none;text-align: left;font-size: 12px;">				
+<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblQCI_{{$type}}" style='width:100%'></table>	
