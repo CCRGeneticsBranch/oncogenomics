@@ -1217,7 +1217,7 @@ class SampleController extends BaseController {
 			$final_json["methylseq"] = $methylseq_json;
 		$unformatted_json = json_encode($final_json, JSON_UNESCAPED_SLASHES);
 		if (strtolower($do_format) == "true") {
-			$cmd = "echo '$unformatted_json' | ".public_path()."/node/bin/node json";
+			$cmd = "echo '$unformatted_json' | ".app_path()."/bin/node/bin/node ".app_path()."/bin/json";
 			$formatted_json = shell_exec($cmd);
 			if ($formatted_json != "")
 				return $formatted_json;
@@ -1395,7 +1395,7 @@ public function getPatientsJsonV2($patient_list, $case_list="all", $exp_types="a
 			$final_json["methylseq"] = $methylseq_json;
 		$unformatted_json = json_encode($final_json, JSON_UNESCAPED_SLASHES);
 		if (strtolower($do_format) == "true") {
-			$cmd = "echo '$unformatted_json' | ".public_path()."/node/bin/node json";
+			$cmd = "echo '$unformatted_json' | ".app_path()."/bin/node/bin/node ".app_path()."/bin/json";
 			$formatted_json = shell_exec($cmd);
 			if ($formatted_json != "")
 				return $formatted_json;

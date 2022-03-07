@@ -3361,7 +3361,7 @@ class VarController extends BaseController {
 		if (count($fusion_data) > 0)
 			$data[] = array("name" => "Gene fusion", "data_type" => "links", "header" => $fusion_header, "data" => $fusion_data);
 		$unformatted_json = json_encode($data);
-		$cmd = "echo '$unformatted_json' | ".public_path()."/node/bin/node json";
+		$cmd = "echo '$unformatted_json' | ".app_path()."/bin/node/bin/node ".app_path()."/bin/json";
 		$formatted_json = shell_exec($cmd);
 		return $formatted_json;		
 	}
