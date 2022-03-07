@@ -67,6 +67,15 @@ my $script_dir = dirname(__FILE__);
 my $dbh = getDBI();
 my $sid = getDBSID();
 
+my $main_column_file = "$script_dir/../../storage/data/main_columns.txt";
+open(MAIN_COL_FILE, "$main_column_file") or die "Cannot open file $main_column_file";
+my %main_cols = ();
+
+while (<MAIN_COL_FILE>) {
+	chomp;
+	$main_cols{$_} = '';
+}
+close(MAIN_COL_FILE);
 my $tbl_var_smp = "var_annotation_samples";
 
 # Get the RNAseq sample data then we know what projects have been changed and we can refresh those projects
@@ -172,8 +181,12 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 	my @headers = split(/\t/,$line);
 	my %header_idx = ();
 	my $idx = 0;
+	my @detail_cols = ();
 	foreach my $header(@headers) {
 		$header_idx{$header} = $idx++;
+		if (!exists($main_cols{$header})) {
+			push @detail_cols, $header;
+		}
 	}
 
 	my $num_fields = $#headers;
@@ -338,12 +351,12 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 		my $alternate_id = defined($header_idx{'ALTERNATE_ID'})? $fields[$header_idx{'ALTERNATE_ID'}]: "";
 		my $protocol_no = defined($header_idx{'Protocol no'})? $fields[$header_idx{'Protocol no'}]: "";
 		my $cus_id = "";
-		if (defined($header_idx{'patient_id'})) {
-			$cus_id = $fields[$header_idx{'patient_id'}];
-		} else {
-			if (defined($header_idx{'custom ID'})) {
-				$cus_id = $fields[$header_idx{'custom ID'}];
-			}
+		if (defined($header_idx{'Patient ID'})) {
+			$cus_id = $fields[$header_idx{'Patient ID'}];
+		} elsif (defined($header_idx{'patient_id'})) {
+				$cus_id = $fields[$header_idx{'patient_id'}];
+		} elsif (defined($header_idx{'custom ID'})) {
+				$cus_id = $fields[$header_idx{'custom ID'}];			
 		}
 		
 		my $relation = "self";
@@ -465,7 +478,7 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 							if (defined($header_idx{'patient_id'})) {
 								$end_idx = $#headers - 1;
 							}
-							&saveDetail($start_idx, $end_idx, $illumina_id, \@headers, \@fields);
+							&saveDetail($illumina_id, \%header_idx, \@fields, \@detail_cols);
 						}
 						$sample_id = $illumina_id;
 
@@ -592,6 +605,27 @@ sub formatSampleID {
 }
 
 sub saveDetail {	
+	my ($id, $headers_ref, $fields_ref, $cols_ref) = @_;	
+	my %header_idx = %{$headers_ref};
+	my @cols = @{$cols_ref};
+	my @fields = @{$fields_ref};		
+	foreach my $col (@cols) {
+		if ($header_idx{$col}) {
+			my $idx = $header_idx{$col};
+			my $value = $fields[$idx];
+			next if (!$value);
+			next if ($value eq "" || $value eq "#N/A!" || $value eq "#N/A");		
+			next if ($value eq "Row No");
+			$sth_smp_dtl->bind_param(1, $id);
+			$sth_smp_dtl->bind_param(2, $col);
+			$sth_smp_dtl->bind_param(3, $value);
+			$sth_smp_dtl->execute();
+		}
+	}
+
+}
+
+sub saveDetailByIndex {	
 	my ($start_idx, $end_idx, $id, $headers_ref, $fields_ref) = @_;	
 	for (my $i=$start_idx; $i<=$end_idx; $i++) {		
 		my @headers = @{$headers_ref};
