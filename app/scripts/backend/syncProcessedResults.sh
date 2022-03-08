@@ -176,6 +176,7 @@ do
 						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name} -u ${url} 2>&1 1>>${log_file}			
 						if [ "$project" != "compass_tso500" ]
 						then
+							LC_ALL="en_US.utf8" perl ${script_home}/updateVarCases.pl
 							LC_ALL="en_US.utf8" perl ${script_home}/../preprocessProjectMaster.pl -p ${update_list} -e $emails -u https://oncogenomics.ccr.cancer.gov/production/public
 						fi
 						#echo "${script_home}/updateVarCases.pl 2>&1 1>>${case_log}" >>${log_file}

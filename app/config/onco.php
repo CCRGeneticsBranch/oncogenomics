@@ -23,7 +23,7 @@ return array(
 	'study_column_hide' => array(0,1,9),
 	'study_column_exclude' => array('study_type_code','samples','analyses'),
 	'study_column_filter' => array(1,5,6,7,8),
-	'sample_column_exclude' => array('datapath', 'reference', "biomaterial_id", "source_biomaterial_id", "tissue_type", "source", "dataset", "sample_capture", "alias", "relation","enhancepipe","peakcalling","sample_name"),
+	'sample_column_exclude' => array('datapath', 'reference', "biomaterial_id", "tissue_type", "source", "dataset", "sample_capture", "alias", "relation","enhancepipe","peakcalling","sample_name"),
 	'sample_column_hide' => array(0,12,14),
 	'sample_column_filter' => array(5,6,7,8,9),
 	'patient_column_exclude' => array('person_id','subject_id','first_name','last_name','middle_name','study_code','is_cellline'),
