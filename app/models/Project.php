@@ -1114,7 +1114,8 @@ class Project extends Eloquent {
    	public function hasQCI() {
    		$sql="select count(*) as cnt from var_qci_annotation q,project_cases p where q.patient_id=p.patient_id and q.case_id=p.case_id and p.project_id=$this->id";
 		Log::info($sql);
-		return DB::select($sql);
+		$rows = DB::select($sql);
+		return ($rows[0]->cnt > 0);
 
    	}
 
