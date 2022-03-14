@@ -252,6 +252,9 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 		if ($type =~ /PDX/i) {
 			$tissue_cat = "PDX";
 		}
+		if ($type =~ /mu_allograft/i) {
+			$tissue_cat = "mu_allograft";
+		}		
 		if ($type =~ /tumor/i) {
 			$tissue_cat = "tumor";
 		}
