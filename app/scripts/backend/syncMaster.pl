@@ -249,6 +249,9 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 		if ($type =~ /xeno/i) {
 			$tissue_cat = "xeno";
 		}
+		if ($type =~ /PDX/i) {
+			$tissue_cat = "PDX";
+		}
 		if ($type =~ /tumor/i) {
 			$tissue_cat = "tumor";
 		}
