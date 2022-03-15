@@ -137,6 +137,8 @@ class VarCases extends Eloquent {
                   $mix_samples[$row->sample_name] = $case_id;
               if (file_exists($root.$row->path."/$patient_id/$case_id/".$row->sample_name."/mixcr/convert.".$row->sample_id.".clones.RNA.txt"))
                   $mix_samples[$row->sample_name] = $case_id;
+              if (file_exists($root.$row->path."/$patient_id/$case_id/".$row->sample_name."/mixcr/convert.".$row->sample_name.".clonotypes.ALL.txt"))
+                  $mix_samples[$row->sample_name] = $case_id;
             }
             if($type=="tcr"){
                 if (file_exists($root.$row->path."/$patient_id/$case_id/".$row->sample_id."/mixcr/convert.".$row->sample_id.".clones.TCR.txt"))
@@ -145,7 +147,7 @@ class VarCases extends Eloquent {
 		        if (file_exists($root.$row->path."/$patient_id/$case_id/".$row->sample_name."/mixcr/convert.".$row->sample_name.".clones.TCR.txt"))
                   $mix_samples[$row->sample_name] = $case_id;
                 if (file_exists($root.$row->path."/$patient_id/$case_id/".$row->sample_name."/mixcr/convert.".$row->sample_id.".clones.TCR.txt"))
-                  $mix_samples[$row->sample_name] = $case_id;
+                  $mix_samples[$row->sample_name] = $case_id;                
             }
         }
         return $mix_samples;

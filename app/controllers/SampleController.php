@@ -2733,8 +2733,9 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 				$pathToFile = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/$sample_id/mixcr/$sample_id.$ext";
 				if (!file_exists($pathToFile)) {
 					$pathToFile = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/$sample_name/mixcr/$sample_id.$ext";
-					if (!file_exists($pathToFile)) 
+					if (!file_exists($pathToFile)) {
 						return "";
+					}
 				}
 			}
 			return $pathToFile;
@@ -2762,6 +2763,12 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 		$pathToFile = $this->getMixcrFile($patient_id, $sample_name, $case_id, "$type.RNA.txt");
 		if ($pathToFile == null) {
 			$pathToFile = $this->getMixcrFile($patient_id, $sample_name, $case_id, "$type.TCR.txt");
+			if ($pathToFile == null) {
+				$pathToFile = $this->getMixcrFile($patient_id, $sample_name, $case_id, "$type.ALL.txt");
+				if ($pathToFile == null && $type=="clones") {
+					$pathToFile = $this->getMixcrFile($patient_id, $sample_name, $case_id, "clonotypes.ALL.txt");
+				}
+			}				
 		}
 		if ($pathToFile != "") {
 				$file=	file_get_contents($pathToFile);		
