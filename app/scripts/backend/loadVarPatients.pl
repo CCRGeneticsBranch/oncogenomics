@@ -918,7 +918,7 @@ my $data = qq{
     	<tbody>$log_cotent</tbody>
     </table>
     <HR>
-    <h2><font color=red>Failed Cases:</font></h2>
+    <h2><font color=red>Failed/Deleted Cases:</font></h2>
 	<table id="errlog" border=1 cellspacing="2" width="60%">
     	<thead><tr><th>Patient ID</th><th>Case ID</th><th>Diagnosis</th></tr></thead>
     	<tbody>$failed_cotent</tbody>

@@ -127,7 +127,7 @@ div.toolbar {
 </script>
 <div id="tabQCI" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false" style="width:100%;padding:5px;border-width:0px">
 		@foreach ( $types as $type)
-			<div id="tab{{Lang::get("messages.$type")}}" title="{{Lang::get("messages.$type")}}" data-options="tools:'#{{$type}}_mutation_help'" style="width:98%;padding:5px;overflow:auto">				
+			<div id="tab{{Lang::get("messages.$type")}}" title="QCI-{{Lang::get("messages.$type")}}{{($type=="variants")?"(TSO)":""}}" data-options="tools:'#{{$type}}_mutation_help'" style="width:98%;padding:5px;overflow:auto">				
 			</div>				
 		@endforeach
 </div>

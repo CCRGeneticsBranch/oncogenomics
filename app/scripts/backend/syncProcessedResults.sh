@@ -140,19 +140,20 @@ do
 							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1
 						fi
 					fi
-				else
-					if [ "$target_type" == "db" ];then
-						if [ "$target_db" == "all" ] || [ "$target_db" == "prod" ]
-						then
-							echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
-							LC_ALL="en_US.utf8" perl ${script_home}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
-						fi
-						if [ "$target_db" == "all" ] || [ "$target_db" == "dev" ]
-						then
-							echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
-							LC_ALL="en_US.utf8" perl ${script_home_dev}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
-						fi
-					fi
+				# move delete case to loadVarPatients.pl
+				#else
+				#	if [ "$target_type" == "db" ];then
+				#		if [ "$target_db" == "all" ] || [ "$target_db" == "prod" ]
+				#		then
+				#			echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
+				#			LC_ALL="en_US.utf8" perl ${script_home}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
+				#		fi
+				#		if [ "$target_db" == "all" ] || [ "$target_db" == "dev" ]
+				#		then
+				#			echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
+				#			LC_ALL="en_US.utf8" perl ${script_home_dev}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
+				#		fi
+				#	fi
 				fi
 
 		done < $sync_list

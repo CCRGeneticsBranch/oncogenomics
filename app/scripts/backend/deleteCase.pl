@@ -67,6 +67,8 @@ $sth_var_cases->finish;
   $dbh->do("delete var_type where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete var_fusion where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete var_qc where patient_id='$patient_id' and case_id='$case_id'");
+  $dbh->do("delete var_qci_annotation where patient_id='$patient_id' and case_id='$case_id'");
+  $dbh->do("delete var_qci_summary where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete mutation_burden where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete neo_antigen where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete var_cnv where patient_id='$patient_id' and case_id='$case_id'");

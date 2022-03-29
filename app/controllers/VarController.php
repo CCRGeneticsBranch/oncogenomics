@@ -3145,6 +3145,9 @@ class VarController extends BaseController {
 		if (substr($path_to_file, -3) == "bai") {
 			return Response::download($path_to_file);
 		}
+		if (substr($path_to_file, -4) == "crai") {
+			return Response::download($path_to_file);
+		}
 		if(isset($_SERVER['HTTP_RANGE'])) {			
             list($a, $range) = explode("=", $_SERVER['HTTP_RANGE']);
             list($fbyte, $lbyte) = explode("-", $range);             

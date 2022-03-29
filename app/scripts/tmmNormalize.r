@@ -21,7 +21,7 @@ runPCA <- function(lcpm, file_prefix, var_gene_num=1000) {
     z_std_file<-paste(file_prefix, "-std.zscore.tsv", sep="");      
 
     s <- min(30, ncol(res$rotation))
-    if (s > 3) {
+    if (s >= 3) {
       write.table(res$rotation[,1:s], file=loading_file, sep='\t', col.names=FALSE, quote = FALSE);
       write.table(res$x[,1:3], file=coord_file, sep='\t', col.names=FALSE, quote = FALSE);
       write.table(res$sdev, file=std_file, sep='\t', col.names=FALSE, quote = FALSE);
@@ -29,7 +29,7 @@ runPCA <- function(lcpm, file_prefix, var_gene_num=1000) {
 
     res_z<-prcomp(mat, center=T, scale=T)
     s <- min(30, ncol(res_z$rotation))
-    if (s > 3) {
+    if (s >= 3) {
       write.table(res_z$rotation[,1:s], file=z_loading_file, sep='\t', col.names=FALSE, quote = FALSE);
       write.table(res_z$x[,1:3], file=z_coord_file, sep='\t', col.names=FALSE, quote = FALSE);
       write.table(res_z$sdev, file=z_std_file, sep='\t', col.names=FALSE, quote = FALSE);

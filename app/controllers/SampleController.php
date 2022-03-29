@@ -2775,7 +2775,7 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 				$headers = fgets(fopen($pathToFile, 'r'));
 				$parts = preg_split('/\s+/', $headers);
 				foreach ($parts as $header){
-					$cols[] = array("title" => $header);
+					$cols[] = array("title" => ucfirst($header));
 					$show[]=$header;
 								
 					}
@@ -2783,6 +2783,13 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 				array_shift($filearray);
 				foreach ($filearray as $line){
 						$parts = explode("\t", $line);
+						for ($pi=0;$pi<count($parts);$pi++) {
+							$parts[$pi] = str_replace("convert.", "", $parts[$pi]);
+							if (is_numeric($parts[$pi]))
+								if (is_float($parts[$pi] + 0))
+									$parts[$pi] = round($parts[$pi],3);
+
+						}
 						$data[]=$parts;			
 				}
 				array_pop($data);
