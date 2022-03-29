@@ -40,9 +40,9 @@
                     	{
                             //url: '{{url('/ProcessedResults/')."/".$first_bam->sample_file}}',
                             url: '{{url('/getBAM/')."/".$first_bam->sample_file}}',
-                            //indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.bai',
-                            format: 'cram',
-                            indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.crai',
+                            indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.bai',
+                            //format: 'cram',
+                            //indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.crai',
                             //url: 'https://data.broadinstitute.org/igvdata/BodyMap/hg19/IlluminaHiSeq2000_BodySites/brain_merged/accepted_hits.bam',
                             //locus: "chr8:128,747,267-128,754,546",
                             name: '{{$first_bam->sample_name}}',
