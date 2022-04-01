@@ -3322,9 +3322,9 @@ class VarController extends BaseController {
                 $fusion_header = array("source_chromosome", "source_position", "source_gene", "target_chromosome", "target_position", "target_gene", "type", "tier");
                 $fusion_data = array();
                 foreach ($fusions as $fusion) {
-                    if (substr($fusion->var_level,0,6) == 'Tier 1' || substr($fusion->var_level,0,6) == 'Tier 2')
+                    if (substr($fusion->var_level,0,1) == '1' || substr($fusion->var_level,0,1) == '2')
                     //if ($fusion->var_level != '')
-                        $fusion_data[] = array($fusion->left_chr, $fusion->left_position, $fusion->left_gene, $fusion->right_chr, $fusion->right_position, $fusion->right_gene, $fusion->type, $fusion->var_level);
+                        $fusion_data[] = array($fusion->left_chr, $fusion->left_position, $fusion->left_gene, $fusion->right_chr, $fusion->right_position, $fusion->right_gene, $fusion->type, "Tier $fusion->var_level");
 				}
 
 				//Log::info("fusion count:".count($fusion_data));
