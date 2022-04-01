@@ -108,6 +108,7 @@ Route::group(['before' => ['authorized_patient']], function () {
 	Route::get('/getArribaPDF/{path}/{patient_id}/{case_id}/{sample_id}/{sample_name}'            , 'VarController@getArribaPDF'  );
 	Route::get('/viewIGV/{patient_id}/{sample_id}/{case_id}/{type}/{center}/{locus}', 'VarController@viewIGV');
 	Route::get('/viewFusionIGV/{patient_id}/{sample_id}/{case_id}/{left_chr}/{left_position}/{right_chr}/{right_position}', 'VarController@viewFusionIGV');
+	Route::get('/getProejctListForPatient/{patient_id}', 'SampleController@getProejctListForPatient');
 
 
 });

@@ -2,6 +2,7 @@
 @section('content')
 
 {{ HTML::style('css/light-bootstrap-dashboard.css') }}
+{{ HTML::style('css/style_datatable.css') }}
 {{ HTML::style('css/sb-admin.css') }}
 {{ HTML::style('css/font-awesome.min.css') }}
 
@@ -9,10 +10,220 @@
 {{ HTML::script('packages/highchart/js/highcharts-3d.js')}}
 {{ HTML::script('packages/highchart/js/highcharts-more.js')}}
 {{ HTML::script('packages/highchart/js/modules/exporting.js')}}
+{{ HTML::style('packages/jquery-ui-1.13.1/jquery-ui.min.css')}}
+{{ HTML::script('packages/jquery-ui-1.13.1/jquery-ui.min.js')}}
+{{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}
+
 {{ HTML::script('js/onco.js') }}
 
+<style>
+.ui-dialog { z-index: 9999 !important ;}
+</style>
 <script type="text/javascript">
 	
+	(function($){
+	    $.widget( "ui.combobox", $.ui.autocomplete, 
+	        {
+	        options: { 
+	            /* override default values here */
+	            minLength: 2,
+	            /* the argument to pass to ajax to get the complete list */
+	            ajaxGetAll: {get: "all"}
+	        },
+
+	        _create: function(){
+	            if (this.element.is("SELECT")){
+	                this._selectInit();
+	                return;
+	            }
+
+	            $.ui.autocomplete.prototype._create.call(this);
+	            var input = this.element;
+	            input.addClass( "ui-widget ui-widget-content ui-corner-left" );
+
+	            this.button = $( "<button type='button'>&nbsp;</button>" )
+	            .attr( "tabIndex", -1 )
+	            .attr( "title", "Show All Items" )
+	            .insertAfter( input )
+	            .button({
+	                icons: { primary: "ui-icon-triangle-1-s" },
+	                text: false
+	            })
+	            .removeClass( "ui-corner-all" )
+	            .addClass( "ui-corner-right ui-button-icon" )
+	            .click(function(event) {
+	                // close if already visible
+	                if ( input.combobox( "widget" ).is( ":visible" ) ) {
+	                    input.combobox( "close" );
+	                    return;
+	                }
+	                // when user clicks the show all button, we display the cached full menu
+	                var data = input.data("combobox");
+	                clearTimeout( data.closing );
+	                if (!input.isFullMenu){
+	                    data._swapMenu();
+	                    input.isFullMenu = true;
+	                }
+	                /* input/select that are initially hidden (display=none, i.e. second level menus), 
+	                   will not have position cordinates until they are visible. */
+	                input.combobox( "widget" ).css( "display", "block" )
+	                .position($.extend({ of: input },
+	                    data.options.position
+	                    ));
+	                input.focus();
+	                data._trigger( "open" );
+	            });
+
+	            /* to better handle large lists, put in a queue and process sequentially */
+	            $(document).queue(function(){
+	                var data = input.data("combobox");
+	                if ($.isArray(data.options.source)){ 
+	                    $.ui.combobox.prototype._renderFullMenu.call(data, data.options.source);
+	                }else if (typeof data.options.source === "string") {
+	                    $.getJSON(data.options.source, data.options.ajaxGetAll , function(source){
+	                        $.ui.combobox.prototype._renderFullMenu.call(data, source);
+	                    });
+	                }else {
+	                    $.ui.combobox.prototype._renderFullMenu.call(data, data.source());
+	                }
+	            });
+	        },
+
+	        /* initialize the full list of items, this menu will be reused whenever the user clicks the show all button */
+	        _renderFullMenu: function(source){
+	            var self = this,
+	                input = this.element,
+	                ul = input.data( "combobox" ).menu.element,
+	                lis = [];
+	            source = this._normalize(source); 
+	            input.data( "combobox" ).menuAll = input.data( "combobox" ).menu.element.clone(true).appendTo("body");
+	            for(var i=0; i<source.length; i++){
+	                lis[i] = "<li class=\"ui-menu-item\" role=\"menuitem\"><a class=\"ui-corner-all\" tabindex=\"-1\">"+source[i].label+"</a></li>";
+	            }
+	            ul.append(lis.join(""));
+	            this._resizeMenu();
+	            // setup the rest of the data, and event stuff
+	            setTimeout(function(){
+	                self._setupMenuItem.call(self, ul.children("li"), source );
+	            }, 0);
+	            input.isFullMenu = true;
+	        },
+
+	        /* incrementally setup the menu items, so the browser can remains responsive when processing thousands of items */
+	        _setupMenuItem: function( items, source ){
+	            var self = this,
+	                itemsChunk = items.splice(0, 500),
+	                sourceChunk = source.splice(0, 500);
+	            for(var i=0; i<itemsChunk.length; i++){
+	                $(itemsChunk[i])
+	                .data( "item.autocomplete", sourceChunk[i])
+	                .mouseenter(function( event ) {
+	                    self.menu.activate( event, $(this));
+	                })
+	                .mouseleave(function() {
+	                    self.menu.deactivate();
+	                });
+	            }
+	            if (items.length > 0){
+	                setTimeout(function(){
+	                    self._setupMenuItem.call(self, items, source );
+	                }, 0);
+	            }else { // renderFullMenu for the next combobox.
+	                $(document).dequeue();
+	            }
+	        },
+
+	        /* overwrite. make the matching string bold */
+	        _renderItem: function( ul, item ) {
+	            var label = item.label.replace( new RegExp(
+	                "(?![^&;]+;)(?!<[^<>]*)(" + $.ui.autocomplete.escapeRegex(this.term) + 
+	                ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<strong>$1</strong>" );
+	            return $( "<li></li>" )
+	                .data( "item.autocomplete", item )
+	                .append( "<a>" + label + "</a>" )
+	                .appendTo( ul );
+	        },
+
+	        /* overwrite. to cleanup additional stuff that was added */
+	        destroy: function() {
+	            if (this.element.is("SELECT")){
+	                this.input.remove();
+	                this.element.removeData().show();
+	                return;
+	            }
+	            // super()
+	            $.ui.autocomplete.prototype.destroy.call(this);
+	            // clean up new stuff
+	            this.element.removeClass( "ui-widget ui-widget-content ui-corner-left" );
+	            this.button.remove();
+	        },
+
+	        /* overwrite. to swap out and preserve the full menu */ 
+	        search: function( value, event){
+	            var input = this.element;
+	            if (input.isFullMenu){
+	                this._swapMenu();
+	                input.isFullMenu = false;
+	            }
+	            // super()
+	            $.ui.autocomplete.prototype.search.call(this, value, event);
+	        },
+
+	        _change: function( event ){
+	            abc = this;
+	            if ( !this.selectedItem ) {
+	                var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( this.element.val() ) + "$", "i" ),
+	                    match = $.grep( this.options.source, function(value) {
+	                        return matcher.test( value.label );
+	                    });
+	                if (match.length){
+	                    match[0].option.selected = true;
+	                }else {
+	                    // remove invalid value, as it didn't match anything
+	                    this.element.val( "" );
+	                    if (this.options.selectElement) {
+	                        this.options.selectElement.val( "" );
+	                    }
+	                }
+	            }                
+	            // super()
+	            $.ui.autocomplete.prototype._change.call(this, event);
+	        },
+
+	        _swapMenu: function(){
+	            var input = this.element, 
+	                data = input.data("combobox"),
+	                tmp = data.menuAll;
+	            data.menuAll = data.menu.element.hide();
+	            data.menu.element = tmp;
+	        },
+
+	        /* build the source array from the options of the select element */
+	        _selectInit: function(){
+	            var select = this.element.hide(),
+	            selected = select.children( ":selected" ),
+	            value = selected.val() ? selected.text() : "";
+	            this.options.source = select.children( "option[value!='']" ).map(function() {
+	                return { label: $.trim(this.text), option: this };
+	            }).toArray();
+	            var userSelectCallback = this.options.select;
+	            var userSelectedCallback = this.options.selected;
+	            this.options.select = function(event, ui){
+	                ui.item.option.selected = true;
+	                if (userSelectCallback) userSelectCallback(event, ui);
+	                // compatibility with jQuery UI's combobox.
+	                if (userSelectedCallback) userSelectedCallback(event, ui);
+	            };
+	            this.options.selectElement = select;
+	            this.input = $( "<input>" ).insertAfter( select )
+	                .val( value ).combobox(this.options);
+	        }
+	    }
+	);
+	})(jQuery);
+
+
+
 	$(document).ready(function() {
 
 		var url = '{{url('/getTopVarGenes')}}';
@@ -42,6 +253,78 @@
 		var pie_data = {{json_encode($tissue_cats)}};
 		showPieChart("tissue_cats", "Normal/Tumor", pie_data, null, true, false, false, 'Number of samples');
 
+		patient_data = {{$patient_data}};
+		gene_data = {{$gene_data}};
+
+		$( "#search_patient" ).autocomplete({
+      	source: function( request, response ) {
+              var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+              response( $.grep( patient_data, function( item ){
+                  return matcher.test( item );
+              }) );
+          },
+        select: function( event, ui ) {
+            var v=ui.item.value; //ui.item is your object from the array            
+            $( "#search_patient" ).val( ui.item.label);
+            //window.open("{{url("/viewProjectDetails/")}}" + "/" + v);
+            return false;
+        },delay: 500
+    });		
+
+
+    $( "#search_sample" ).autocomplete({
+      	source: {{$sample_data}},
+      	focus: function( event, ui ) {
+
+      	},
+        select: function( event, ui ) {
+            $( "#search_sample" ).val( ui.item.label);
+            //window.open("{{url("/viewProjectDetails/")}}" + "/" + v);
+            window.open("{{url('/viewSearchSample')}}" + "/" + ui.item.label);
+            return false;
+        }
+    });
+
+    $( "#search_gene" ).autocomplete({
+      	source: function( request, response ) {
+              var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+              response( $.grep( gene_data, function( item ){
+                  return matcher.test( item );
+              }) );
+          },
+      	focus: function( event, ui ) {
+
+      	},
+        select: function( event, ui ) {
+        		var gene_id = ui.item.label;
+            $( "#search_gene" ).val( gene_id);
+            @if ($project_count > 1)
+        			window.open("{{url('/viewGeneDetail')}}" + "/" + gene_id.toUpperCase());
+        		@else
+        			window.open("{{url("/viewProjectGeneDetail/$project_id")}}" + "/" + gene_id.toUpperCase());
+        		@endif
+            return false;
+        }
+    });
+
+
+    $( "#search_project" ).autocomplete({
+      	source: {{$project_data}},
+      	focus: function( event, ui ) {
+
+      	},
+        select: function( event, ui ) {
+            //var v=$( "#search_project" ).val( ui.item.label); //ui.item is your object from the array            
+            var v=ui.item.v; //ui.item is your object from the array            
+            console.log(v);
+            console.log(ui.item.label);
+            $( "#search_project" ).val( ui.item.label);
+            window.open("{{url("/viewProjectDetails/")}}" + "/" + v);
+            return false;
+        }
+    });
+
+
 		$('#search_gene').keyup(function(e){
 			if(e.keyCode == 13) {
 				var gene_id = $('#search_gene').val();
@@ -54,14 +337,46 @@
 		});
 
 		$('#search_patient').keyup(function(e){
-			if(e.keyCode == 13) {
-				var patient_id = $('#search_patient').val();
-        		window.open("{{url('/viewPatient')}}" + "/" + '{{$project_id}}' + "/" + patient_id.toUpperCase() + "/any");
+				if(e.keyCode == 13) {
+						var patient_id = $('#search_patient').val();
+						var url = '{{url('/getProejctListForPatient')}}' + '/' + patient_id;
+						console.log(url);		
+						$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {
+								data = JSON.parse(data);
+								if (data.data.length == 1) {
+									window.open("{{url("/viewPatient")}}" + "/" + data.data[0][1] + "/" + patient_id.toUpperCase() + "/any");
+									return;
+								}
+								new_data = [];
+								data.data.forEach(function(d){
+									var patient_url = "{{url('/viewPatient')}}" + "/" + d[1] + "/" + patient_id.toUpperCase() + "/any";
+									new_data.push(["<a target='_blank' href='" + patient_url + "'>" + d[0] + '</a>']);
+								})
+								if ( $.fn.DataTable.isDataTable('#tblProjectList') ) {
+  									$('#tblProjectList').DataTable().destroy();
+								}
+								//$('#tblProjectList tbody').empty();
+								tblDetail = $('#tblProjectList').DataTable({ 
+									"paging":   false,
+									"info":   false,
+									"searching": false,
+									"data": new_data,
+									"columns": [{"title":"Project"}]
+								});
+								//var x = jQuery(this).position().left;
+    						//var y = jQuery(this).position().top;
+    						$( "#projectDiag" ).dialog({position: {my: 'left-100 top', 
+                                    at: 'right top', 
+                                    of: '#search_patient'}});
+							}			
+						});
+
+        		//window.open("{{url('/viewPatient')}}" + "/" + '{{$project_id}}' + "/" + patient_id.toUpperCase() + "/any");
     		}
 		});
 
 		$('#search_sample').keyup(function(e){
-			if(e.keyCode == 13) {
+			if(e.keyCode == 13) {				
 				var sample_id = $('#search_sample').val();
         		window.open("{{url('/viewSearchSample')}}" + "/" + sample_id.toUpperCase());
     		}
@@ -83,11 +398,15 @@
 </script>
 
 <!--div class="main-panel" -->
+<div id="projectDiag" title="Select project" style="display:none;z-index: 99999;">
+  <table cellpadding="5" cellspacing="5" class="prettyDetail" word-wrap="break-word" id="tblProjectList" style="width:100%;border:2px solid"></table>
+</div>
+
     <div class="sr-only">
       <a href="#main" data-skip-link>Skip to content</a>
     </div>
-	<div class="pane-content" style="text-align: center; padding: 10px 0 0 20px">
-		<div  class="container-fluid" style="padding:10px" >
+	<div class="pane-content" style="text-align: center; padding: 10px 0 0 20px">		
+		<div  class="container-fluid" style="padding:10px" >									
 			<div class="row">
 				<div class="col-md-9">
 					<!--div class="row">
@@ -158,7 +477,7 @@
 												<div class="col-xs-9 text-right">
 													<div class="huge">{{$patient_count}}<br>Patients</div>                                        
 												</div>
-	                                    	</div>
+	                    </div>
 										</div>
 										<a href="{{url('/viewPatients/null/any/1/normal')}}">
 											<div class="panel-footer">
@@ -237,6 +556,8 @@
 									<input id="search_patient" class="form-control" type="text" placeholder="Patient ID" aria-label="Search Patient"></input>
 									<i class="fa fa-search"></i><span style="font-size:16">Sample:</span>
 									<input id="search_sample" class="form-control" type="text" placeholder="Sample ID" aria-label="Search Sample"></input>
+									<i class="fa fa-search"></i><span style="font-size:16">Project:</span>
+									<input id="search_project" class="form-control" type="text" placeholder="Project ID" aria-label="Search Project"></input>
 
 									@if (!Config::get('site.isPublicSite') && User::hasAccessMRN())
 										<br />

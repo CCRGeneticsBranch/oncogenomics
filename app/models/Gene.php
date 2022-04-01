@@ -204,6 +204,9 @@ class Gene {
 		return $genes;
 	}
 
+	static public function getAllSymbols() {
+		return DB::select("select distinct symbol from gene where target_type='ensembl' and type='protein-coding' order by symbol");
+	}
 
 	function getEnsemblID() {
 		return $this->ensembl_id;

@@ -69,6 +69,11 @@ class SampleController extends BaseController {
 		
 	}
 
+	public function getProejctListForPatient($patient_id) {
+		$projects = Patient::getProjectList($patient_id);
+		return json_encode($this->getDataTableJson($projects));
+	}
+
 	//used in variants page
 	public function viewPatient($project_id, $patient_id, $case_name='any') {
 		$starttime = microtime(true);

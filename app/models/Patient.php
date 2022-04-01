@@ -701,6 +701,12 @@ class Patient extends Eloquent {
 		$sql = "delete from gsea_stats WHERE token_id=$token_id";
 		DB::delete($sql);
 	}
+	static function getProjectList($patient_id) {
+		$logged_user = User::getCurrentUser();
+		if ($logged_user != null)
+			return DB::select("select distinct u.project_name, u.project_id from user_projects u, project_cases c where u.project_id=c.project_id and c.patient_id='$patient_id' and u.user_id=$logged_user->id order by project_name");
+		return null;
+	}
 	static function getTierCounts2($project_id, $patient_id,$case_name=null,$type=null) {
 		$tier_table = "var_tier_avia";
 		$type_condition = "";

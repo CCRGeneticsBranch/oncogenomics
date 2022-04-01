@@ -132,9 +132,23 @@ class User extends Jacopo\Authentication\Models\User{
 
 
 		if ($logged_user != null)
-			$sql .= " or exists(select * from user_projects u where p.id = u.project_id and u.user_id=".$logged_user->id.") order by name";
+			$sql .= " or exists(select project_id as id, project_name as name from user_projects u where p.id = u.project_id and u.user_id=".$logged_user->id.") order by name";
 		return DB::select($sql);
-	}	
+	}
+
+	static public function getCurrentUserPatients() {
+		$logged_user = User::getCurrentUser();
+		if ($logged_user != null)
+			return DB::select("select distinct patient_id from user_projects u, project_cases c where u.project_id=c.project_id and u.user_id=$logged_user->id order by patient_id");
+		return null;
+	}
+
+	static public function getCurrentUserSamples() {
+		$logged_user = User::getCurrentUser();
+		if ($logged_user != null)
+			return DB::select("select distinct sample_id from user_projects u, project_samples c where u.project_id=c.project_id and u.user_id=$logged_user->id order by sample_id");
+		return null;
+	}		
 
 	static public function getCurrentUserPermissions() {		
 		$logged_user = User::getCurrentUser();

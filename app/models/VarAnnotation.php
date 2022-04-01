@@ -2707,13 +2707,13 @@ p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.
 		$cases = explode(',', $case_id);
 		foreach ($cases as $case_id) {
 			//check squeeze bam
-			$sample_file = "$path/$patient_id/$case_id/$sample_id/$sample_id.$ext_squeeze_cram_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
-				return $sample_file;
-			$sample_file = "$path/$patient_id/$case_id/$alias/$alias.$ext_squeeze_cram_name";
+			#$sample_file = "$path/$patient_id/$case_id/$sample_id/$sample_id.$ext_squeeze_cram_name";
+			#if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			#	return $sample_file;
+			#$sample_file = "$path/$patient_id/$case_id/$alias/$alias.$ext_squeeze_cram_name";
 			//Log::info("checking sample file: $sample_file");
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
-				return $sample_file;
+			#if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			#	return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/Sample_$sample_id/Sample_$sample_id.$ext_squeeze_name";
 			//Log::info("checking sample file: $sample_file");
 			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))

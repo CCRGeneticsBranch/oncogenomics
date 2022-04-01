@@ -226,7 +226,29 @@ class BaseController extends Controller {
 			$tissue_cats[] = array("name" => ucwords($row->tissue_cat), "y" => (int)$row->sample_count);
 		}
 		$labmatrixurl=Config::get('onco.labmatrix');
-		return View::make('pages/viewHome', ['project_count' => $project_count, 'patient_count' => $patient_count, 'case_count' => $case_count, 'user_log' => $user_log, 'project_list' => $project_list, 'gene_list' => $gene_list, 'exp_types' => $exp_types, 'tissue_cats' => $tissue_cats, 'project_id' => $project_id , 'user'=>$user,'lbm'=>$labmatrixurl]);
+
+		$projects = User::getCurrentUserProjects();
+		$project_data = array();
+		foreach ($projects as $p)
+			$project_data[] = array("label" => $p->name, "v" => $p->id);
+		
+		$patients = User::getCurrentUserPatients();
+		$patient_data = array();
+		foreach ($patients as $p)
+			$patient_data[] = "$p->patient_id";
+			
+
+		$samples = User::getCurrentUserSamples();
+		$sample_data = array();
+		foreach ($samples as $s)
+			$sample_data[] = "$s->sample_id";
+
+		$genes = Gene::getAllSymbols();
+		$gene_data = array();
+		foreach ($genes as $g)
+			$gene_data[] = "$g->symbol";
+
+		return View::make('pages/viewHome', ['project_count' => $project_count, 'patient_count' => $patient_count, 'case_count' => $case_count, 'user_log' => $user_log, 'project_list' => $project_list, 'gene_list' => $gene_list, 'exp_types' => $exp_types, 'tissue_cats' => $tissue_cats, 'project_id' => $project_id , 'user'=>$user,'lbm'=>$labmatrixurl, 'project_data' => json_encode($project_data), "patient_data" => json_encode($patient_data), "sample_data" => json_encode($sample_data), "gene_data" => json_encode($gene_data)]);
 	}
 
 	public function broadcast() {
