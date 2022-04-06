@@ -17,7 +17,7 @@ script_file=`realpath $0`
 script_home=`dirname $script_file`
 html_home=`realpath ${script_home}/../../../..`
 script_home_dev=${html_home}/clinomics_dev/app/scripts/backend
-data_home=${html_home}/onco.data/ProcessedResults
+data_home=${script_home}/../../storage/ProcessedResults
 script_lib_home=`realpath ${script_home}/../lib`
 url=`php ${script_lib_home}/getSiteConfig.php url`
 url_dev=`php ${script_lib_home}/getSiteConfig.php url_dev`
@@ -54,8 +54,8 @@ do
 		sync_list=""
 		#if type is db, then sync update list from biowulf
 		if [ "$target_type" == "db" ];then
-			update_list=${update_list_dir}/${prefix}_caselist.txt
-			sync_list=${update_list_dir}/${prefix}_sync.txt
+			update_list=`realpath ${update_list_dir}/${prefix}_caselist.txt`
+			sync_list=`realpath ${update_list_dir}/${prefix}_sync.txt`
 			
 
 			if [ ! -d ${project_home} ]; then

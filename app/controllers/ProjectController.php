@@ -283,6 +283,7 @@ class ProjectController extends BaseController {
 		$coord_file = storage_path()."/project_data/$project_id/pca-coord$value_type.tsv";
 		$std_file = storage_path()."/project_data/$project_id/pca-std$value_type.tsv";		
 		$groups = [];
+		Log::info($loading_file);
 		if (!file_exists($loading_file)) {
 			return json_encode(array("status"=>"no data"));
 		}

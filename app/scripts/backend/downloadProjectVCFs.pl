@@ -18,7 +18,7 @@ my $include_pub=0;
 
 my $script_dir = abs_path(dirname(__FILE__));
 my $app_path = abs_path($script_dir."/../..");
-my $data_dir = abs_path($app_path."/../../onco.data/ProcessedResults");
+my $data_dir = abs_path($app_path."/storage/ProcessedResults");
 my $out_dir = "$app_path/storage/project_data";
 
 my $usage = <<__EOUSAGE__;

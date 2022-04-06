@@ -43,7 +43,7 @@ GetOptions (
 
 my $script_dir = abs_path(dirname(__FILE__));
 my $data_dir = abs_path($script_dir."/../storage/ProcessedResults");
-my $annotation_file = abs_path($script_dir."/../../../onco.data/AnnotationRDSRSEM/gencode.v19.annotation.txt");
+my $annotation_file = abs_path($script_dir."/../ref/RSEM/gencode.v19.annotation.txt");
 
 if (!$project_id) {
 	die "Some parameters are missing\n$usage";

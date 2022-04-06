@@ -738,8 +738,8 @@
 				<div class="panel-body">
 					<!--input type="checkbox" id='clusterGenes' class="plotInput" value="" {{($setting->cluster_genes=="true")? 'checked': ""}}>Cluster genes</input><br>
 					<input type="checkbox" id='clusterSamples' class="plotInput" value="" {{($setting->cluster_samples=="true")? 'checked': ""}}>Cluster samples</input><br-->
-					<label for="selTargetType">Annotation:</label>
-					<select id="selTargetType" class="form-control">
+					<!--label for="selTargetType">Annotation:</label-->
+					<select id="selTargetType" class="form-control" style="display:none">
 						@foreach ($target_types as $target_type)
 							<option value="{{$target_type}}" {{($setting->target_type==$target_type)? "selected": ""}}>{{strtoupper($target_type)}}</option>
 						@endforeach						
@@ -763,8 +763,8 @@
 							<!--option value="zscore_normal">Z-score by normal samples </option-->
 							<!--option value="mcenter_normal">Median Centered by normal samples</option-->
 					</select>
-					<label for="selLibType">Library type:</label>
-					<select id="selLibType" class="form-control">
+					<!--label for="selLibType">Library type:</label-->
+					<select id="selLibType" class="form-control" style="display:none">
 						<option value="all">All</option>
 						<option value="polya">PolyA</option>
 						<option value="nonpolya">Non-PolyA</option>

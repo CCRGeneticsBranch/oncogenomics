@@ -1,9 +1,9 @@
 cript_file=`realpath $0`
 script_path=`dirname $script_file`
-data_home=`realpath ${script_path}/../../../../onco.data/ProcessedResults`
+data_home=`realpath ${script_path}/../../storage/ProcessedResults`
 script_lib_home=`realpath ${script_path}/../lib`
 
-anno_file=`realpath ${script_path}/../../../../onco.data/AnnotationRDSRSEM/annotation_ENSEMBL_gene_38_SortByID.txt`
+anno_file=`realpath ${script_path}/../../ref/RSEM/annotation_ENSEMBL_gene_38_SortByID.txt`
 for tpm_file in $data_home/tcga_data/*/*/*/TPM_ENS/*.gene.TPM.txt;do
 	#echo $tpm_file
 	d=$(dirname $(dirname $tpm_file))
