@@ -11,12 +11,13 @@ then
 	exit $E_BADARGS
 fi
 
-export ADMIN_ADDY='vuonghm@mail.nih.gov';
+export ADMIN_ADDY='chouh@nih.gov';
 
 script_file=`realpath $0`
 script_home=`dirname $script_file`
 html_home=`realpath ${script_home}/../../../..`
 script_home_dev=${html_home}/clinomics_dev/app/scripts/backend
+batch_home=`realpath ${script_home}/../../../site_data`
 data_home=${script_home}/../../storage/ProcessedResults
 script_lib_home=`realpath ${script_home}/../lib`
 url=`php ${script_lib_home}/getSiteConfig.php url`
@@ -70,7 +71,7 @@ do
 	#			rsync -tirm --include '*/' --include "*.txt" --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.bwa.loh" --include "*hotspot.depth" --include "*selfSM" --include 'db/*' --include "*tracking" --include "*exonExpression*" --include "TPM_ENS/*" --include "qc/rnaseqc/*" --include "TPM_UCSC/*" --include "RSEM_ENS/*" --include "RSEM_UCSC/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include '*fastqc/*' --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/" --exclude "calls/" --exclude '*' ${source_path} ${project_home} >>${log_file} 2>&1
 			rsync ${succ_list_path} ${data_home}/update_list 2>&1
 			echo "rsync ${succ_list_path} ${data_home}/update_list" >> ${log_file}
-			new_list=${prefix}_newList.txt
+			new_list=${data_home}/update_list/${prefix}_newList.txt
 			echo "mv ${data_home}/update_list/new_list_${project}.txt $new_list" >> ${log_file}
 			mv ${data_home}/update_list/new_list_${project}.txt $new_list
 				
@@ -83,44 +84,21 @@ do
 			#echo "looking for ${update_list_dir}/${project}_db_*_caselist.txt"
 			if ls  ${update_list_dir}/${project}_db_*_caselist.txt 1> /dev/null 2>&1;then
 				update_list=`ls -tr ${update_list_dir}/${project}_db_*_caselist.txt | tail -n1`
-			fi
+				update_list=`realpath $update_list`
+			fi			
 			sync_list=`ls -tr ${update_list_dir}/${project}_db_*_sync.txt | tail -n1`
+			sync_list=`realpath $sync_list`
 			echo "sync_list: $sync_list"
 		fi
 
-		while IFS='' read -r line || [[ -n "$line" ]]
+		for line in `cat $sync_list`
 		do
-				# E.g /data/Acc_19/processed_DATA/TCGA_ACC_A5JI/TCGA_ACC_A5JI/successful.txt 1568792330 
-				##This does not work on cron!!!!
-				# char='/';
-				# case_idx=`awk -F"${char}" '{print NF-1}' <<< "${var}"`;
-				# let pat_idx=${case_idx}-1;
-				# let status_idx=${case_idx}+1;
-				# if [ -z $pat_idx ] ; then
-				# 	echo "Error syncing in $project and determining pat_id=($pat_idx) on " `hostname` " on "  `date` >> $log_file
-				# 	echo "Terminating script..." >> $log_file
-				# 	mail -s "Error in syncing $project" '$ADMIN_ADDY' < $log_file
-				# 	exit
-				# fi
-				#old way not dynamic
-				#pat_idx=6;case_idx=7;status_idx=8;
-				#if [[ $project == "clinomics" ]] || [[ $project == 'Acc_19' ]] || [[ $project == 'wulab' ]];then
-				#	pat_idx=5;case_idx=6;status_idx=7;
-				#fi
-				#if [[ $project == "compass_tso500" ]] || [[ $project == 'compass_exome' ]];then
-				#	pat_idx=7;case_idx=8;status_idx=9;
-				#fi
-
-				#pat_id="$(echo "$line" |cut -d/ -f $pat_idx)"
-				#case_id="$(echo "$line" |cut -d/ -f $case_idx)"
-				#status="$(echo "$line" |cut -d/ -f $status_idx)"
-
 				pat_id=`echo "$line" | awk -F/ '{print $(NF-2)}'`
 				case_id=`echo "$line" | awk -F/ '{print $(NF-1)}'`
 				status=`echo "$line" | awk -F/ '{print $(NF)}'`
 
 				folder=${pat_id}/${case_id}
-				#echo "$pat_id $case_id $status"
+				echo "$pat_id $case_id $status"
 				if [[ $status == "successful.txt" ]];then
 					
 					mkdir -p ${project_home}/${pat_id}
@@ -139,26 +117,19 @@ do
 							#echo "rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1"
 							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1
 						fi
-					fi
-				# move delete case to loadVarPatients.pl
-				#else
-				#	if [ "$target_type" == "db" ];then
-				#		if [ "$target_db" == "all" ] || [ "$target_db" == "prod" ]
-				#		then
-				#			echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
-				#			LC_ALL="en_US.utf8" perl ${script_home}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
-				#		fi
-				#		if [ "$target_db" == "all" ] || [ "$target_db" == "dev" ]
-				#		then
-				#			echo "deleting case ${pat_id}/${case_id} ..." >> ${log_file}
-				#			LC_ALL="en_US.utf8" perl ${script_home_dev}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r					
-				#		fi
-				#	fi
+					fi				
 				fi
+				if [[ $status == "failed_delete.txt" ]];then
+					if [ "$target_type" == "db" ];then
+						echo ${pat_id}/${case_id}/${status} >> ${update_list}					
+						helix_path=`echo $source_path | sed 's/helix\.nih.gov://'`
+						echo "ssh helix rmdir ${helix_path}/${folder}"
+						ssh -q helix.nih.gov "rm ${helix_path}/${folder}/failed_delete.txt;rmdir ${helix_path}/${folder}"
+					fi
+				fi	
 
-		done < $sync_list
+		done
 		echo "done syncing writing to log file ${log_file}"
-#		fi
 		date >> ${log_file}
 		echo "update list file: ${update_list}"
 		if [[ -s ${update_list} && "$target_type" != "bam" ]]; then
@@ -178,12 +149,16 @@ do
 						if [ "$project" != "compass_tso500" ]
 						then
 							LC_ALL="en_US.utf8" perl ${script_home}/updateVarCases.pl
-							LC_ALL="en_US.utf8" perl ${script_home}/../preprocessProjectMaster.pl -p ${update_list} -e $emails -u https://oncogenomics.ccr.cancer.gov/production/public
+							#submit this to batch server
+							if [ -s ${update_list} ];then
+								sbatch -o ${batch_home}/slurm_log/${prefix}.preprocessProject.o -e ${batch_home}/slurm_log/${prefix}.preprocessProject.e ${batch_home}/submitPreprocessProject.sh ${update_list} $emails https://oncogenomics.ccr.cancer.gov/production/public
+							fi
+							#LC_ALL="en_US.utf8" perl ${script_home}/../preprocessProjectMaster.pl -p ${update_list} -e $emails -u https://oncogenomics.ccr.cancer.gov/production/public
 						fi
 						#echo "${script_home}/updateVarCases.pl 2>&1 1>>${case_log}" >>${log_file}
 						#LC_ALL="en_US.utf8" ${script_home}/updateVarCases.pl 2>&1 1>>${case_log}
 					else
-						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -l ${update_list} -t $target_type -d ${db_name} -u ${url} 2>&1 1>>${log_file}
+						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -l ${update_list} -t $target_type -d ${db_name} -u ${url} 2>&1 1>>${log_file}						
 						#LC_ALL="en_US.utf8" ${script_home}/updateVarCases.pl 2>&1 1>>${case_log}
 					fi
 					echo " done uploading" >> ${log_file}
@@ -212,6 +187,7 @@ do
 #	fi
 done < $project_file
 if [ "$target_type" == "db" ];then
+
 	echo "refreshing views -c -p -h"
 	echo "refreshing views on prod"
 	LC_ALL="en_US.utf8" ${script_home}/refreshViews.pl -c -p -h

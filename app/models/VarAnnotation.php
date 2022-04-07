@@ -2716,30 +2716,30 @@ p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.
 			#	return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/Sample_$sample_id/Sample_$sample_id.$ext_squeeze_name";
 			//Log::info("checking sample file: $sample_file");
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/$sample_id/$sample_id.$ext_squeeze_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/Sample_$alias/Sample_$alias.$ext_squeeze_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/$alias/$alias.$ext_squeeze_name";
 			Log::info($sample_file);
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			//check original bam
 			$sample_file = "$path/$patient_id/$case_id/Sample_$sample_id/Sample_$sample_id.$ext_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/$sample_id/$sample_id.$ext_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/Sample_$alias/Sample_$alias.$ext_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 			$sample_file = "$path/$patient_id/$case_id/$alias/$alias.$ext_name";
-			if (file_exists(storage_path()."/ProcessedResults/".$sample_file))
+			if (file_exists(storage_path()."/bams/".$sample_file))
 				return $sample_file;
 		}
 		return "";

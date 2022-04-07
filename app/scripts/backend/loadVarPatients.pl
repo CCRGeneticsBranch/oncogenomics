@@ -259,6 +259,7 @@ my %update_list = ();
 my %update_cases = ();
 
 my %var_smp = ();
+my %failed_data = ();
 
 if ($update_list_file ne '') {
 	open(UPDATE_FILE, $update_list_file) or die "Cannot open file $update_list_file";
@@ -269,6 +270,12 @@ if ($update_list_file ne '') {
 			my $failed = $dir."$1/$2/failed.txt";
 			system("rm -rf $failed");
 			$update_cases{$1}{$2} = '';
+		}
+		if (/(.*?)\/(.*?)\/failed_delete.txt/) {
+			my $diagnosis = &getDiagnosis($1);
+			system("perl $script_dir/deleteCase.pl -p $1 -c $2 -r");
+			my $patient_key = "$1\t$2\t$diagnosis";
+			$failed_data{$patient_key} = '';
 		}
 	}
 	close(UPDATE_FILE);
@@ -380,7 +387,6 @@ $sth_trans->finish;
 
 my @patient_dirs = grep { -d } glob $dir."*";
 my %new_data = ();
-my %failed_data = ();
 my @errors = ();
 print "use sqlldr? ($use_sqlldr)...load type = $load_type\n";
 foreach my $patient_dir (@patient_dirs) {

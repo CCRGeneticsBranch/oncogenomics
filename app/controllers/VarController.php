@@ -3140,7 +3140,7 @@ class VarController extends BaseController {
 		if (!User::hasPatient($patient_id)) {
 			return FALSE;
 		}
-		$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/$sample_id/$filename";
+		$path_to_file = storage_path()."/bams/$path/$patient_id/$case_id/$sample_id/$filename";
 		Log::info("BAM file: $path_to_file");
 		if (substr($path_to_file, -3) == "bai") {
 			return Response::download($path_to_file);
