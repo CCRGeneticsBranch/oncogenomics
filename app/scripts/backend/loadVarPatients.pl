@@ -273,7 +273,7 @@ if ($update_list_file ne '') {
 		}
 		if (/(.*?)\/(.*?)\/failed_delete.txt/) {
 			my $diagnosis = &getDiagnosis($1);
-			system("perl $script_dir/deleteCase.pl -p $1 -c $2 -r");
+			system("perl $script_dir/deleteCase.pl -p $1 -c $2 -r -b -t $project_folder");
 			my $patient_key = "$1\t$2\t$diagnosis";
 			$failed_data{$patient_key} = '';
 		}
@@ -698,15 +698,6 @@ foreach my $patient_dir (@patient_dirs) {
 
     		}
 		}
-#		if (-e $dir.$qc_file) {
-#			if ($load_type eq "all" || $load_type eq "qc" || $load_type eq "variants") {
-#				try {
-#					&insertQC($case_id, $patient_id, $dir.$qc_file, "rnaV2");				
-#				} catch {
-#					push(@errors, "$patient_id\t$case_id\tQC-RNA\t$_");
-#				};
-#			}
-#		}
 
 		#process CNV
 		if ($load_type eq "all" || $load_type eq "cnv") {
@@ -945,7 +936,7 @@ if ($recipient ne "") {
 	    'Data'    => $data,
 	);
 
-	if ($log_cotent ne "" || $err_cotent ne "") {
+	if ($log_cotent ne "" || $failed_cotent ne "" || $err_cotent ne "") {
 		$mime->send();
 	}
 }	 

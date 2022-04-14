@@ -605,6 +605,8 @@ class SampleController extends BaseController {
 		$time_start = microtime(true);
 		list($rows, $samples, $target_type,$expression_type,$count_type) = Patient::getExpressionByCase($patient_id, $case_id, $target_type, $sample_id);
 		Log::info($expression_type);
+		$junction_url = url("viewJunction/$patient_id/$case_id");
+		$has_junction = VarAnnotation::hasJunction($patient_id, $case_id);
 		$gene_rows = Gene::getGenes(strtolower($expression_type));
 		$gene_infos = array();
 		foreach($gene_rows as $gene_row) {
@@ -700,8 +702,9 @@ class SampleController extends BaseController {
 			$cols[] = array("title" => $list_name);
 		foreach ($exp_data as $symbol => $exp) {
 			$row_data = array();
-			if (!$has_refseq)
-				$row_data[] = $symbol;
+			if (!$has_refseq) {
+				$row_data[] = ($has_junction)? "<a target=_blank href='$junction_url/$symbol'>$symbol</a>" : $symbol;				
+			}
 			$non_na = true;
 			foreach ($target_types as $target_type) {
 				$gene_ids = $genes[$symbol];
@@ -709,7 +712,7 @@ class SampleController extends BaseController {
 				//Log::info(json_encode($gene_ids));
 				if (array_key_exists($target_type, $gene_ids)) {
 					$gene = $gene_ids[$target_type];					
-					$row_data[] = $gene;					
+					$row_data[] = $gene;
 				}
 				else {
 					$non_na = false;
@@ -2813,5 +2816,67 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 			}
 		}
 		return json_encode($rnaseq_samples);
+	}
+
+	public function getDataIntegrityReportTable($file, $target="Khanlab", $format="json") {
+		$content = file_get_contents($file);
+		$lines = explode("\n", $content);
+		$cols = array();
+		$data = array();
+		$path_idx = -1;
+		$headers = explode("\t", $lines[0]);
+		if ($format == "text") {
+			$data[] = $lines[0];
+		}
+		for ($i=0;$i<count($headers);$i++) {
+			$cols[] = array("title"=>$headers[$i]);
+			if ($headers[$i] == "Path")
+				$path_idx = $i;
+		}
+		for ($i=1;$i<count($lines);$i++) {
+			$fields = explode("\t", $lines[$i]);
+			if (count($fields) <= 1)
+				continue;
+			if ($path_idx > 0 ) {
+				if ($target == "COMPASS") {
+					if (strpos($fields[$path_idx], "compass") === false)
+						continue;
+				} else {
+					if (strpos($fields[$path_idx], "compass") !== false)
+						continue;
+				}
+			}
+			if ($format == "json")
+				$data[] = $fields;
+			else
+				$data[] = $lines[$i];			
+		}
+		if ($format == "json")
+			return json_encode(array("cols"=>$cols,"data"=>$data));
+		return implode("\n", $data);
+
+	}
+
+	public function viewDataIntegrityReport($target="Khanlab") {
+		$data_list = ($target == "Khanlab")? array("case_content_inconsistency", "case_name_inconsistency"):array();
+		$data_list = array_merge($data_list,array("cases_on_Biowulf_only", "cases_on_Frederick_only", "missing_bams", "missing_rsems", "no_successful_cases", "unloaded_cases","unprocessed_cases", "unused_cases"));
+		$root = storage_path()."/data_integrity_report";
+		$summary = $this->getDataIntegrityReportTable("$root/summary_${target}.txt", $target);
+		$detail_tables = array();
+		foreach ($data_list as $name) {
+			$detail_tables[$name] = $this->getDataIntegrityReportTable("$root/${name}.txt", $target);
+		}
+		//return $summary;
+		return View::make('pages/viewDataIntegrityReport',['target'=>$target, 'summary'=>$summary, 'detail_tables' => $detail_tables]);
+
+	}
+
+	public function downloadDataIntegrityReport($report_name, $target="Khanlab") {
+		$root = storage_path()."/data_integrity_report";
+		
+		$content = $this->getDataIntegrityReportTable("$root/${report_name}.txt", $target, "text");		
+		$headers = array('Content-Type' => 'text/txt','Content-Disposition' => 'attachment; filename='."${report_name}.txt");
+		return Response::make($content, 200, $headers);
+
 	}	
 }

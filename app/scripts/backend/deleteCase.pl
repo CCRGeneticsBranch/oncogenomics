@@ -11,10 +11,12 @@ require(dirname(abs_path($0))."/../lib/Onco.pm");
 my $script_dir = dirname(__FILE__);
 
 my $processed_data_dir = abs_path($script_dir."/../../storage/ProcessedResults");
+my $bam_dir = abs_path($script_dir."/../../storage/bams");
 my $patient_id;
 my $case_id;
 my $path = "processed_DATA";
 my $remove_folder = 0;
+my $remove_bam = 0;
 my $label_failed = 0;
 my $usage = <<__EOUSAGE__;
 
@@ -28,6 +30,7 @@ Options:
   -c  <string>  Case ID
   -t  <string>  Path (default: $path)
   -r            Remove case folder
+  -b            Remove bam folder
   -f            Label case failed
   
 __EOUSAGE__
@@ -39,6 +42,7 @@ GetOptions (
   'c=s' => \$case_id,
   't=s' => \$path,
   'r' => \$remove_folder,
+  'b' => \$remove_bam,
   'f' => \$label_failed
 );
 
@@ -74,7 +78,7 @@ $sth_var_cases->finish;
   $dbh->do("delete var_cnv where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete var_cnvkit where patient_id='$patient_id' and case_id='$case_id'");
   $dbh->do("delete var_tier where patient_id='$patient_id' and case_id='$case_id'");
-  $dbh->do("delete var_tier_avia where patient_id='$patient_id' and case_id='$case_id'");
+  $dbh->do("delete var_tier_avia where patient_id='$patient_id' and case_id='$case_id'");  
 #}
 
 my $case_folder = "$processed_data_dir/$path/$patient_id/$case_id";
@@ -83,6 +87,9 @@ if ($case_id eq "EmptyFolder") {
 }
 if ($remove_folder) {
     system("rm -rf $case_folder");
+}
+if ($remove_bam) {
+    system("rm -rf $bam_dir/$path/$patient_id/$case_id");
 }
 
 #$dbh->do("delete sample_cases where patient_id='$patient_id' and case_id='$case_id'");

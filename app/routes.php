@@ -12,6 +12,9 @@
 |
 */
 
+Route::get('/viewJunction/{patient_id}/{case_id}/{symbol?}','VarController@viewJunction');
+Route::get('/viewDataIntegrityReport/{target?}','SampleController@viewDataIntegrityReport');
+Route::get('/downloadDataIntegrityReport/{report_name}/{target?}','SampleController@downloadDataIntegrityReport');
 
 Route::get('/getVarGeneSummary/{gene_id}/{value_type}/{category}/{min_pat}/{tiers}','VarController@getVarGeneSummary');
 Route::get('/getCNVGeneSummary/{gene_id}/{value_type}/{category}/{min_pat}/{min_amplified}/{max_deleted}','VarController@getCNVGeneSummary');

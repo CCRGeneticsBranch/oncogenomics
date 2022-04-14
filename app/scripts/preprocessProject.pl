@@ -76,7 +76,7 @@ $dbh->disconnect();
 sub process {
 	my ($type, $level) = @_;
 	my $sql_prj = "select name, version from projects where id=$project_id";
-	my $sql_samples = "select distinct s.sample_id, s.sample_name, s.sample_alias, c.patient_id, c.case_id, c.path, s.library_type, s.tissue_type from project_samples p,samples s, sample_cases sc, cases c where sc.sample_id = s.sample_id and s.exp_type='RNAseq' and p.project_id=$project_id and p.sample_id=s.sample_id and sc.case_id=c.case_id and sc.patient_id=c.patient_id order by s.sample_id";
+	my $sql_samples = "select distinct s.sample_id, s.sample_name, s.sample_alias, c.patient_id, c.case_id, c.path, s.library_type, s.tissue_type from project_samples p,samples s, sample_cases sc, cases c where sc.sample_id = s.sample_id and s.exp_type='RNAseq' and p.project_id=$project_id and p.sample_id=s.sample_id and sc.case_id=c.case_id and sc.patient_id=c.patient_id and not exists(select * from sample_details d where s.sample_id=d.sample_id and attr_name='status' and attr_value='Failed') order by s.sample_id";
 	my %data = ();
 	my %targets = ();
 	my %lib_types = ();

@@ -19,6 +19,7 @@ html_home=`realpath ${script_home}/../../../..`
 script_home_dev=${html_home}/clinomics_dev/app/scripts/backend
 batch_home=`realpath ${script_home}/../../../site_data`
 data_home=${script_home}/../../storage/ProcessedResults
+bam_home=${script_home}/../../storage/bams
 script_lib_home=`realpath ${script_home}/../lib`
 url=`php ${script_lib_home}/getSiteConfig.php url`
 url_dev=`php ${script_lib_home}/getSiteConfig.php url_dev`
@@ -49,6 +50,7 @@ do
 	then
 
 		project_home=${data_home}/${project}
+		project_bam_home=${bam_home}/${project}
 		log_file=${update_list_dir}/log/${prefix}.log
 		log_dev_file=${update_list_dir}/log/${prefix}.dev.log
 		update_list=""
@@ -91,7 +93,7 @@ do
 			echo "sync_list: $sync_list"
 		fi
 
-		for line in `cat $sync_list`
+		while IFS='' read -r line || [[ -n "$line" ]]
 		do
 				pat_id=`echo "$line" | awk -F/ '{print $(NF-2)}'`
 				case_id=`echo "$line" | awk -F/ '{print $(NF-1)}'`
@@ -108,27 +110,27 @@ do
 						echo "deleteing old case..."
 						perl ${script_home}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r
 						echo "syncing ${source_path}${folder} ${project_home}/${pat_id}"
-						rsync -tirm --include '*/' --include "*.txt" --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.gt" --include "*.bwa.loh" --include "*hotspot.depth" --include "*.tmb" --include "*.status" --include "*selfSM" --include 'db/*' --include "*tracking" --include "*exonExpression*" --include "TPM_ENS/*" --include "qc/rnaseqc/*" --include "TPM_UCSC/*" --include "RSEM*/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include 'cnvTSO/*' --include '*fastqc/*' --exclude "TPM_*/" --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/*" --exclude "calls/" --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} 2>&1
+						rsync -tirm --include '*/' --include "*.txt" --exclude "fusions.discarded.tsv" --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.gt" --include "*.bwa.loh" --include "*hotspot.depth" --include "*.tmb" --include "*.status" --include "*selfSM" --include 'db/*' --include "*tracking" --include "*exonExpression*" --include "TPM_ENS/*" --include "qc/rnaseqc/*" --include "TPM_UCSC/*" --include "RSEM*/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include 'cnvTSO/*' --include '*fastqc/*' --exclude "TPM_*/" --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/*" --exclude "calls/" --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} 2>&1
 					fi
 					if [ "$target_type" == "bam" ];then
 						if [[ $project == "compass_tso500" ]];then
-							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1
+							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*.bam*' --exclude '*' ${source_path}${folder} ${project_bam_home}/${pat_id} >>${log_file} 2>&1
 						else
 							#echo "rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1"
-							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} >>${log_file} 2>&1
+							rsync -tirm -L --size-only --remove-source-files --exclude '*/*/*/*/' --include '*/' --include '*bwa.final.squeeze.bam*' --include '*star.final.squeeze.bam*' --exclude '*' ${source_path}${folder} ${project_bam_home}/${pat_id} >>${log_file} 2>&1
 						fi
 					fi				
 				fi
 				if [[ $status == "failed_delete.txt" ]];then
 					if [ "$target_type" == "db" ];then
 						echo ${pat_id}/${case_id}/${status} >> ${update_list}					
-						helix_path=`echo $source_path | sed 's/helix\.nih.gov://'`
-						echo "ssh helix rmdir ${helix_path}/${folder}"
-						ssh -q helix.nih.gov "rm ${helix_path}/${folder}/failed_delete.txt;rmdir ${helix_path}/${folder}"
+						#helix_path=`echo $source_path | sed 's/helix\.nih.gov://'`
+						#echo "ssh helix rmdir ${helix_path}/${folder}"
+						#ssh -q helix.nih.gov "rm ${helix_path}/${folder}/failed_delete.txt;rmdir ${helix_path}/${folder}"
 					fi
 				fi	
 
-		done
+		done < $sync_list
 		echo "done syncing writing to log file ${log_file}"
 		date >> ${log_file}
 		echo "update list file: ${update_list}"

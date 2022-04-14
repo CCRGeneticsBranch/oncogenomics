@@ -3112,6 +3112,21 @@ class VarController extends BaseController {
 
 	}
 
+	public function viewJunction($patient_id, $case_id, $symbol="FGFR4") {		
+		$case = VarCases::getCase($patient_id, $case_id);
+		$path = $case->path;
+		$suffix="SJ.out.bed.gz";
+		$junctions = array();
+		foreach (glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/*/*$suffix") as $filename) {
+			$fn = basename($filename);
+			$sid = str_replace("Sample_", "", $fn);
+			$sid = str_replace($suffix, "", $sid);
+			$bw_file = str_replace($suffix, ".bw", $filename);
+			$bw_fn = (file_exists($bw_file))? basename($bw_file):"";			
+			$junctions[$sid] = ["bed" => $fn, "bw" => $bw_fn];
+		}	
+		return View::make('pages/viewJunction', ["patient_id" => $patient_id, "case_id" => $case_id, "symbol" => $symbol, "path" => $path, "junctions" => $junctions]);
+	}
 
 	public function viewFusionIGV($patient_id, $sample_id, $case_id, $left_chr, $left_position, $right_chr, $right_position) {
 		$case = VarCases::getCase($patient_id, $case_id);
@@ -3144,7 +3159,7 @@ class VarController extends BaseController {
 		Log::info("BAM file: $path_to_file");
 		if (substr($path_to_file, -3) == "bai") {
 			return Response::download($path_to_file);
-		}
+		}		
 		if (substr($path_to_file, -4) == "crai") {
 			return Response::download($path_to_file);
 		}
@@ -3173,12 +3188,17 @@ class VarController extends BaseController {
             fclose($file);
         }
         else
-			print "Please view BAM using IGV page";
+			print "Please view $filename using IGV page";
 	}
 
 	function getBigWig($path, $patient_id, $case_id, $sample_id, $filename) {		
-		$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/Sample_$sample_id/$filename";
-		//return Response::download($path_to_file);		
+		$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/$sample_id/$filename";
+		//return Response::download($path_to_file);	
+		if (!file_exists($path_to_file))
+			$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/Sample_$sample_id/$filename";
+		if (substr($path_to_file, -3) == "tbi") {
+			return Response::download($path_to_file);
+		}
 		if(isset($_SERVER['HTTP_RANGE'])) {			
             list($a, $range) = explode("=", $_SERVER['HTTP_RANGE']);
             list($fbyte, $lbyte) = explode("-", $range);             

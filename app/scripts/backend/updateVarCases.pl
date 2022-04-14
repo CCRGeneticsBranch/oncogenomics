@@ -15,6 +15,7 @@ require(dirname(abs_path($0))."/../lib/Onco.pm");
 
 my $default_case_name = "20160415";
 my $verbose = 0;
+my $out_path = dirname(abs_path($0))."/../../../site_data/slurm_log/";
 
 my $usage = <<__EOUSAGE__;
 
@@ -25,6 +26,7 @@ $0 [options]
 Options:
 
   -c  <string>  Default case name (default: $default_case_name)
+  -o  <string>  Output dir (default: $out_path)
   -v            Verbose output
   
 __EOUSAGE__
@@ -59,6 +61,8 @@ while (my ($patient_id, $case_id, $version, $path) = $sth_read_cases->fetchrow_a
 	if (!$version) {
 		$version = "NA";
 	}
+	$version =~ s/dev/\.0dev/;
+	$version =~ s/21/2\.1/;
 	$processed_cases{$patient_id}{$case_id} = $version;
 	$processed_cases_path{$patient_id}{$case_id} = $path;
 }
@@ -76,12 +80,12 @@ while (my ($patient_id, $case_name, $sample_id) = $sth_sample_cases->fetchrow_ar
 }
 $sth_sample_cases->finish;
 
-open(PERFECT_MATCH, ">perfectly_matched_cases.txt");
-open(PARTIAL_MATCH, ">partial_matched_cases.txt");
-open(NOTMATCH, ">notmatched_cases.txt");
-open(NOT_PIPELINE, ">processed_not_pipeline_cases.txt");
-open(PARTIAL_PROCESSED, ">partial_processed_cases.txt");
-open(NEW_PATIENT, ">new_patient_cases.txt");
+open(PERFECT_MATCH, ">$out_path/perfectly_matched_cases.txt");
+open(PARTIAL_MATCH, ">$out_path/partial_matched_cases.txt");
+open(NOTMATCH, ">$out_path/notmatched_cases.txt");
+open(NOT_PIPELINE, ">$out_path/processed_not_pipeline_cases.txt");
+open(PARTIAL_PROCESSED, ">$out_path/partial_processed_cases.txt");
+open(NEW_PATIENT, ">$out_path/new_patient_cases.txt");
 
 #check all patients in master file
 foreach my $patient_id (sort { $master_file_samples{$b} <=> $master_file_samples{$a} } keys %master_file_samples) {
@@ -122,9 +126,10 @@ foreach my $patient_id (sort { $master_file_samples{$b} <=> $master_file_samples
 				if ($total_master_samples == $total_processed_samples && $match_cnt == $total_master_samples) {
 					my $version = $processed_cases{$patient_id}{$case_id};
 					if (!$version) {
-						print("$patient_id/$case_id not in processed_cases\n");
+						#print("$patient_id/$case_id not in processed_cases\n");
 					} else {
-						if ($perfect_version lt $version) {
+						# if current case id is the same as case name or better version
+						if ($perfect_version lt $version || $case_id eq $case_name) {
 							$perfect_version = $version;
 							$perfect_case_id = $case_id;
 						}

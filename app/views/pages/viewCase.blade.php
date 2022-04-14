@@ -206,10 +206,10 @@ a.boxclose{
 			@foreach ($samples as $sample)			
 				@if (!($type == 'rnaseq' && $sample->exp_type != 'RNAseq') && !($type == 'somatic' && $sample->exp_type == 'RNAseq'))
 					var title = '{{$sample->sample_alias."-".str_replace(" ", "_", $sample->exp_type)}}';
-					title_id_mapping[title] = '{{$type}}_{{$sample->sample_id}}';
+					title_id_mapping[title] = '{{$type}}_{{str_replace(".","_",$sample->sample_id)}}';
 					var url = '{{url("/viewVarAnnotation/$project_id/$patient_id/$sample->sample_id/$sample->case_id/$type")}}';
 					console.log(url);
-					tab_urls['{{$type}}_{{$sample->sample_id}}'] = url;
+					tab_urls['{{$type}}_{{str_replace(".","_",$sample->sample_id)}}'] = url;
 				@endif
 				
 			@endforeach
@@ -968,7 +968,7 @@ function drawLinePlot(div_id, title, sample_list, coverage_data ) {
 							@endif
 							@foreach ($sample_types[$type] as $sample)
 								@if (!($type == 'rnaseq' && $sample->exp_type != 'RNAseq') && !($type == 'somatic' && $sample->exp_type == 'RNAseq'))
-									<div id='{{$type}}_{{$sample->sample_id}}' title='{{$sample->sample_alias."-".str_replace(" ", "_", $sample->exp_type)}}' style="width:98%;height:95%;padding:0px;">
+									<div id='{{$type}}_{{str_replace(".","_",$sample->sample_id)}}' title='{{$sample->sample_alias."-".str_replace(" ", "_", $sample->exp_type)}}' style="width:98%;height:95%;padding:0px;">
 									</div>
 								@endif								
 							@endforeach							

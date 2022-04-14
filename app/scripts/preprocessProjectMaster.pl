@@ -152,7 +152,8 @@ $dbh->do("alter index PROJECT_STAT_PK VISIBLE");
 $dbh->disconnect();
 my $total_duration = time - $all_start;
 print "total time: $total_duration s\n";
-if ($project_id ne "all" && $email ne "") {
+my $size = keys %projects;
+if ($project_id ne "all" && $email ne "" && $size > 0) {
 	sendEmail($email, $url, \%projects);
 }
 

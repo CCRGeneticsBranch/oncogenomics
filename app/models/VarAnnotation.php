@@ -2753,6 +2753,18 @@ p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.
 			return "";
 	}
 
+	static public function hasJunction($patient_id, $case_id) {		
+		$case = VarCases::getCase($patient_id, $case_id);
+		$path = $case->path;
+		$suffix="SJ.out.bed.gz";
+		$junctions = array();
+		foreach (glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/*/*$suffix") as $filename) {
+			if (file_exists($filename))
+				return true;
+		}	
+		return false;
+	}
+
 	static function getLevel($type, $var, $source) {
 		if ($var->frequency > 0.05)
 			return "";
