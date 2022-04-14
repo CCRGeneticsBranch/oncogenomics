@@ -130,12 +130,12 @@ th {
 			  <b>Description:</b> Cases found on Frederick only<br>
 			  <b>Possible reasons:</b> Failed cases on Biowulf<br>
 			  <b>Actions:</b> Delete the cases on Frederick<br>
-			@if ($target == "Khanalb") 			  
-			  <H4 style="color:red">Case content inconsistence</H4>
+			@if ($target == "Khanlab") 			  
+			  <H4 style="color:red">Case content inconsistency</H4>
 			  <b>Description:</b> Samples processed does not match samples defined in master file<br>
 			  <b>Possible reasons:</b> Case definition was changed in master file<br>
 			  <b>Actions:</b> Check master file or reprocess the cases<br>
-			  <H4>Case name inconsistence</H4>
+			  <H4>Case name inconsistency</H4>
 			  <b>Description:</b> Case name is not the same as case ID (folder name)<br>
 			  <b>Possible reasons:</b> Case name was changed in master file or cases were not processed properly<br>
 			  <b>Actions:</b> 1. Rename the folder 2. Check master file 3. reprocess the cases<br>
