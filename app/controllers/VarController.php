@@ -3122,7 +3122,12 @@ class VarController extends BaseController {
 			$sid = str_replace("Sample_", "", $fn);
 			$sid = str_replace($suffix, "", $sid);
 			$bw_file = str_replace($suffix, ".bw", $filename);
-			$bw_fn = (file_exists($bw_file))? basename($bw_file):"";			
+			$tdf_file = str_replace($suffix, ".star.final.bam.tdf", $filename);
+			$bw_fn = (file_exists($bw_file))? basename($bw_file):"";
+			if (file_exists($tdf_file))
+				$bw_fn = (file_exists($tdf_file))? basename($tdf_file):"";
+			else
+				continue;
 			$junctions[$sid] = ["bed" => $fn, "bw" => $bw_fn];
 		}	
 		return View::make('pages/viewJunction', ["patient_id" => $patient_id, "case_id" => $case_id, "symbol" => $symbol, "path" => $path, "junctions" => $junctions]);

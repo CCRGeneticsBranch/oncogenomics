@@ -250,8 +250,8 @@ $sth_case_consistence->finish;
 $dbh->disconnect();
 
 print("7: generating report\n");
-my @emails = ('chouh@nih.gov');
-my @compass_emails = ('chouh@nih.gov');
+my @emails = ('chouh@nih.gov','khanjav@mail.nih.gov','weij@mail.nih.gov');
+my @compass_emails = ('chouh@nih.gov','manoj.tyagi@nih.gov','kristin.valdez@nih.gov');
 
 &generateReport("Khanlab",\%report, \@emails);
 &generateReport("COMPASS",\%report, \@compass_emails);
