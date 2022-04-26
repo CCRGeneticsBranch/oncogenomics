@@ -68,9 +68,10 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/viewProjectQC/{project_id}',  'VarQCController@viewProjectQC');
 	Route::get('/getProjectQCI/{project_id}/{type}',  'ProjectController@getProjectQCI');
 	Route::get('/viewQCITypeProjectDetail/{project_id}/{type}',  'ProjectController@viewQCITypeProjectDetail');
-	
-	
-
+	Route::get('/viewProjectDetails/{project_id}', 'ProjectController@viewProjectDetails');	
+	Route::get('/viewSurvivalByExpression/{project_id}/{symbol}/{show_search?}/{include_header?}', 'ProjectController@viewSurvivalByExpression');
+	Route::get('/viewSurvivalListByExpression/{project_id}', function($project_id) { return View::make('pages/viewSurvivalListByExpression',['project_id' => $project_id]); });
+	Route::get('/getSurvivalListByExpression/{project_id}', 'ProjectController@getSurvivalListByExpression');
 	
 });
 
@@ -141,9 +142,6 @@ Route::group(['before' => ['logged', 'can_see']], function () {
 	Route::get('/viewExpressionByGene/{project_id}/{gene_id}', 'ProjectController@viewExpressionByGene');
 	Route::get('/getProjects', 'ProjectController@getProjects');	
 	Route::get('/getGeneListByLocus/{chr}/{start_pos}/{end_pos}/{target_type}', 'GeneController@getGeneListByLocus');
-	
-	Route::get('/viewProjectDetails/{project_id}', 'ProjectController@viewProjectDetails');	
-	Route::get('viewSurvivalByExpression/{project_id}/{symbol}/{show_search?}', 'ProjectController@viewSurvivalByExpression');
 	
 	Route::get('/getFlagHistory/{chromosome}/{start_pos}/{end_pos}/{ref}/{alt}/{type}/{patient_id}', 'VarController@getFlagHistory');
 	Route::get('/getFlagStatus/{chromosome}/{start_pos}/{end_pos}/{ref}/{alt}/{type}/{patient_id}', 'VarController@getFlagStatus');

@@ -43,7 +43,7 @@
                                         name: 'Coverage',
                                         format: 'tdf', 
                                         autoscaleGroup: "group1",                                       
-                                        url: '{{url("/getBigWig/$path/$patient_id/$case_id/$sample_id/".$filenames["bw"])}}'
+                                        url: '{{url("/getBigWig/$path/$patient_id/$case_id/$sample_id/".$filenames["tdf"])}}'
                                     },
                                     {
                                         type: 'junction',

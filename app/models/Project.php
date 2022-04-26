@@ -876,6 +876,13 @@ class Project extends Eloquent {
 		return $surv_file;
 	}
 
+	public function getSurvivalPvalueFile($type="overall_survival") {
+		$path = storage_path()."/project_data/".$this->id."/survival/${type}_pvalues.tsv";
+		if (file_exists($path))
+			return $path;
+		return "";
+	}
+
 	public function getProjectStat($target_type = "refseq", $value_type="tmm-rpkm") {
 		$sql = "select p.*,g.symbol from project_stat p, gene g where project_id = $this->id and p.target_type='$target_type' and p.target=g.gene and g.type='protein-coding' and p.target_level='gene' and p.value_type='$value_type'";
 		Log::info("getProjectStat SQL: $sql");

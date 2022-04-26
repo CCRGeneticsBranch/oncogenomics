@@ -1,3 +1,7 @@
+@extends(($include_header=="Y")? 'layouts.default' : 'layouts.noheader')
+@section('content')
+
+
 {{ HTML::style('css/style_datatable.css') }}
 {{ HTML::style('packages/yadcf-0.8.8/jquery.dataTables.yadcf.css') }}
 {{ HTML::style('packages/jquery-easyui/themes/bootstrap/easyui.css') }}
@@ -30,8 +34,10 @@
 		});
 
 		$('#gene_id').keyup(function(e){
+			if ($('#gene_id').val() == "")
+				return;
 			if(e.keyCode == 13) {
-        		window.location.replace("{{url('/viewSurvivalByExpression')}}" + "/{{$project->id}}/" + $('#gene_id').val() + "/{{$show_search}}");
+        		window.location.replace("{{url('/viewSurvivalByExpression')}}" + "/{{$project->id}}/" + $('#gene_id').val() + "/{{$show_search}}"  + "/{{$include_header}}");
     		}
 		});	
 		
@@ -312,8 +318,8 @@
 									</select>
 									<H5  style="display:inline">&nbsp;&nbsp;Normalization:</H5>
 									<select id="selSurvNorm" class="form-control surv" style="display:inline;width:150px">
-										<option value="tmm-rpkm">TMM-FPKM</option>
 										<option value="tpm">TPM</option>
+										<option value="tmm-rpkm">TMM-FPKM</option>										
 									</select>
 									<H5  style="display:inline">&nbsp;&nbsp;Diagnosis:</H5>
 									<select id="selSurvDiagnosis" class="form-control surv" style="display:inline;width:150px">
@@ -357,3 +363,5 @@
 		
 	</body>
 </html>				
+@stop
+

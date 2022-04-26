@@ -667,6 +667,8 @@ class Patient extends Eloquent {
 			#$cases = explode(",", $patient->case_list);
 			//if (is_array($case_names[$patient->patient_id]))
 			//$cases = explode(",", $case_names[$patient->patient_id]);
+			if (!array_key_exists($patient->patient_id, $case_names))
+				continue;
 			$cases = $case_names[$patient->patient_id];
 			$uniq_cases = array();
 			foreach ($cases as $case) {
@@ -702,9 +704,10 @@ class Patient extends Eloquent {
 		DB::delete($sql);
 	}
 	static function getProjectList($patient_id) {
+		$patient_id = strtoupper($patient_id);
 		$logged_user = User::getCurrentUser();
 		if ($logged_user != null)
-			return DB::select("select distinct u.project_name, u.project_id from user_projects u, project_cases c where u.project_id=c.project_id and c.patient_id='$patient_id' and u.user_id=$logged_user->id order by project_name");
+			return DB::select("select distinct u.project_name, u.project_id from user_projects u, project_cases c where u.project_id=c.project_id and UPPER(c.patient_id)='$patient_id' and u.user_id=$logged_user->id order by project_name");
 		return null;
 	}
 	static function getTierCounts2($project_id, $patient_id,$case_name=null,$type=null) {

@@ -489,7 +489,12 @@ a.boxclose{
 		tab_urls['Heatmap'] = '{{url('/viewExpression/'.$project->id)}}';
 		tab_urls['QC'] = '{{url('/viewProjectQC/'.$project->id)}}';
 		tab_urls['GSEA'] = '{{url("/viewGSEA/$project->id/any/any/".rand())}}';
-		tab_urls['ByExpression'] = '{{url("/viewSurvivalByExpression/$project->id/".User::getLatestGene()."/Y")}}';
+		@if ($has_survival_pvalues)
+			tab_urls['ByExpression'] = '{{url("/viewSurvivalListByExpression/$project->id")}}';
+		@else
+			tab_urls['ByExpression'] = '{{url("/viewSurvivalByExpression/$project->id/".User::getLatestGene()."/Y")}}';
+		@endif
+
 		tab_urls['TIL'] = '{{url("/viewTIL/$project->id")}}';
 
 		//addTab('GSEA', '{{url('/viewGSEA/'.$project->id)}}');	

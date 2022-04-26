@@ -43,10 +43,18 @@ my $sid = getDBSID();
 
 my $survival_dir = "$script_dir/../storage/project_data/$project_id/survival";
 system("mkdir -p $survival_dir");
-my $overall_survival_file = "$survival_dir/overvall_survival.tsv";
+my $overall_survival_file = "$survival_dir/overall_survival.tsv";
 my $event_free_survival_file = "$survival_dir/event_free_survival.tsv";
 &saveSurvivalFile($project_id, $overall_survival_file, $event_free_survival_file);
 $dbh->disconnect();
+
+my $expression_file = "$script_dir/../storage/project_data/$project_id/expression.tpm.tsv";
+if ( -s $expression_file) {
+	print("calculating pvalues for overall survival\n");
+	system("Rscript $script_dir/preprocessProjectExpressionSurvival.R $overall_survival_file $expression_file $survival_dir/overall_survival_pvalues.tsv");
+	print("calculating pvalues for event free survival\n");
+	system("Rscript $script_dir/preprocessProjectExpressionSurvival.R $event_free_survival_file $expression_file $survival_dir/event_free_survival_pvalues.tsv");
+}
 
 sub saveSurvivalFile {
 	my ($project_id, $overall_survival_file, $event_free_survival_file) = @_;
@@ -60,6 +68,8 @@ sub saveSurvivalFile {
 	$sth_samples->finish();
 	open(OVERALL_SURVIVAL, ">$overall_survival_file");
 	open(EVENT_FREE_SURVIVAL, ">$event_free_survival_file");
+	print "overall survival: $overall_survival_file\nevent free survival:$event_free_survival_file\n";
+
 	print OVERALL_SURVIVAL join("\t", ("SampleID","Patient ID","Time","Status"))."\n";
 	print EVENT_FREE_SURVIVAL join("\t", ("SampleID","Patient ID","Time","Status"))."\n";
 	foreach my $patient_id (keys %survival_data) {
