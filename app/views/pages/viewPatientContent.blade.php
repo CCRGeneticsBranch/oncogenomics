@@ -38,6 +38,9 @@ html, body { height:100%; width:100%;}
 .layout-panel {
 	overflow-y: hidden;
 }
+.fancybox-overlay {
+    z-index: 1000000 !important;
+}
 </style>
 <script type="text/javascript">
 	var tbl;	

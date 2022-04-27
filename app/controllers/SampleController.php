@@ -1185,8 +1185,9 @@ class SampleController extends BaseController {
 				else
 					$subject_json[$sample->patient_id][] = $sample->sample_id;				
 				$sample_json[] = $sample->sample_id;
-				if (strtolower($sample->tissue_cat) == 'tumor' || strtolower($sample->tissue_cat) == 'cell line' ) {
-					$sample_type[$sample->sample_id] = "Tumor";
+				if (strtolower($sample->tissue_cat) == 'tumor' || strtolower($sample->tissue_cat) == 'cell line' || strtolower($sample->tissue_cat) == 'xeno') {
+					if (strtolower($sample->tissue_cat) != 'xeno')
+						$sample_type[$sample->sample_id] = "Tumor";
 					if ($sample->normal_sample != null) {
 						$normal_sample_id = $sample->normal_sample;
 						if ($use_sample_name && array_key_exists($normal_sample_id, $sample_names))

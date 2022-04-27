@@ -45,7 +45,21 @@ open(DIFF_CASES, "$out_dir/processed_list/diff_case_list.txt");
 open(CASES_BIOWULF, ">$out_dir/cases_on_Biowulf_only.txt");
 open(CASES_FREDERICK, ">$out_dir/cases_on_Frederick_only.txt");
 print CASES_BIOWULF join("\t",("Patient_ID","Case_ID","Path","Biowulf_Path"))."\n";
-print CASES_FREDERICK join("\t",("Patient_ID","Case_ID","Path","Biowulf_Path"))."\n";
+print CASES_FREDERICK join("\t",("Patient_ID","Case_ID","Path","Biowulf_Path", "Case_Name"))."\n";
+my $sth_cases = $dbh->prepare("select distinct patient_id,case_id,path,version,case_name from cases");
+my $sth_processed_cases = $dbh->prepare("select distinct patient_id,case_id,path,version from processed_cases");
+$sth_cases->execute();
+
+my %cases = ();
+my %processed_cases = ();
+my %paths = ();
+#get all cases
+while (my ($patient_id,$case_id,$path,$version,$case_name) = $sth_cases->fetchrow_array) {
+  $cases{join(",",($patient_id,$case_id,$path))} = $case_name;
+  $paths{$path} = '';
+}
+$sth_cases->finish;
+
 <DIFF_CASES>;
 while(<DIFF_CASES>) {
   chomp;
@@ -58,8 +72,12 @@ while(<DIFF_CASES>) {
       push @{$report{"cases_on_Biowulf_only"}{$path}}, join("\t", ($patient_id,$case_id,$path,$biowulf_path));
       print CASES_BIOWULF join("\t", ($patient_id,$case_id,$path,$biowulf_path))."\n";
     } else {
-      push @{$report{"cases_on_Frederick_only"}{$path}}, join("\t", ($patient_id,$case_id,$path,$biowulf_path));
-      print CASES_FREDERICK join("\t", ($patient_id,$case_id,$path,$biowulf_path))."\n";
+      my $case_name = "NA";
+      if (exists($cases{join(",", ($patient_id, $case_id, $path))})) {
+        $case_name = $cases{join(",", ($patient_id, $case_id, $path))};
+      }
+      push @{$report{"cases_on_Frederick_only"}{$path}}, join("\t", ($patient_id,$case_id,$path,$biowulf_path,$case_name));
+      print CASES_FREDERICK join("\t", ($patient_id,$case_id,$path,$biowulf_path,$case_name))."\n";
     }    
   }
 }
@@ -68,20 +86,6 @@ close(CASES_BIOWULF);
 close(CASES_FREDERICK);
 
 print("2: checking if loaded no successful.txt\n");
-
-my $sth_cases = $dbh->prepare("select distinct patient_id,case_id,path,version from cases");
-my $sth_processed_cases = $dbh->prepare("select distinct patient_id,case_id,path,version from processed_cases");
-$sth_cases->execute();
-
-my %cases = ();
-my %processed_cases = ();
-my %paths = ();
-#get all cases
-while (my ($patient_id,$case_id,$path,$version) = $sth_cases->fetchrow_array) {
-  $cases{join(",",($patient_id,$case_id,$path))} = '';
-  $paths{$path} = '';
-}
-$sth_cases->finish;
 
 open(NO_SUCCESSFUL_CASES, ">$out_dir/no_successful_cases.txt");
 print NO_SUCCESSFUL_CASES join("\t",("Patient_ID","Case_ID","Path"))."\n";
