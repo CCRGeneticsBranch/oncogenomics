@@ -1174,7 +1174,7 @@ function drawLinePlot(div_id, title, sample_list, coverage_data ) {
 			<div id="ChIPseq" title="ChIPseq" style="width:98%;padding:0px;">					
 			</div>
 			@endif
-			@if ($project->showFeature("GSEA") && $has_expression)
+			@if ($project->showFeature("GSEA") && $has_expression && 1==2)
 			<div id="GSEA" title="GSEA" style="width:100%;" class="list-group-item active text-center " >
 					<div id="{{$patient_id}}" title="{{$patient_id}}">
 						<object data="{{url("/viewGSEA/$project_id/$patient_id/$case->case_id/".rand())}}" type="application/pdf" width="100%" height="100%"></object>
