@@ -254,7 +254,7 @@ $sth_case_consistence->finish;
 $dbh->disconnect();
 
 print("7: generating report\n");
-my @emails = ('chouh@nih.gov','khanjav@mail.nih.gov','weij@mail.nih.gov','wenxi@mail.nih.gov','vineela.gangalapudi@nih.gov');
+my @emails = ('chouh@nih.gov','khanjav@mail.nih.gov','weij@mail.nih.gov','wenxi@mail.nih.gov','vineela.gangalapudi@nih.gov','patrick.zhao@nih.gov','erica.pehrsson@nih.gov');
 my @compass_emails = ('chouh@nih.gov','manoj.tyagi@nih.gov','kristin.valdez@nih.gov');
 
 &generateReport("Khanlab",\%report, \@emails);
@@ -335,6 +335,10 @@ sub generateReport {
   <b>Description:</b> Cases has no successful.txt<br>
   <b>Possible reasons:</b> Old Cases<br>
   <b>Actions:</b> 1. check if cases should be deleted 2. Touch the successful.txt<br>
+  <H4 style="color:red">Unloaded cases</H4>
+  <b>Description:</b> Cases were synced but not in database<br>
+  <b>Possible reasons:</b> 1. Cronjob issue 2. Database issue<br>
+  <b>Actions:</b> 1. Load the case manually<br>
   <H4 style="color:red">Unprocessed cases</H4>
   <b>Description:</b> Cases defined in master file but not processed<br>
   <b>Possible reasons:</b> 1. Cases to be processed 2. Cases failed 3. Forgotten cases 4. Not main pipeline cases<br>

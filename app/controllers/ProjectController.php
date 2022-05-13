@@ -21,11 +21,9 @@ class ProjectController extends BaseController {
 		if ($has_survival) {
 			$tier1_genes = Project::getMutationGeneList($project_id);
 			$survival_meta_list = $project->getProperty("survival_meta_list");
-			$overall_file = $project->getSurvivalPvalueFile("overall_survival");
-			$event_free_file = $project->getSurvivalPvalueFile("event_free_survival");
-			Log::info("overall_file: $overall_file");
-			Log::info("event_free_file: $event_free_file");
-			$has_survival_pvalues = ($overall_file != "" || $event_free_file != "");
+			$overall_files = $project->getSurvivalPvalueFile("overall");
+			$event_free_files = $project->getSurvivalPvalueFile("event_free");
+			$has_survival_pvalues = (count($overall_files) > 1 || count($event_free_files) > 1);
 
 		}
 		$cnv_files = array();
@@ -355,7 +353,7 @@ class ProjectController extends BaseController {
 
 	}
 
-	public function viewSurvivalByExpression($project_id, $symbol, $show_search="N", $include_header="N") {
+	public function viewSurvivalByExpression($project_id, $symbol, $show_search="N", $include_header="N", $type="overall", $selected_diagnosis="any") {
 		$gene = Gene::getGene($symbol);
 		if ($gene != null) {
 			$symbol = $gene->getSymbol();
@@ -363,7 +361,7 @@ class ProjectController extends BaseController {
 		}
 		$project = Project::getProject($project_id);
 		$survival_diags = $project->getSurvivalDiagnosis();		
-		return View::make('pages/viewSurvivalByExpression',['project' => $project, 'symbol'=>$symbol, 'survival_diagnosis' => $survival_diags, 'show_search' => $show_search, 'include_header' => $include_header]);
+		return View::make('pages/viewSurvivalByExpression',['project' => $project, 'symbol'=>$symbol, 'survival_diagnosis' => $survival_diags, 'show_search' => $show_search, 'include_header' => $include_header, 'type'=>$type, 'selected_diagnosis' => $selected_diagnosis]);
 	}
 
 	public function viewTIL($project_id) {		
@@ -715,53 +713,43 @@ class ProjectController extends BaseController {
 		return json_encode(Project::getMutationGeneList($project_id, $tier));
 	}
 	
-	public function getSurvivalListByExpression($project_id) {
-		set_time_limit(240);
+	public function viewSurvivalListByExpression($project_id) {
 		$project = Project::getProject($project_id);
+		$exp_types = array("overall", "event_free");
+		$types = array();
+		foreach ($exp_types as $type) {
+			foreach (glob(storage_path()."/project_data/$project_id/survival/${type}_pvalues.*.tsv") as $file) {
+				preg_match('/pvalues\.(.*)\.tsv/', $file, $m );
+				$diagnosis = $m[1];
+				$type_label = ucfirst(str_replace("_", " ", $type));
+				$types["$type_label - $diagnosis"] = array($type, $diagnosis);				
+			}
+		}
+		return View::make('pages/viewSurvivalListByExpression', ['project_id' => $project_id, 'types' => $types]);
+	}
+
+	public function getSurvivalListByExpression($project_id, $type, $diagnosis) {
+		set_time_limit(240);
 		$time_start = microtime(true);
-		$overall_file = $project->getSurvivalPvalueFile("overall_survival");
-		$event_free_file = $project->getSurvivalPvalueFile("event_free_survival");
 		$genes = array();
-		$exp_types = array("overall_survival", "event_free_survival");
+		$exp_types = array("overall", "event_free");
 		$types = array();
 		# check if event free and overvall survival data exist
-		$cols = array(['title'=>'Gene']);
-		foreach ($exp_types as $type) {
-			$file = storage_path()."/project_data/$project_id/survival/${type}_pvalues.tsv";
-			if (file_exists($file)) {
-				$types[] = $type;
-				$type_label = ucfirst(str_replace("_", " ", $type));
-				$cols = array_merge($cols, [["title"=>"$type_label-Median"],["title"=>"$type_label-Median Pvalue"],["title"=>"$type_label-Minimum Cutoff"],["title"=>"$type_label-Minimum Pvalue"]]);
-			}
-		}
+		$cols = array(['title'=>'Gene'],["title"=>"Median"],["title"=>"Median Pvalue"],["title"=>"Minimum Cutoff"],["title"=>"Minimum Pvalue"],["title"=>"FDR"]);
 		
-		foreach ($types as $type) {
-			$file = storage_path()."/project_data/$project_id/survival/${type}_pvalues.tsv";			
-			$content = file_get_contents($file);			
-			$lines = explode("\n", $content);			
-			foreach ($lines as $line) {
-				$fields = explode("\t", $line);
-				$gene = $fields[0];
-				#if empty then it is the title
-				if ($gene != "")
-					$genes[$gene][$type] = array_slice($fields,1);
-			}
-			
-		}
+		$file = storage_path()."/project_data/$project_id/survival/${type}_pvalues.{$diagnosis}.tsv";			
+		$content = file_get_contents($file);
+		$lines = explode("\n", $content);
 		$data = array();
-		foreach ($genes as $gene => $surv_data) {
-			$row = array($gene);
-			foreach ($types as $type) {
-				$fields = array("NA", "NA", "NA","NA");
-				if (array_key_exists($type, $surv_data))
-					$fields = $surv_data[$type];
-				$row = array_merge($row, $fields);
-			}
-			$data[] = $row;
-		}
+		foreach ($lines as $line) {
+			$fields = explode("\t", $line);
+			$gene = $fields[0];
+			#if empty then it is the title
+			if ($fields[0] != "")
+				$data[] = $fields;
+		}		
 		Log::info("getSurvivalListByExpression time: ". (microtime(true)-$time_start));
 		return json_encode(array("cols"=>$cols, "data"=>$data));
-
 	}
 
 	public function getExpSurvivalData($project_id, $target_id, $level, $cutoff=null, $target_type="refseq", $data_type="overall", $value_type="tmm-rpkm", $diag="any") {

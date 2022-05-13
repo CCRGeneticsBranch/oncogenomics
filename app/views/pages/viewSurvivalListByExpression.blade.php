@@ -47,18 +47,17 @@ th {
 	$(document).ready(function() {	
 		getData();
 		$.fn.dataTableExt.afnFiltering.push( function( oSettings, aData, iDataIndex ) {
-			var overall_idx = 4;
-			var event_free_idx = 8;
+			var fdr_idx = 5;
 			var cutoff = 0.05;
 			if ($('#ckSig').is(":checked")) {
-				if (aData.length < 6 && (aData[overall_idx] > cutoff || aData[overall_idx] == "NA"))
-					return false;
-				if (aData[overall_idx] > cutoff && aData[event_free_idx] > cutoff)
-					return false
-				if (aData[overall_idx] == "NA" && aData[event_free_idx] == "NA")
-					return false
+				if (aData[fdr_idx] > cutoff || aData[fdr_idx] == "NA")
+					return false;				
 			}
 			return true;
+		});
+
+		$('#selType').on('change', function() {
+			getData();			
 		});
 			
 	});	
@@ -70,7 +69,11 @@ th {
 	function getData() {
 		$("#loadingMaster").css("display","block");
 		$('#onco_layout').css('visibility', 'hidden');
-		var url = '{{url("/getSurvivalListByExpression")}}' + '/' + project_id;
+		var values = $('#selType').val();
+		var values = values.split(",");
+		var type = values[0];
+		var diagnosis = values[1];
+		var url = '{{url("/getSurvivalListByExpression")}}' + '/' + project_id + '/' + type + '/' + diagnosis;
 		var survival_url = '{{url("/viewSurvivalByExpression")}}' + '/' + project_id;
 		console.log(url);
        	$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {
@@ -83,7 +86,7 @@ th {
 				}
 				data.data.forEach(function(d,i) {
 					var symbol = d[0];
-					data.data[i][0] = "<a target=_blank href='" + survival_url + "/" + symbol + "/Y/Y'>" + symbol + "</a>";
+					data.data[i][0] = "<a target=_blank href='" + survival_url + "/" + symbol + "/Y/Y/" + type + '/' + diagnosis + "'>" + symbol + "</a>";
 				});
 				showTable(data);
 			}
@@ -98,6 +101,8 @@ th {
 		cols = data.cols;		
 
 		hide_cols = [];
+		if (tbl != null)
+			tbl.destroy();
        	tbl = $('#tblOnco').DataTable( 
 		{
 				"data": data.data,
@@ -117,27 +122,6 @@ th {
 			$('#lblCountDisplay').text(tbl.page.info().recordsDisplay);
     		$('#lblCountTotal').text(tbl.page.info().recordsTotal);
     	});
-
-		var html = '';
-		$("div.toolbar").html(html + '<button id="popover" data-toggle="popover" data-placement="bottom" type="button" class="btn btn-default" style="font-size: 12px;">Select Columns</button>');
-		tbl.columns().iterator('column', function ( context, index ) {
-				var show = (hide_cols.indexOf(index) == -1);
-				tbl.column(index).visible(show);
-				columns.push(tbl.column(index).header().innerHTML);
-				checked = (show)? 'checked' : '';
-				col_html += '<input type=checkbox ' + checked + ' class="onco_checkbox" id="data_column" value=' + index + '><font size=3>&nbsp;' + tbl.column(index).header().innerHTML + '</font></input><BR>';
-			});
-		
-
-		$('[data-toggle="popover"]').popover({
-				title: 'Select column <a href="#" class="close" data-dismiss="alert">×</a>',
-				placement : 'bottom',  
-				html : true,
-				content : function() {
-					return col_html;
-				}
-			});
-
 		
 	}		
 
@@ -154,6 +138,12 @@ th {
 		<div data-options="region:'center',split:true" style="height:100%;width:100%;padding:0px;overflow:none;" >
 			<div style="margin:20px">				
 				<span class="btn-group" id="interchr" data-toggle="buttons">
+					&nbsp;&nbsp;&nbsp;Survival Types: 
+					<select class="form-control" id="selType" style="width:400px;display:inline">
+						@foreach ($types as $type_label => $values)
+						<option value="{{$values[0]}},{{$values[1]}}">{{$type_label}}</option>
+						@endforeach						
+					</select>
 			  		<label class="mut btn btn-default">
 							<input class="ck" id="ckSig" type="checkbox" autocomplete="off">Significant genes
 					</label>

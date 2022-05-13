@@ -3115,20 +3115,17 @@ class VarController extends BaseController {
 	public function viewJunction($patient_id, $case_id, $symbol="FGFR4") {		
 		$case = VarCases::getCase($patient_id, $case_id);
 		$path = $case->path;
-		$suffix="SJ.out.bed.gz";
+		$suffix=".star.final.bam.tdf";
 		$junctions = array();
 		foreach (glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/*/*$suffix") as $filename) {
-			$fn = basename($filename);
-			$sid = str_replace("Sample_", "", $fn);
-			$sid = str_replace($suffix, "", $sid);
-			$bw_file = str_replace($suffix, ".bw", $filename);
-			$tdf_file = str_replace($suffix, ".star.final.bam.tdf", $filename);
-			$bw_fn = (file_exists($bw_file))? basename($bw_file):"";
-			if (file_exists($tdf_file))
-				$bw_fn = (file_exists($tdf_file))? basename($tdf_file):"";
-			else
-				continue;
-			$junctions[$sid] = ["bed" => $fn, "bw" => $bw_fn];
+			$tdf_file = basename($filename);
+			$dn = dirname($filename);
+			$sid = basename($dn);
+			$beds = glob("$dn/*.SJ.out.bed.gz");
+			if (count($beds) > 0) {
+				$bed_file = basename($beds[0]);
+				$junctions[$sid] = ["bed" => $bed_file, "tdf" => $tdf_file];
+			}			
 		}	
 		return View::make('pages/viewJunction', ["patient_id" => $patient_id, "case_id" => $case_id, "symbol" => $symbol, "path" => $path, "junctions" => $junctions]);
 	}
@@ -3199,8 +3196,8 @@ class VarController extends BaseController {
 	function getBigWig($path, $patient_id, $case_id, $sample_id, $filename) {		
 		$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/$sample_id/$filename";
 		//return Response::download($path_to_file);	
-		if (!file_exists($path_to_file))
-			$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/Sample_$sample_id/$filename";
+		#if (!file_exists($path_to_file))
+		#	$path_to_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/Sample_$sample_id/$filename";
 		if (substr($path_to_file, -3) == "tbi") {
 			return Response::download($path_to_file);
 		}

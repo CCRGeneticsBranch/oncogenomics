@@ -313,8 +313,8 @@
 								<div class="card" style="padding:8px;margin:0 auto">
 									<H5  style="display:inline">&nbsp;&nbsp;Data Type:</H5>
 									<select id="selSurvType" class="form-control surv" style="display:inline;width:150px">
-										<option value="overall">Overall</option>
-										<option value="event_free">Event free</option>
+										<option value="overall" {{($type=="overall")? "selected" : ""}}>Overall</option>
+										<option value="event_free" {{($type=="event_free")? "selected" : ""}}>Event free</option>
 									</select>
 									<H5  style="display:inline">&nbsp;&nbsp;Normalization:</H5>
 									<select id="selSurvNorm" class="form-control surv" style="display:inline;width:150px">
@@ -325,7 +325,7 @@
 									<select id="selSurvDiagnosis" class="form-control surv" style="display:inline;width:150px">
 										<option value="any">All Data</option>
 										@foreach ($survival_diagnosis as $diag)
-											<option value="{{$diag}}">{{$diag}}</option>
+											<option value="{{$diag}}" {{($selected_diagnosis=="$diag")? "selected" : ""}}>{{$diag}}</option>
 										@endforeach										
 										
 									</select>

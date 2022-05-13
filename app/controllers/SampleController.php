@@ -415,6 +415,7 @@ class SampleController extends BaseController {
 		#	return View::make('pages/error', ['message'=>"No data in patient $patient_id!"]);
 		
 		//return $timediff;
+		$has_expression_matrix = file_exists(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/expression.tpm.coding.tsv");
 		$has_qc = file_exists(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/qc");
 		$has_vcf = file_exists(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/$patient_id.$case_id.vcf.zip");		
 		$endtime = microtime(true);
@@ -454,9 +455,9 @@ class SampleController extends BaseController {
 		}
     
 
-		return View::make('pages/viewCase', ['with_header' => $with_header, 'summary' => $summary, 'path' => $path, 'cnv_samples' => $cnv_samples, 'cnvkit_samples' => $cnvkit_samples, 'has_cnvtso' => $has_cnvtso, 'sig_samples' => $sig_samples, 'hla_samples' => $hla_samples, 'antigen_samples' => $antigen_samples, 'sample_types' => $sample_types, 'patient_id'=>$patient_id, 'project_id' => $project_id, 'project' => $project, 'path' => $path, 'merged' => ($case_name == "any"), 'case_name' => $case_name, 'case' => $case, 'var_types' => $var_types, 'fusion_cnt' => $fusion_cnt, 'cnv_cnt'=>$cnv_cnt, 'has_expression' => $has_expression, 'exp_samples' => $exp_samples, 'mix_samples' => $mix_samples,'mixRNA_samples' => $mixRNA_samples,'mixTCR_samples' => $mixTCR_samples, 'has_qc' => $has_qc, 'has_vcf' => $has_vcf, 'show_circos' => $show_circos, 'has_burden' => $has_burden ,'has_Methlyation'=>$hasMethylation, 'methylseq_files'=>$methylseq_files, 'has_splice' => $has_splice, 'arriba_samples' => $arriba_samples, 'report_data' => $report_data, 'tcell_extrect_data' => $tcell_extrect_data, "tcell_pdfs" => $tcell_pdfs, "chip_bws" => $chip_bws ]);
+		return View::make('pages/viewCase', ['with_header' => $with_header, 'summary' => $summary, 'path' => $path, 'cnv_samples' => $cnv_samples, 'cnvkit_samples' => $cnvkit_samples, 'has_cnvtso' => $has_cnvtso, 'sig_samples' => $sig_samples, 'hla_samples' => $hla_samples, 'antigen_samples' => $antigen_samples, 'sample_types' => $sample_types, 'patient_id'=>$patient_id, 'project_id' => $project_id, 'project' => $project, 'path' => $path, 'merged' => ($case_name == "any"), 'case_name' => $case_name, 'case' => $case, 'var_types' => $var_types, 'fusion_cnt' => $fusion_cnt, 'cnv_cnt'=>$cnv_cnt, 'has_expression' => $has_expression, 'exp_samples' => $exp_samples, 'mix_samples' => $mix_samples,'mixRNA_samples' => $mixRNA_samples,'mixTCR_samples' => $mixTCR_samples, 'has_qc' => $has_qc, 'has_vcf' => $has_vcf, 'show_circos' => $show_circos, 'has_burden' => $has_burden ,'has_Methlyation'=>$hasMethylation, 'methylseq_files'=>$methylseq_files, 'has_splice' => $has_splice, 'arriba_samples' => $arriba_samples, 'report_data' => $report_data, 'tcell_extrect_data' => $tcell_extrect_data, "tcell_pdfs" => $tcell_pdfs, "chip_bws" => $chip_bws, "has_expression_matrix" => $has_expression_matrix ]);
 		
-	}
+	}	
 
 	public function viewChIPseq($patient_id, $case_id) {
 		$case = VarCases::getCase($patient_id, $case_id);
@@ -582,6 +583,133 @@ class SampleController extends BaseController {
 	public function viewCases($project_id) {		
 		$projects = User::getCurrentUserProjects();		
 		return View::make('pages/viewCases', ['project_id' => $project_id, 'projects' => $projects]);
+	}
+
+	public function getAnalysisPlot($patient_id, $case_id, $type, $name) {
+		$path = VarCases::getPath($patient_id, $case_id);
+		$content_type = "application/pdf";
+		$pathToFile = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/$type/$name";
+		if (file_exists($pathToFile)) {
+			return Response::make(file_get_contents($pathToFile), 200, ['Content-Type' => $content_type,'Content-Disposition' => "inline; filename=$name"]);		
+		}
+		return "file $name not exists!";
+		
+
+	}
+
+	public function getGSEAReport($patient_id, $case_id, $geneset, $group, $filename) {
+		$path = VarCases::getPath($patient_id, $case_id);
+		$htmls = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/${group}*${geneset}*gmt/*/$filename");
+		$content_type = "text/html";
+		if (count($htmls) > 0) {
+			return Response::make(file_get_contents($htmls[0]), 200, ['Content-Type' => $content_type]);
+		}
+		return "file $geneset, $group not exists!";
+	}
+
+	public function viewExpressionAnalysisByCase($project_id, $patient_id, $case_id) {
+		$path = VarCases::getPath($patient_id, $case_id);
+		$fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/*.pdf");
+		$files = array();
+		foreach ($fs as $f) {
+			$files[basename($f, ".pdf")] = basename($f);
+		}
+		$fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/GSEA_weighted_*_all.txt");
+		$gsea_files = array();
+		$gsea_htmls = array();
+		foreach ($fs as $f) {
+			$type = basename($f, "_all.txt");
+			$type = str_replace("GSEA_weighted_", "", $type);
+			$content = file_get_contents($f);
+			$cols = array();
+			$data = array();
+			$lines = explode("\n", $content);
+			foreach ($lines as $line) {
+				$fields = explode("\t", $line);
+				if (count($cols) == 0) {
+					foreach ($fields as $field)
+						$cols[] = array("title" => $field);
+				} else {
+					if (count($cols)==count($fields))	
+						$data[] = $fields;
+				}
+			}
+			$htmls = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/*${type}*gmt/*/index.html");
+			$groups = array();
+			foreach ($htmls as $html) {
+				$dn = basename(dirname(dirname($html)));
+				preg_match('/(.*)\.rnk_weighted_.*/', $dn, $m );
+				$group = $m[1];
+				$groups[] = $group;
+			}
+			$gsea_files[$type] = json_encode(array("cols" => $cols, "data" => $data));
+			$gsea_htmls[$type] = $groups;
+		}		
+		$filter_definition = array();
+		$filter_lists = UserGeneList::getDescriptions('all');
+		foreach ($filter_lists as $list_name => $desc) {
+			$filter_definition[$list_name] = $desc;
+		}		
+		return View::make('pages/viewExpressionAnalysisByCase', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'filter_definition' => $filter_definition, 'files'=>$files, 'gsea_files' => $gsea_files, 'gsea_htmls' => $gsea_htmls]);
+	}
+
+	public function getCaseExpMatrixFile($patient_id, $case_id) {
+		$case = VarCases::getCase($patient_id, $case_id);
+		$path = $case->path;
+		$matrix_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/analysis/expression/expression.tpm.coding.tsv";
+		Log::info("matrix_file: $matrix_file");
+		return Response::download($matrix_file);
+	}
+
+	public function getExpressionMatrix($patient_id, $case_id) {
+		$case = VarCases::getCase($patient_id, $case_id);
+		$path = $case->path;
+		$matrix_file = storage_path()."/ProcessedResults/$path/$patient_id/$case_id/analysis/expression/expression.tpm.coding.tsv";
+		Log::info("matrix_file: $matrix_file");
+		$cols = array();
+		$data = array();
+		$user_list_idx = 0;
+		$junction_url = url("viewJunction/$patient_id/$case_id");
+		if (file_exists($matrix_file)) {
+			$content = file_get_contents($matrix_file);
+			$lines = explode("\n", $content);			
+			$user_filter_list = UserGeneList::getGeneList("all");
+			foreach ($lines as $line) {
+				$fields = explode("\t", $line);
+				if (count($cols) == 0) {
+					$fields[0] = "Gene";
+					foreach ($fields as $field)
+						$cols[] = array("title" => $field);
+					
+					$user_list_idx = count($cols);
+					/*
+					foreach ($user_filter_list as $list_name => $gene_list)
+						$cols[] = array("title" => $list_name);
+					*/
+				} else {
+					$symbol = $fields[0];
+					$row_data = array("<a target=_blank href='$junction_url/$symbol'>$symbol</a>");
+					#$row_data = array($fields[0]);
+					for ($i=1;$i<count($fields);$i++)
+						$row_data[] = round(log($fields[$i]+1,2),2);					
+					/*
+					foreach ($user_filter_list as $list_name => $gene_list) {
+						$has_gene = '';
+						if (array_key_exists($fields[0], $gene_list)) {
+							$has_gene = 'Y';
+						}
+						$row_data[] = $has_gene;
+					}
+					*/
+					if (count($cols)==count($row_data))					
+						$data[] = $row_data;
+				}				
+			}
+
+		}
+		$json_data = json_encode(array("cols" => $cols, "data" => $data, "user_list_idx" => $user_list_idx ));
+		return $json_data;
+		
 	}
 
 	public function viewExpressionByCase($project_id, $patient_id, $case_id, $sample_id="null") {

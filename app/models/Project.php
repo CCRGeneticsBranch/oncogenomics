@@ -876,11 +876,9 @@ class Project extends Eloquent {
 		return $surv_file;
 	}
 
-	public function getSurvivalPvalueFile($type="overall_survival") {
-		$path = storage_path()."/project_data/".$this->id."/survival/${type}_pvalues.tsv";
-		if (file_exists($path))
-			return $path;
-		return "";
+	public function getSurvivalPvalueFile($type="overall") {
+		$files = glob(storage_path()."/project_data/$this->id/survival/${type}_pvalues.*.tsv");
+		return $files;
 	}
 
 	public function getProjectStat($target_type = "refseq", $value_type="tmm-rpkm") {

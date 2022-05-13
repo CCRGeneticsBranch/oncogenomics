@@ -69,9 +69,9 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getProjectQCI/{project_id}/{type}',  'ProjectController@getProjectQCI');
 	Route::get('/viewQCITypeProjectDetail/{project_id}/{type}',  'ProjectController@viewQCITypeProjectDetail');
 	Route::get('/viewProjectDetails/{project_id}', 'ProjectController@viewProjectDetails');	
-	Route::get('/viewSurvivalByExpression/{project_id}/{symbol}/{show_search?}/{include_header?}', 'ProjectController@viewSurvivalByExpression');
-	Route::get('/viewSurvivalListByExpression/{project_id}', function($project_id) { return View::make('pages/viewSurvivalListByExpression',['project_id' => $project_id]); });
-	Route::get('/getSurvivalListByExpression/{project_id}', 'ProjectController@getSurvivalListByExpression');
+	Route::get('/viewSurvivalByExpression/{project_id}/{symbol}/{show_search?}/{include_header?}/{type?}/{diagnosis?}', 'ProjectController@viewSurvivalByExpression');
+	Route::get('/viewSurvivalListByExpression/{project_id}', 'ProjectController@viewSurvivalListByExpression');
+	Route::get('/getSurvivalListByExpression/{project_id}/{type}/{diagnosis}', 'ProjectController@getSurvivalListByExpression');
 	
 });
 
@@ -88,11 +88,14 @@ Route::group(['before' => ['authorized_patient']], function () {
 	Route::get('/downloadHLAData/{patient_id}/{case_id}/{sample_name}'            , 'VarController@downloadHLAData'  );
 	Route::get('/createReport'            , 'VarController@createReport'  );
 	Route::get('/getExpressionByCase/{patient_id}/{case_id}/{target_type?}/{sample_id?}'            , 'SampleController@getExpressionByCase'  );
-	Route::get('/getGSEA/{project_id}/{patient_id}/{case_id}/{sample_id}'            , 'SampleController@getGSEA'  );
+	Route::get('/getGSEA/{project_id}/{patient_id}/{case_id}/{sample_id}'            , 'SampleController@getGSEA'  );	
 	Route::post('/GSEAcalc/{project_id}/{patient_id}/{case_id}'            , 'SampleController@GSEAcalc'  );
 	Route::get('/getVarActionable/{patient_id}/{case_id}/{type}/{flag}', 'VarController@getVarActionable'  );
 	Route::get('/getVCF/{patient_id}/{case_id}'            , 'VarController@getVCF'  );	
 	Route::get('/getQCPlot/{patient_id}/{case_id}/{type}'            , 'VarQCController@getQCPlot'  );	
+	Route::get('/getCaseExpMatrixFile/{patient_id}/{case_id}','SampleController@getCaseExpMatrixFile'  );
+	Route::get('/getAnalysisPlot/{patient_id}/{case_id}/{type}/{name}','SampleController@getAnalysisPlot');
+	Route::get('/getGSEAReport/{patient_id}/{case_id}/{geneset}/{group}/{filename}'            , 'SampleController@getGSEAReport'  );
 	Route::get('/getCNVPlot/{patient_id}/{sample_name}/{case_id}/{type}'            , 'VarController@getCNVPlot'  );
 	Route::get('/getCNVPlotByChromosome/{patient_id}/{sample_name}/{case_id}/{type}/{chromosome}'            , 'VarController@getCNVPlotByChromosome'  );	
 	Route::get('/getmixcrPlot/{patient_id}/{sample_name}/{case_id}/{type}'            , 'SampleController@getmixcrPlot'  );
@@ -169,6 +172,8 @@ Route::group(['before' => ['logged', 'can_see']], function () {
 	
 	
 	Route::get('/viewExpressionByCase/{project_id}/{patient_id}/{case_id}/{sample_id?}'            , 'SampleController@viewExpressionByCase'  );
+	Route::get('/viewExpressionAnalysisByCase/{project_id}/{patient_id}/{case_id}', 'SampleController@viewExpressionAnalysisByCase'  );
+	Route::get('/getExpressionMatrix/{patient_id}/{case_id}', 'SampleController@getExpressionMatrix');
 	Route::get('/viewMixcrTable/{project_id}/{patient_id}/{case_id}/{sample_name}/{source}', 'SampleController@viewMixcrTable' );
 	
 	Route::get('/viewGSEA/{project_id}/{patient_id}/{case_id}/{token_id}'            , 'SampleController@viewGSEA'  );	

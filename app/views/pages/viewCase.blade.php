@@ -244,13 +244,19 @@ a.boxclose{
 				first_tab = 'Fusion-list';
 		@endif
 
-		@foreach ($exp_samples as $sample_name => $sample_id)
+		@if ($has_expression_matrix)
+			tab_urls["Expression"] = '{{url("/viewExpressionAnalysisByCase/$project_id/$patient_id/$case->case_id")}}';
+		@else
+			@foreach ($exp_samples as $sample_name => $sample_id)
 			tab_urls["Exp-{{$sample_id}}"] = '{{url("/viewExpressionByCase/$project_id/$patient_id/$case->case_id/$sample_id")}}';
 			if (first_tab == null)
 				first_tab = 'Exp-{{$sample_id}}';				
-		@endforeach
+			@endforeach
+		@endif
 		sub_tabs['Fusion'] = 'tabFusion';
-		sub_tabs['Expression'] = 'tabExp';
+		@if (!$has_expression_matrix)
+			sub_tabs['Expression'] = 'tabExp';
+		@endif
 		sub_tabs['Mixcr'] = 'tabMix';
 		sub_tabs['CNV'] = 'tabCNV';
 		tab_urls['Circos'] = '{{url("/viewCircos/$patient_id/$case_name")}}';
@@ -1011,15 +1017,17 @@ function drawLinePlot(div_id, title, sample_list, coverage_data ) {
 				</div>
 			  @endif
 			@endif
-			@if ($project->showFeature('expression'))
+			@if ($project->showFeature('expression'))			  
 			  @if (count($exp_samples) > 0)	
 				<div id="Expression" title="Expression" style="width:98%;padding:0px;">
+					@if (!$has_expression_matrix)
 					<div id="tabExp" class="easyui-tabs" data-options="tabPosition:top,fit:true,plain:true,pill:false" style="width:98%;padding:10px;overflow:visible;">
 						@foreach ($exp_samples as $sample_name => $sample_id)
 							<div id="Exp-{{$sample_id}}" title="Exp-{{$sample_name}}">								
 							</div>
 						@endforeach						
-					</div>	
+					</div>
+					@endif
 				</div>
 			  @endif
 			@endif
