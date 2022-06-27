@@ -1,5 +1,6 @@
 <?php
 
+use Symfony\Component\Process\Process;
 
 class SampleController extends BaseController {
 
@@ -246,7 +247,16 @@ class SampleController extends BaseController {
 		$mix_samples = VarCases::getMixcrSamples($patient_id, $case_name,"mixcr");
 		$mixRNA_samples = VarCases::getMixcrSamples($patient_id, $case_name,"rna");
 		$mixTCR_samples = VarCases::getMixcrSamples($patient_id, $case_name,"tcr");
-		$has_expression = (count($exp_samples) > 0);		
+		$has_expression = (count($exp_samples) > 0);
+		$mixcr_summary = Sample::getMixcr($patient_id,$case_id,"summary");
+		$has_mixcr = (count($mixcr_summary) > 0);
+		$mixcr_samples = array();
+
+		foreach (glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/*/mixcr/*.pdf") as $filename) {
+			preg_match('/.*\/mixcr\/(.*)\.(.*)\.fancyvj\.wt\.pdf/', $filename, $m );
+			$mixcr_samples[$m[1]][] = $m[2];
+		}
+
 		Log::info("Expression samples: ".count($exp_samples));
 		Log::info("Mixcr");
 		Log::info($mix_samples);
@@ -455,7 +465,7 @@ class SampleController extends BaseController {
 		}
     
 
-		return View::make('pages/viewCase', ['with_header' => $with_header, 'summary' => $summary, 'path' => $path, 'cnv_samples' => $cnv_samples, 'cnvkit_samples' => $cnvkit_samples, 'has_cnvtso' => $has_cnvtso, 'sig_samples' => $sig_samples, 'hla_samples' => $hla_samples, 'antigen_samples' => $antigen_samples, 'sample_types' => $sample_types, 'patient_id'=>$patient_id, 'project_id' => $project_id, 'project' => $project, 'path' => $path, 'merged' => ($case_name == "any"), 'case_name' => $case_name, 'case' => $case, 'var_types' => $var_types, 'fusion_cnt' => $fusion_cnt, 'cnv_cnt'=>$cnv_cnt, 'has_expression' => $has_expression, 'exp_samples' => $exp_samples, 'mix_samples' => $mix_samples,'mixRNA_samples' => $mixRNA_samples,'mixTCR_samples' => $mixTCR_samples, 'has_qc' => $has_qc, 'has_vcf' => $has_vcf, 'show_circos' => $show_circos, 'has_burden' => $has_burden ,'has_Methlyation'=>$hasMethylation, 'methylseq_files'=>$methylseq_files, 'has_splice' => $has_splice, 'arriba_samples' => $arriba_samples, 'report_data' => $report_data, 'tcell_extrect_data' => $tcell_extrect_data, "tcell_pdfs" => $tcell_pdfs, "chip_bws" => $chip_bws, "has_expression_matrix" => $has_expression_matrix ]);
+		return View::make('pages/viewCase', ['with_header' => $with_header, 'summary' => $summary, 'path' => $path, 'cnv_samples' => $cnv_samples, 'cnvkit_samples' => $cnvkit_samples, 'has_cnvtso' => $has_cnvtso, 'sig_samples' => $sig_samples, 'hla_samples' => $hla_samples, 'antigen_samples' => $antigen_samples, 'sample_types' => $sample_types, 'patient_id'=>$patient_id, 'project_id' => $project_id, 'project' => $project, 'path' => $path, 'merged' => ($case_name == "any"), 'case_name' => $case_name, 'case' => $case, 'var_types' => $var_types, 'fusion_cnt' => $fusion_cnt, 'cnv_cnt'=>$cnv_cnt, 'has_expression' => $has_expression, 'exp_samples' => $exp_samples, 'mix_samples' => $mix_samples,'mixRNA_samples' => $mixRNA_samples,'mixTCR_samples' => $mixTCR_samples, 'has_qc' => $has_qc, 'has_vcf' => $has_vcf, 'show_circos' => $show_circos, 'has_burden' => $has_burden ,'has_Methlyation'=>$hasMethylation, 'methylseq_files'=>$methylseq_files, 'has_splice' => $has_splice, 'arriba_samples' => $arriba_samples, 'report_data' => $report_data, 'tcell_extrect_data' => $tcell_extrect_data, "tcell_pdfs" => $tcell_pdfs, "chip_bws" => $chip_bws, "has_expression_matrix" => $has_expression_matrix, "has_mixcr" => $has_mixcr, "mixcr_samples" => $mixcr_samples ]);
 		
 	}	
 
@@ -588,6 +598,8 @@ class SampleController extends BaseController {
 	public function getAnalysisPlot($patient_id, $case_id, $type, $name) {
 		$path = VarCases::getPath($patient_id, $case_id);
 		$content_type = "application/pdf";
+		if (substr($name, -6) == "MA.pdf")
+			$name = "DE/$name";
 		$pathToFile = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/$type/$name";
 		if (file_exists($pathToFile)) {
 			return Response::make(file_get_contents($pathToFile), 200, ['Content-Type' => $content_type,'Content-Disposition' => "inline; filename=$name"]);		
@@ -595,6 +607,12 @@ class SampleController extends BaseController {
 		return "file $name not exists!";
 		
 
+	}
+
+	public function getDEResults($patient_id, $case_id, $de_file) {
+		$path = VarCases::getPath($patient_id, $case_id);
+		$de_results = $this->fileToTable(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/DE/${de_file}.txt", "Gene");
+		return $de_results;
 	}
 
 	public function getGSEAReport($patient_id, $case_id, $geneset, $group, $filename) {
@@ -607,20 +625,13 @@ class SampleController extends BaseController {
 		return "file $geneset, $group not exists!";
 	}
 
-	public function viewExpressionAnalysisByCase($project_id, $patient_id, $case_id) {
+	public function getGSEASummary($patient_id, $case_id, $gsea_type, $format="json") {
 		$path = VarCases::getPath($patient_id, $case_id);
-		$fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/*.pdf");
-		$files = array();
-		foreach ($fs as $f) {
-			$files[basename($f, ".pdf")] = basename($f);
-		}
-		$fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/GSEA_weighted_*_all.txt");
-		$gsea_files = array();
-		$gsea_htmls = array();
-		foreach ($fs as $f) {
-			$type = basename($f, "_all.txt");
-			$type = str_replace("GSEA_weighted_", "", $type);
+		$f = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/GSEA_weighted_${gsea_type}_all.txt";
+		if (file_exists($f)) {
 			$content = file_get_contents($f);
+			if ($format == "text")
+				return $content;
 			$cols = array();
 			$data = array();
 			$lines = explode("\n", $content);
@@ -634,23 +645,61 @@ class SampleController extends BaseController {
 						$data[] = $fields;
 				}
 			}
+			return json_encode(array("cols" => $cols, "data" => $data));
+		}
+		return "GSEA file $f not found";
+	}
+
+	public function viewExpressionAnalysisByCase($project_id, $patient_id, $case_id) {
+		$path = VarCases::getPath($patient_id, $case_id);
+		$fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/*.pdf");
+		$files = array();
+		foreach ($fs as $f) {
+			$files[basename($f, ".pdf")] = basename($f);
+		}
+		$types = array("NCI","c2","c6","CytoSig");
+		$summary_files = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/GSEA_weighted_*_all.txt");
+		// if no summary files found, generate them
+		Log::info("Total GSEA summary files found: ".count($summary_files));
+		if (count($summary_files) == 0) {
+			$merge_cmd = app_path()."/scripts/backend/mergeGSEA.sh ".storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression";
+			popen($merge_cmd . " > /dev/null &", "r");  
+			$process = new Process(["whoami"]);
+			$process->run();
+			Log::info($merge_cmd);
+			Log::info($process -> getOutput());
+		}
+
+		$des= array();
+		$de_summary_file = storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/DE/de_summary.txt";
+		$de_summary = $this->fileToTable($de_summary_file);
+		$de_fs = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/DE/*.txt");
+		$de_files = array();
+		foreach ($de_fs as $de_f) {
+			$de_file = basename($de_f, ".txt");
+			if ($de_file != "de_summary")
+				$de_files[] = $de_file;
+		}
+
+		$gsea_htmls = array();
+		foreach ($types as $type) {
 			$htmls = glob(storage_path()."/ProcessedResults/".$path."/$patient_id/$case_id/analysis/expression/*${type}*gmt/*/index.html");
 			$groups = array();
 			foreach ($htmls as $html) {
 				$dn = basename(dirname(dirname($html)));
-				preg_match('/(.*)\.rnk_weighted_.*/', $dn, $m );
+				preg_match('/(.*)_weighted_.*/', $dn, $m );
 				$group = $m[1];
 				$groups[] = $group;
 			}
-			$gsea_files[$type] = json_encode(array("cols" => $cols, "data" => $data));
-			$gsea_htmls[$type] = $groups;
+			if (count($groups) > 0)			
+				$gsea_htmls[$type] = $groups;
 		}		
 		$filter_definition = array();
 		$filter_lists = UserGeneList::getDescriptions('all');
 		foreach ($filter_lists as $list_name => $desc) {
 			$filter_definition[$list_name] = $desc;
 		}		
-		return View::make('pages/viewExpressionAnalysisByCase', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'filter_definition' => $filter_definition, 'files'=>$files, 'gsea_files' => $gsea_files, 'gsea_htmls' => $gsea_htmls]);
+		return View::make('pages/viewExpressionAnalysisByCase', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'filter_definition' => $filter_definition, 'files'=>$files, 'gsea_htmls' => $gsea_htmls, 'de_summary' => $de_summary, 'de_files' => $de_files]);
 	}
 
 	public function getCaseExpMatrixFile($patient_id, $case_id) {
@@ -2861,6 +2910,22 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 		return Response::download($pathToFilezip);
 		
 	}
+	
+	public function viewMixcr($patient_id, $case_id, $type) {
+		return View::make('pages/viewMixcr',['patient_id'=>$patient_id,'case_id'=>$case_id, 'type'=>$type]);
+	}
+
+	public function getMixcr($patient_id, $case_id, $type, $format="json") {
+		$rows = Sample::getMixcr($patient_id, $case_id, $type);		
+		$data = $this->getDataTableJson($rows);
+		if ($format == "text") {
+			$headers = array('Content-Type' => 'text/txt','Content-Disposition' => 'attachment; filename='."$patient_id-$case_id-$type.tsv");
+			$content = $this->dataTableToTSV($data["cols"], $data["data"]);
+			return Response::make($content, 200, $headers);			
+		}
+		return json_encode($data);
+	}
+
 	public function getMixcrFile($patient_id, $sample_name, $case_id, $ext) {
 		$path = VarCases::getPath($patient_id, $case_id);
 		if ($path != null) {

@@ -251,9 +251,23 @@ while (my ($patient_id,$case_id,$case_name,$path,$version,$match_type) = $sth_ca
 close(CASE_NAME_INCONSISTENCY);
 close(CASE_CONTENT_INCONSISTENCY);
 $sth_case_consistence->finish;
+
+print("8: checking sample_id discrepancy between master file and processed data\n");
+my $sth_sample_consistence = $dbh->prepare("select distinct v.patient_id,v.case_id,v.sample_id,v.sample_name,c.path from var_samples v,processed_cases c where v.patient_id=c.patient_id and v.case_id=c.case_id and not exists(select * from samples s where v.sample_id=s.sample_id and v.sample_name=s.sample_name)");
+$sth_sample_consistence->execute();
+
+open(SAMPLE_INCONSISTENCY, ">$out_dir/sample_inconsistency.txt");
+print SAMPLE_INCONSISTENCY join("\t",("Patient_ID","Case_ID","Sample_ID","Sample_Name", "Path"))."\n";
+while (my ($patient_id,$case_id,$sample_id, $sample_name,$path) = $sth_sample_consistence->fetchrow_array) {
+  $sample_name = "" if (!$sample_name);
+  print SAMPLE_INCONSISTENCY join("\t", ($patient_id,$case_id,$sample_id, $sample_name,$path))."\n";
+  push @{$report{"sample_inconsistency"}{$path}}, join("\t", ($patient_id,$case_id,$sample_id, $sample_name,$path));  
+}
+close(SAMPLE_INCONSISTENCY);
+$sth_sample_consistence->finish;
 $dbh->disconnect();
 
-print("7: generating report\n");
+print("9: generating report\n");
 my @emails = ('chouh@nih.gov','khanjav@mail.nih.gov','weij@mail.nih.gov','wenxi@mail.nih.gov','vineela.gangalapudi@nih.gov','patrick.zhao@nih.gov','erica.pehrsson@nih.gov');
 my @compass_emails = ('chouh@nih.gov','manoj.tyagi@nih.gov','kristin.valdez@nih.gov');
 
@@ -272,7 +286,7 @@ sub generateReport {
   }
   my @content = ();
   foreach my $cat (sort keys %report) {
-    next if ($target ne "Khanlab" && $cat =~ /inconsistency/);
+    next if ($target ne "Khanlab" && ($cat eq "case_name_inconsistency" || $cat eq "case_content_inconsistency"));
     my $cat_label = ucfirst($cat);    
     $cat_label =~ s/_/ /g;
     my @row = ($cat_label);
@@ -321,7 +335,9 @@ sub generateReport {
   <H4 style="color:red">Case name inconsistency</H4>
   <b>Description:</b> Case name is not the same as case ID (folder name)<br>
   <b>Possible reasons:</b> Case name was changed in master file or cases were not processed properly<br>
-  <b>Actions:</b> 1. Rename the folder 2. Check master file 3. reprocess the cases<br>};
+  <b>Actions:</b> 1. Rename the folder 2. Check master file 3. reprocess the cases<br>
+  <H4 style="color:red">Sample inconsistency</H4>  
+};
   my $explanation3 = qq{
   <H4 style="color:red">Missing BAMs</H4>
   <b>Description:</b> BAM files not found<br>
@@ -346,7 +362,10 @@ sub generateReport {
   <H4 style="color:red">Unused cases</H4>
   <b>Description:</b> Cases were processed but could not find the match in master file<br>
   <b>Possible reasons:</b> Case definition was changed in master file<br>
-  <b>Actions:</b> Check if cases should be deleted<br>  
+  <b>Actions:</b> Check if cases should be deleted<br>
+  <b>Description:</b> Sample ID/name is not the same as master file<br>
+  <b>Possible reasons:</b> Sample ID (Library ID or flowcell ID) was changed in master file or cases were not processed properly<br>
+  <b>Actions:</b> 1. Reload the case 2. Check master file 3. reprocess the cases<br>  
 };
 
 my $data = ($target eq "Khanlab")? $html.$explanation.$explanation2.$explanation3 : $html.$explanation.$explanation3;

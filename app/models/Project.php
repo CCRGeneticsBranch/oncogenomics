@@ -1145,6 +1145,36 @@ class Project extends Eloquent {
 		return DB::select($sql);
 
    	}
+
+	public function hasMixcr() {
+		$sql = "select count(*) as cnt from project_cases p, mixcr_summary m where p.project_id=$this->id and p.patient_id=m.patient_id and p.case_id=m.case_id and m.count >=3 and m.chain like 'TR%'";
+
+		Log::info($sql);
+		$rows = DB::select($sql);
+		return ($rows[0]->cnt > 0);
+	}
+
+   	public function getMixcr($type="summary") {
+		$table = ($type == "summary")? "mixcr_summary": "mixcr";
+		$sql = "select m.* from project_cases p, $table m where p.project_id=$this->id and p.patient_id=m.patient_id and p.case_id=m.case_id and m.count >=3 and m.chain like 'TR%'";
+		Log::info($sql);
+		$rows = DB::select($sql);
+		for ($i=0;$i<count($rows);$i++) {
+			if ($type == "summary") {
+				$rows[$i]->mean_frequency = round($rows[$i]->mean_frequency, 4);
+				$rows[$i]->geomean_frequency = round($rows[$i]->geomean_frequency, 4);
+				$rows[$i]->nc_frequency = round($rows[$i]->nc_frequency, 4);
+				$rows[$i]->mean_cdr3nt_length = round($rows[$i]->mean_cdr3nt_length, 2);
+				$rows[$i]->mean_insert_size = round($rows[$i]->mean_insert_size, 2);
+				$rows[$i]->mean_ndn_size = round($rows[$i]->mean_ndn_size, 2);
+			} else {
+				$rows[$i]->freq = round($rows[$i]->freq, 4);
+			}
+		}
+		
+		return $rows;
+	}
+
    	public function getVarGeneTier($type, $meta_type = "any", $meta_value="any", $annotation="AVIA", $maf=1, $min_total_cov=0, $vaf=0, $tier_table="var_tier_avia") {
 
 		$meta_from = "";

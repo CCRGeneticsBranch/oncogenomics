@@ -73,12 +73,12 @@
 
 <html>	
 	<body>		
-		<div id='loadingTIL'>
+		<div id='loadingTIL' style="min-height: 70%;height:100%">
 		    <img src='{{url('/images/ajax-loader.gif')}}'></img>
 		</div>
-		<div id='TIL_panel' sytle="display:none">
+		<div id='TIL_panel' sytle="visibility:hidden;">
 			<H5 style="display: inline;">Minimum TCellExTRECT fraction: </H5><input id="fraction_min" class="easyui-numberbox num_filter" data-options="min:0,max:1,precision:3,value:0" style="width:50px;height:26px">
-			<span style="font-family: monospace; font-size: 20;float:right;margin:10px;">
+			<span style="font-family: monospace; font-size: 20;float:right;margin:0px;">
 					<span id="lblCountDisplay" style="text-align:left;color:red;" text="0"></span>/<span id="lblCountTotal" style="text-align:left;" text="0"></span>
 			</span>
 			<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblTIL" style='width:100%'>

@@ -98,6 +98,24 @@ if ($patient_mapping_file) {
 		$patient_mapping{$original_id} = $new_id;
 	}
 }
+my $sth_smp_groups = $dbh->prepare("select sample_id, attr_name, attr_value from sample_details where attr_name in ('ControlGroup','SampleGroup')");
+$sth_smp_groups->execute();
+my %old_smp_groups = ();
+my %new_smp_groups = ();
+while (my ($sid, $an, $av) = $sth_smp_groups->fetchrow_array) {
+	$old_smp_groups{$sid}{$an} = $av;	
+}
+$sth_smp_groups->finish;
+
+my $sth_smp_case_id = $dbh->prepare("select patient_id, case_id, path, sample_id from sample_cases where case_id is not null");
+$sth_smp_case_id->execute();
+my %smp_case_ids = ();
+while (my ($pid, $cid, $path, $sid) = $sth_smp_case_id->fetchrow_array) {
+	my $case_str = join("\t", $pid, $cid, $path);
+	$smp_case_ids{$sid} = $case_str;
+}
+$sth_smp_case_id->finish;
+
 if (!$keep_old) {	
 	my $num = $dbh->do("delete from sample_details d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1)");
 	print "deleted $num from sample_details\n";
@@ -138,6 +156,7 @@ my $sth_check_lib_type = $dbh->prepare("select * from samples s1 where exists(se
 my $sth_check_normal = $dbh->prepare("select sample_id, normal_sample from samples s1 where (select count(*) from samples s2 where (s2.sample_id=s1.normal_sample or s2.sample_name=s1.normal_sample) and s1.sample_id <> s2.sample_id) > 1");
 my $sth_check_rnaseq = $dbh->prepare("select sample_id, rnaseq_sample from samples s1 where (select count(*) from samples s2 where (s2.sample_id=s1.rnaseq_sample or s2.sample_name=s1.rnaseq_sample) and s1.sample_id <> s2.sample_id) > 1");
 my $sth_dup_libs = $dbh->prepare("select sample_name, exp_type from samples s1 where exists(select * from samples s2 where s1.sample_name=s2.sample_name and s1.exp_type <> s2.exp_type) order by sample_name");
+
 
 $sth_projects->execute();
 my %projects = ();
@@ -200,7 +219,8 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 		next if ($#fields == 0);
 		# clear NA fields
 		for (my $i = 0; $i<=$#fields; $i++) {
-			$fields[$i] = "" unless defined($fields[$i]);		
+			$fields[$i] = "" unless defined($fields[$i]);
+			$fields[$i] =~ s/^\s+|\s+$//;
 			if ($fields[$i] eq '#N/A!' || $fields[$i] eq '#N/A' || $fields[$i] eq 'Unknown' || $fields[$i] eq '0') {
 				$fields[$i] = '';
 			}
@@ -626,6 +646,9 @@ sub saveDetail {
 			$sth_smp_dtl->bind_param(2, $col);
 			$sth_smp_dtl->bind_param(3, $value);
 			$sth_smp_dtl->execute();
+			if ($col eq "ControlGroup" || $col eq "SampleGroup") {
+				$new_smp_groups{$id}{$col} = $value;	
+			}			
 		}
 	}
 
@@ -795,6 +818,38 @@ print "commiting...";
 $dbh->commit();
 $dbh->disconnect();
 print "done on $sid\n";
+
+#find modified group definition
+my %cases_to_run = ();
+foreach my $sample_id (keys %new_smp_groups) {
+	my $flag = 0;
+	if (!exists $old_smp_groups{$sample_id}) {
+		$flag = 1;
+	} else {
+		foreach my $attr_name (keys %{$new_smp_groups{$sample_id}}) {
+			if (!exists $old_smp_groups{$sample_id}{$attr_name}) {
+				$flag = 1;
+			} else {
+				if ($new_smp_groups{$sample_id}{$attr_name} ne $old_smp_groups{$sample_id}{$attr_name}) {
+					$flag = 1;
+				}
+			}
+
+		}
+	}
+	if ($flag) {
+		if (exists $smp_case_ids{$sample_id}) {
+			$cases_to_run{$smp_case_ids{$sample_id}} = '';
+		}
+	}	
+}
+
+#run case expression analysis
+foreach my $case_str (keys %cases_to_run) {
+	my ($pid, $cid, $path) = split("\t", $case_str);
+	print("perl $script_dir/caseExpressionAnalysis.pl -p $pid -c $cid -t $path\n");
+	system("perl $script_dir/caseExpressionAnalysis.pl -p $pid -c $cid -t $path");
+}
 
 #find orphan projects
 if ($rm_orphan_prj) {

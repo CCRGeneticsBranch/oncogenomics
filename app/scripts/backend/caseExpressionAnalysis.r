@@ -67,8 +67,8 @@ for (i in c(1:length(meta$File))) {
     count_mats <- count_mats %>% inner_join(count, by=c("gene_name"="gene_id"))
     tpm_mats <- tpm_mats %>% inner_join(tpm, by=c("gene_name"="gene_id"))
   }
-  colnames(count_mats)[ncol(count_mats)] = sample_name
-  colnames(tpm_mats)[ncol(tpm_mats)] = sample_name
+  colnames(count_mats)[ncol(count_mats)] = sample_id
+  colnames(tpm_mats)[ncol(tpm_mats)] = sample_id
 }
 write.table(count_mats, paste(out_dir,"/expression.count.tsv", sep= ""), sep="\t",row.names = F, col.names=T, quote = FALSE)
 write.table(tpm_mats, paste(out_dir,"/expression.tpm.tsv", sep= ""), sep="\t",row.names = F, col.names=T, quote = FALSE)
@@ -92,7 +92,11 @@ meta$SampleGroup <- factor(meta$SampleGroup)
 rownames(meta) <- meta$SampleID
 meta$SampleID <- NULL
 meta$File <- NULL
-dds <- DESeqDataSetFromMatrix(countData=counts, colData=meta, design=~ SampleGroup)
+if (nlevels(meta$SampleGroup) > 1) {
+  dds <- DESeqDataSetFromMatrix(countData=counts, colData=meta, design=~ SampleGroup)
+} else {
+  dds <- DESeqDataSetFromMatrix(countData=counts, colData=meta, design=~ SampleName)
+}
 ntd <- normTransform(dds)
 library("vsn")
 pdf(paste0(out_dir,"/Mean_SD_plot_without_rlog.pdf"))
@@ -100,7 +104,8 @@ meanSdPlot(assay(ntd))
 dev.off()
 keep <- rowSums(counts(dds)) >= 20
 dds <- dds[keep,]
-blind <- (nrow(meta) == nlevels(meta$SampleGroup))
+counts <- counts[keep,]
+blind <- (nrow(meta) == nlevels(meta$SampleGroup) || nlevels(meta$SampleGroup)==1)
 rld <- rlog(dds, blind=blind)
 rld_mat <- assay(rld)
 pdf(paste0(out_dir,"/Mean_SD_plot_with_rlog.pdf"))
@@ -109,7 +114,7 @@ dev.off()
 sampleDists <- dist(t(rld_mat))
 library("RColorBrewer")
 sampleDistMatrix <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- meta$SampleGroup
+rownames(sampleDistMatrix) <- colnames(rld_mat)
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette( rev(brewer.pal(9, "Reds")) )(255)
 pdf(paste0(out_dir,"/SampleDistance.pdf"))
@@ -121,22 +126,65 @@ dev.off()
 plotPCA(rld_mat, paste0(out_dir,"/PCA.pdf"), meta$SampleGroup)
 
 log2FCs <- list()
+levels(meta$SampleGroup)
+alpha<-0.05
+lfc_th<-0.58
+de_summary <- data.frame()
+de_dir <- paste0(out_dir, "/DE")
 for(group in levels(meta$SampleGroup)){
   samples <- meta %>% dplyr::filter(SampleGroup == group)
+  print(group)
   control_group <- samples$ControlGroup[1]
-  if (group == control_group)
+  if (group == control_group || control_group == "." || control_group == "" || control_group == "Unknown") {
     next
+  }
   controls <- meta %>% filter(SampleGroup == control_group)
+  print(nrow(controls))
+  if (nrow(controls) == 0) {
+    next
+  }
   log2FC <- apply(as.data.frame(rld_mat[,rownames(samples)]), 1, mean)-apply(as.data.frame(rld_mat[,rownames(controls)]), 1, mean)
   log2FCs[[group]] <- log2FC
   log2FC <- data.frame("value"=log2FC)
   rownames(log2FC) <- rownames(rld_mat)
   log2FC <- log2FC %>% dplyr::arrange(desc(value))
-  write.table(log2FC, paste0(out_dir,"/",group,".rnk"), col.names = F, row.names = T, quote=F, sep="\t")
-  print(group)
+  #if we have replicates, do DE analysis
+  if (nrow(controls) > 1 && nrow(samples) > 1) {    
+    dir.create(de_dir, showWarnings = FALSE)
+    de_meta <- rbind(controls, samples)
+    de_counts <- cbind(counts[,rownames(controls)], counts[,rownames(samples)])
+    de_meta$SampleGroup <- droplevels(de_meta$SampleGroup)
+    dds <- DESeqDataSetFromMatrix(countData=de_counts, colData=de_meta, design=~ SampleGroup)
+    dds$SampleGroup <- relevel(dds$SampleGroup, ref = control_group)
+    dds <- DESeq(dds)
+    contrast_name <- paste0(group, "_vs_", control_group)
+    res <- results(dds, lfcThreshold=lfc_th)    
+    de_up <- as.data.frame(res) %>% dplyr::filter(log2FoldChange > 0 & padj < alpha)
+    de_dn <- as.data.frame(res) %>% dplyr::filter(log2FoldChange < 0 & padj < alpha)
+    de_summary <- rbind(de_summary, data.frame(Condition=group, Up_genes=nrow(de_up), Down_genes=nrow(de_dn)))
+    resLFC <- lfcShrink(dds, coef=2, type="apeglm", res=res)
+    write.table(resLFC, paste0(de_dir, "/", group, "_vs_", control_group, ".txt"), col.names=T, row.names=T, sep="\t", quote=F)
+    pdf(paste0(de_dir, "/", group, "_vs_", control_group, ".MA.pdf"))
+    DESeq2::plotMA(resLFC, alpha=alpha)
+    dev.off()
+    #prepare GSEA files
+    de_rld <- cbind(rld_mat[,rownames(samples)], rld_mat[,rownames(controls)])
+    exp <- data.frame("Name"=rownames(rld_mat),"DESCRIPTION"="na")
+    exp <- cbind(exp, round(de_rld,2))
+    write.table(exp, paste0(out_dir,"/", contrast_name, ".txt"), col.names = T, row.names = F, quote=F, sep="\t")
+    fileConn<-file(paste0(out_dir, "/", contrast_name, ".cls", sep=""))    
+    writeLines(c(paste(ncol(de_rld),nlevels(de_meta$SampleGroup),1), paste("#", paste(levels(de_meta$SampleGroup), collapse=" ")), paste(c(as.character(samples$SampleGroup), as.character(controls$SampleGroup)), collapse=" ")), fileConn)
+    close(fileConn)
+  } else {
+    write.table(log2FC, paste0(out_dir,"/",group,".rnk"), col.names = F, row.names = T, quote=F, sep="\t")
+    print(group)
+  }
 }
-log2FCs <- as.data.frame(log2FCs)
-write.table(log2FCs, paste0(out_dir,"/log2FC.tsv"), col.names = NA, row.names = T, quote=F, sep="\t")
-
-plotPCA(log2FCs, paste0(out_dir,"/PCA_Log2FC.pdf"), colnames(log2FCs))
-
+if (nrow(de_summary) > 0) {
+  write.table(de_summary, paste0(de_dir,"/de_summary.txt"), col.names = T, row.names = F, quote=F, sep="\t")
+}
+if (length(log2FCs) > 0) {
+  log2FCs <- as.data.frame(log2FCs)
+  write.table(log2FCs, paste0(out_dir,"/log2FC.tsv"), col.names = NA, row.names = T, quote=F, sep="\t")
+  plotPCA(log2FCs, paste0(out_dir,"/PCA_Log2FC.pdf"), colnames(log2FCs))
+}

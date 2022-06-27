@@ -51,7 +51,7 @@
 		
 	<li><a href="#" rel="nofollow">About</a>
 			<ul>
-				<li><a target=_blank href="https://hsienchao-chou.gitbook.io/oncogenomics" rel="nofollow">Tutorial</a></li>
+				<li><a target=_blank href="https://github.com/CCRGeneticsBranch/oncogenomics/wiki/1.-Introduction" rel="nofollow">Tutorial</a></li>
 				<li><a href="{{url('/viewContact')}}" rel="nofollow">Contact</a></li>
 			</ul>
 		</li>	

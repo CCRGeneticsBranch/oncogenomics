@@ -48,8 +48,8 @@ Log::useFiles(storage_path().'/logs/laravel.log');
 
 App::error(function(Exception $exception, $code)
 {
-	//Log::error($exception);
-	return 'Sorry! Something is wrong! If you see this message during 6am to 12pm May 21st, our Oracle server is under quarterly patching.';
+	Log::error($exception);
+	//return 'Sorry! Something is wrong! If you see this message during 6am to 12pm May 21st, our Oracle server is under quarterly patching.';
 });
 
 /*

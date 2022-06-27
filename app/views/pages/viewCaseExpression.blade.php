@@ -360,6 +360,12 @@ a.boxclose{
 		//$(d).w2overlay('<H4><div style="padding:30px">loading...<div></H4>');
 		$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {
 				var data = parseJSON(data);
+				if (data.exp_data.length == 0) {
+					$('#w2ui-popup #loading_plot').css('display', 'none');
+					$('#w2ui-popup #no_data').css('display', 'block');
+					return;
+				}
+
 				if (data.hasOwnProperty("patients")) {
 					patients = data.patients;
 				} else {
@@ -385,7 +391,8 @@ a.boxclose{
 
 				values = getSortedScatterValues(log2_exp_val, data.samples, rnaseq_sample_names);
 
-				var sample_idx = 0;
+				var sample_idx = -1;
+				console.log(rnaseq_sample_names);
 				for (var i in data.samples) {
 					for (var j in rnaseq_sample_names) {
 						if (data.samples[i] == rnaseq_sample_names[j]) {
@@ -394,7 +401,7 @@ a.boxclose{
 						}
 					}
 				}
-				tpm = (sample_idx == 0)? "NA" : Math.round(log2_exp_val[sample_idx] * 100) / 100;
+				tpm = (sample_idx == -1)? "NA" : Math.round(log2_exp_val[sample_idx] * 100) / 100;
 				//fpkm = Math.log2(fpkm+1);
 				var title = gene_id + ', ' + rnaseq_sample_names[0] + ' <font color="red">(TPM: ' + tpm + ')</font>';
 				//$(d).w2overlay('<div id="exp_plot" style="width:380px;height:260px"></div>', { css: { width: '400px', height: '250px', padding: '10px' } });				

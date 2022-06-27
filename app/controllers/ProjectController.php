@@ -1171,6 +1171,22 @@ class ProjectController extends BaseController {
 		return json_encode(array("cols"=>$cols, "data" => $data));
 	}
 
+	public function viewProjectMixcr($project_id, $type) {
+		return View::make('pages/viewMixcr',['project_id'=>$project_id,'type'=>$type]);
+	}
+
+	public function getProjectMixcr($project_id, $type, $format="json") {
+		$project = Project::getProject($project_id);
+		$rows = $project->getMixcr($type);
+		$data = $this->getDataTableJson($rows);
+		if ($format == "text") {
+			$headers = array('Content-Type' => 'text/txt','Content-Disposition' => 'attachment; filename='."$project->name-$type.tsv");
+			$content = $this->dataTableToTSV($data["cols"], $data["data"]);
+			return Response::make($content, 200, $headers);			
+		}
+		return json_encode($data);
+	}
+
 	public function saveProject() {
 		$user = User::getCurrentUser();
 		if ($user == null) {

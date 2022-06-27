@@ -59,6 +59,29 @@ class Sample extends Eloquent {
 		
 	}
 
+	static public function getMixcr($patient_id, $case_id=null, $type="summary") {
+		$table = ($type == "summary")? "mixcr_summary": "mixcr";
+		$case_condition = '';
+		if ($case_id !="any" && $case_id != null)
+			$case_condition = $case_condition." and case_id = '$case_id'";	
+		$sql = "select * from $table where patient_id='$patient_id' $case_condition ";
+		Log::info($sql);
+		$rows = DB::select($sql);
+		for ($i=0;$i<count($rows);$i++) {
+			if ($type == "summary") {
+				$rows[$i]->mean_frequency = round($rows[$i]->mean_frequency, 4);
+				$rows[$i]->geomean_frequency = round($rows[$i]->geomean_frequency, 4);
+				$rows[$i]->mean_cdr3nt_length = round($rows[$i]->mean_cdr3nt_length, 2);
+				$rows[$i]->mean_insert_size = round($rows[$i]->mean_insert_size, 2);
+				$rows[$i]->mean_ndn_size = round($rows[$i]->mean_ndn_size, 2);
+			} else {
+				$rows[$i]->freq = round($rows[$i]->freq, 4);
+			}
+		}
+		
+		return $rows;
+	}
+
 	static public function getExpressionFile($path, $sample_id, $sample_name, $type, $level, $file_type="txt") {
 		$level_str = ($level == "gene")? "Gene" : "Transcript";
 

@@ -453,7 +453,7 @@ a.boxclose{
 
 		$('.easyui-tabs').tabs({
 			onSelect:function(title) {
-				if (title == "Mutations" || title == "Expression" || title == "Survival")
+				if (title == "Mutations" || title == "Expression" || title == "Survival" || title=="TCR")
 					tab = $('#tab' + title).tabs('getSelected');
 				else
 					tab = $(this).tabs('getSelected');				
@@ -487,6 +487,8 @@ a.boxclose{
 		@endif
 		tab_urls['fusion_summary'] = '{{url("/viewFusionProjectDetail/$project->id")}}';
 		tab_urls['Heatmap'] = '{{url('/viewExpression/'.$project->id)}}';
+		tab_urls['Stats'] = '{{url("/viewProjectMixcr/$project->id/summary")}}';
+		tab_urls['Clones'] = '{{url("/viewProjectMixcr/$project->id/clones")}}';
 		tab_urls['QC'] = '{{url('/viewProjectQC/'.$project->id)}}';
 		tab_urls['GSEA'] = '{{url("/viewGSEA/$project->id/any/any/".rand())}}';
 		@if ($has_survival_pvalues)
@@ -515,7 +517,7 @@ a.boxclose{
 		if (loaded_list.indexOf(id) == -1) {
 			var url = tab_urls[id];
 			if (url != undefined) {
-				var html = '<iframe scrolling="no" frameborder="0"  src="' + url + '" style="width:100%;height:85%;overflow:none;border-width:0px"></iframe>';
+				var html = '<iframe scrolling="no" frameborder="0"  src="' + url + '" style="width:100%;min-height:100%;height:100%;overflow:auto;border-width:0px"></iframe>';
 				$('#' + id).html(html);
 				console.log('#' + id);
 				console.log(html);
@@ -895,6 +897,14 @@ a.boxclose{
 		@endif
 	@if ($has_tcell_extrect_data)
 			<div id="TIL" title="TIL" style="width:98%;padding:5px;">					
+			</div>
+	@endif
+	@if ($project->hasMixcr())
+			<div id="TCR" title="TCR" style="width:98%;padding:5px;">
+				<div id="tabTCR" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false,border:false,headerWidth:100" style="width:100%;padding:0px;overflow:auto;border-width:0px">
+					<div id="Stats" title="Stats"></div>
+					<div id="Clones" title="Clones"></div>					
+				</div>
 			</div>
 	@endif
 	@if ($project->showFeature('fusion'))	

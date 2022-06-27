@@ -66,7 +66,7 @@ Options:
   -c  <string>  Upload specified case
   -a            Append annotation column table
   -g            Remove noncoding variants (annotated by AVIA)
-  -t  <string>  Load type: (all,fusion,variants,tier,annotation,qc,cnv,antigen,exp,burden,genotyping,tcell_extrect,qci), default: $load_type
+  -t  <string>  Load type: (all,fusion,variants,tier,annotation,qc,cnv,antigen,exp,burden,genotyping,tcell_extrect,qci,mixcr), default: $load_type
   -n  <string>  Canonical transcript list file (default: $canonical_trans_list)
   -x            Update expression data
   -k            Assign case id using case name.
@@ -146,6 +146,8 @@ my $sth_cnvkit = $dbh->prepare("insert into var_cnvkit values(?,?,?,?,?,?,?,?,?,
 my $sth_cnvtso = $dbh->prepare("insert into var_cnvtso values(?,?,?,?,?,?,?,?,?)");
 my $sth_tcell_extrect = $dbh->prepare("insert into tcell_extrect values(?,?,?,?,?,?,?)");
 my $sth_mutation_burden = $dbh->prepare("insert into mutation_burden values(?,?,?,?,?,?)");
+my $sth_mixcr_summary = $dbh->prepare("insert into mixcr_summary values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+my $sth_mixcr = $dbh->prepare("insert into mixcr values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 my $sth_neo_antigen = $dbh->prepare("insert into neo_antigen values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 my $stn_del_noncoding = $dbh->prepare("delete $var_sample_tbl v where patient_id=? and case_id=? and exists(select * from hg19_annot\@pub_lnk a where SUBSTR(v.chromosome,4) = a.chr and v.start_pos=a.query_start and v.end_pos=a.query_end and v.ref=a.allele1 and v.alt=a.allele2 and (maf > 0.05 or annovar_annot not in ('exonic','splicing','exonic;splicing')))");
 my $stn_rnaseqfp_khanlab = $dbh->prepare("delete var_tier t where type='rnaseq' and exists(select * from rnaseq_fp r where t.chromosome=r.chromosome and t.start_pos=r.start_pos and t.end_pos=r.end_pos and t.ref=r.ref and t.alt=r.alt)");
@@ -346,7 +348,7 @@ my %coding_genes = ();
 
 #get admin emails
 my @emails = ('NCI-FrederickAVIA@mail.nih.gov','khanjav@mail.nih.gov',  'vineela.gangalapudi@nih.gov', 'wenxi@mail.nih.gov', 'chouh@nih.gov', 'NCIBioinformatics_Oncogenomics@mail.nih.gov');
-my @compass_email_list = ('simran.chhabria@nih.gov', 'kristin.valdez@nih.gov','manoj.tyagi@nih.gov');
+my @compass_email_list = ('kristin.valdez@nih.gov','manoj.tyagi@nih.gov');
 #my @emails = ('chouh@nih.gov');
 #$sth_emails->execute();
 #while (my @row = $sth_emails->fetchrow_array) {	
@@ -774,9 +776,18 @@ foreach my $patient_dir (@patient_dirs) {
 
 		#check Mixcr
 		if ($load_type eq "all" || $load_type eq "mixcr") {
-			my @mix_dirs = grep { -d } glob $case_dir."*/mixcr";
+			my @mix_dirs = grep { -d } glob $case_dir."*";
 			foreach my $d (@mix_dirs) {
-				$new_data{$patient_key}{'mixcr'} = '';
+				$d = &formatDir($d);
+				my $folder_name = basename($d);				
+				try {					
+					my $ret = &insertMixcr($dir, $folder_name, $patient_id, $case_id);
+					if ($ret) {
+						$new_data{$patient_key}{'mixcr'} = '';
+					}
+				} catch {
+					push(@errors, "$patient_id\t$case_id\tMixcr\t$_");
+				};						
 			}
 		}
 
@@ -818,6 +829,12 @@ foreach my $patient_dir (@patient_dirs) {
 			}
 		}
 
+		#process expression data
+		if ($load_type eq "all") {
+			my $exp_cmd = "perl ${script_dir}/caseExpressionAnalysis.pl -p $patient_id -c $case_id -t $project_folder";
+			print("$exp_cmd\n");
+			system($exp_cmd);
+		}
 		#next if ($load_type ne "exp" || $refresh_exp);		
 		if ($load_type eq "exp" || $refresh_exp) {
 			my @exp_dirs = grep { -d } glob $case_dir."*";
@@ -865,6 +882,7 @@ else {
 my $log_cotent = "";
 my $failed_cotent = "";
 my $err_cotent = "";
+my $total_cases = keys %new_data;
 my @types = ("germline", "somatic", "variants", "rnaseq", "hotspot", "tier", "fusion", "mixcr", "expression", "CNV", "antigen", "mutation_burden", "TCellExTRECT");
 foreach my $patient_key (sort keys %new_data) {	
 	$log_cotent .= "<tr>";
@@ -908,7 +926,7 @@ if (!$project_folder_desc) {
 }
 my $data = qq{
 	
-    <h2>The following <font color=red>$project_folder_desc</font> data has been uploaded to $db_name DB:</h2>
+    <h2>The following <font color=red>$project_folder_desc</font> data has been uploaded to $db_name DB ($total_cases cases):</h2>
 
     <table id="log" border=1 cellspacing="2" width="60%">
     	<thead><tr><th>Patient ID</th><th>Case ID</th><th>Diagnosis</th><th>Germline</th><th>Somatic</th><th>DNA Variants</th><th>RNASeq Variants</th><th>Hotspot</th><th>Tier</th><th>Fusion</th><th>Mixcr</th><th>Expression</th><th>CNV</th><th>NeoAntigen</th><th>Mutation Burden</th><th>TCellExTRECT</th></tr></thead>
@@ -986,6 +1004,63 @@ sub insertQCI {
 	#print "$summary\n";	
 	$sth_var_qci_summary->execute($patient_id, $case_id, $sample_id, $type, $summary);
 	$dbh->commit();
+	return 1;
+}
+
+sub insertMixcr {
+	my ($dir, $folder_name, $patient_id, $case_id) = @_;	
+	my $summary_file = $dir.$patient_id."/$case_id/$folder_name/mixcr/$folder_name.summarystats.RNA.txt";
+	my $mixcr_file = $dir.$patient_id."/$case_id/$folder_name/mixcr/convert.$folder_name.clones.RNA.txt";
+	#print $filename."\n";
+	if (!-e $summary_file) {
+		$summary_file = $dir.$patient_id."/$case_id/$folder_name/mixcr/$folder_name.summarystats.ALL.txt";
+		$mixcr_file = $dir.$patient_id."/$case_id/$folder_name/mixcr/convert.$folder_name.clonotypes.ALL.txt";
+		if (!-e $summary_file) {
+			return 0;
+		}
+	}
+	my $sample_id = $folder_name;
+	$sample_id =~ s/Sample_//;
+	if (exists $sample_alias{$sample_id}) {
+		$sample_id = $sample_alias{$sample_id};
+	}
+	open (SUMMARY_FILE, "$summary_file") or return;
+	print "=====>processing Mixcr\n";
+	$dbh->do("delete mixcr_summary where case_id = '$case_id' and patient_id = '$patient_id' and sample_id = '$sample_id'");
+	$dbh->do("delete mixcr where case_id = '$case_id' and patient_id = '$patient_id' and sample_id = '$sample_id'");
+	$dbh->commit();
+
+	my $exp_type = "RNAseq";
+	my $line = <SUMMARY_FILE>;
+	while(<SUMMARY_FILE>) {
+		my $print_line = "$patient_id\t$case_id\t$sample_id\t$exp_type\t$_";
+		my @data_to_insert = split(/\t/, $print_line);
+		#print($data_to_insert[4]."\n");
+		my $chain = ".";
+		if ($data_to_insert[4] =~ /.*clones\.(.*)/) {
+			$chain = $1;
+		} elsif ($data_to_insert[4] =~ /.*clonotypes\.(.*)/) {
+			$chain = $1;
+		}
+		#print($chain."\n");
+		$data_to_insert[4] = $chain;
+		$sth_mixcr_summary->execute(@data_to_insert);
+	}
+	close(SUMMARY_FILE);
+	open (FILE, "$mixcr_file") or return;
+	$line = <FILE>;
+	while(<FILE>) {
+		my $print_line = "$patient_id\t$case_id\t$sample_id\t$exp_type\t.\t$_";
+		my @data_to_insert = split(/\t/, $print_line);
+		my $chain = ".";
+		if (length($data_to_insert[9]) > 3) {
+			$chain = substr($data_to_insert[9], 0, 3);
+		}
+		$data_to_insert[4] = $chain;
+		$sth_mixcr->execute(@data_to_insert);
+	}
+	close(FILE);
+	#push(@errors, "$patient_id\t$case_id\tNeoAntigen\tSQLLoader");
 	return 1;
 }
 

@@ -148,6 +148,29 @@ class BaseController extends Controller {
 			return "";
 	}
 
+	protected function fileToTable($file, $first_column_name=null) {
+		$cols = array();		
+		$data = array();
+		if (file_exists($file)) {
+			$content = file_get_contents($file);
+			$lines = explode("\n", $content);			
+			foreach ($lines as $line) {
+				$fields = explode("\t", $line);
+				if (count($cols) == 0) {
+					if ($first_column_name!=null)
+						$cols[] = array("title" => $first_column_name);
+					foreach ($fields as $field)
+						$cols[] = array("title" => $field);
+				} else {
+					if (count($cols)==count($fields))					
+						$data[] = $fields;					
+				}				
+			}
+
+		}
+		return json_encode(array("cols" => $cols, "data" => $data));		
+	}
+
 	/**
 	 * 
 	 * Convert JQuery DataTable to TSV file

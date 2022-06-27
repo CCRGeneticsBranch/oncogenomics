@@ -109,13 +109,15 @@ a.boxclose{
 
 				showTable(data, 'tblExp');				
 				onco_filter = new OncoFilter(Object.keys(filter_list), null, function() {doFilter();});	
-				doFilter();		
+				doFilter();
 			}			
 		});
 
-		@foreach ($gsea_files as $gsea_type => $gsea_data)
-			var gsea_data = {{$gsea_data}};
-			showTable(gsea_data, 'tbl{{$gsea_type}}');
+		@if (count($de_files)>0)
+			de_summary = {{$de_summary}};
+			showTable(de_summary, 'tblDESummary');
+		@endif
+		@foreach ($gsea_htmls as $gsea_type => $groups)
 			showGSEAReport('{{$gsea_type}}','{{$gsea_htmls[$gsea_type][0]}}');			
 		@endforeach
 
@@ -135,6 +137,60 @@ a.boxclose{
 		$('#btnClearFilter').on('click', function() {
 			showAll();		
 		});
+
+		$('.de_filter').on('change', function() {
+			var tid = $(this).attr("id").replace("selLFC", "tblDE");
+			tid = tid.replace("selAdjP", "tblDE");
+			tbls[tid].draw();
+		});
+
+		$('.easyui-tabs').tabs({
+			onSelect:function(title, idx) {				
+				var tab = $(this).tabs('getSelected');
+				var id = tab.panel('options').id;
+				console.log("type: " + id.substring(0,4));
+				var geneset = "NCI";
+				if (id.substring(0,4) == "GSEA") {
+					if (id != "GSEA")
+						geneset = id.substring(4);
+					tab = $("#tabGeneset" + geneset).tabs('getSelected');
+				}
+				var id = tab.panel('options').id;
+				console.log("ID: " + id);
+				if (id != null && id.substring(0,7) == "summary") {
+					id = id.replace("summary","");					
+					if (tbls["tbl"+ id] === undefined) {
+						var url = '{{url('/getGSEASummary')}}' + '/' + '{{$patient_id}}' + '/' + '{{$case_id}}' + '/' + id;
+						console.log(url);
+						$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {
+								var data = JSON.parse(data);				
+								if (data.cols.length == 1) {
+									return;
+								}
+								showTable(data, 'tbl' + id);							
+							}			
+						});
+					}
+				}
+				if (id != null && id.substring(0,3) == "DE_") {
+					id = id.replace("DE_","");					
+					if (tbls["tblDE"+ id] === undefined) {
+						var url = '{{url('/getDEResults')}}' + '/' + '{{$patient_id}}' + '/' + '{{$case_id}}' + '/' + id;
+						console.log(url);
+						$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {
+								var data = JSON.parse(data);				
+								if (data.cols.length == 1) {
+									return;
+								}
+								$("#loading" + id).css("display","none");	
+								$("#tableArea" + id).css("display","block");
+								showTable(data, 'tblDE' + id);							
+							}			
+						});
+					}
+				}
+		   }
+		});		
 	});
 
 	function showGSEAReport(geneset, group) {
@@ -225,6 +281,17 @@ a.boxclose{
 
 		
     	$.fn.dataTableExt.afnFiltering.push( function( oSettings, aData, iDataIndex ) {	
+    		if (oSettings.nTable.id.substring(0,5)=="tblDE") {
+    			var de_id=oSettings.nTable.id.substring(5);
+    			if ($('#selLFC' + de_id).val() != "all") {
+    				if (!eval("aData[2]" + $('#selLFC' + de_id).val()))
+    					return false;
+    			}
+				if ($('#selAdjP' + de_id).val() != "all") {
+    				return (aData[5] < parseFloat($('#selAdjP' + de_id).val()));
+    			}
+    			return true;
+    		}
     		
 			if (oSettings.nTable == document.getElementById('tblExp')) {
 				/*
@@ -520,18 +587,64 @@ a.boxclose{
 			</div>
 		</div>
 		@endif
+		@if (count($de_files)>0)
+		<div id="DE" title="DE" style="width:100%;padding:5px;">
+			<div id="tabDE" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:true" style="width:100%;height:100%;padding:0px;border-width:0px">				
+				<div title="Summary" style="padding:5px;">
+					<H5>Cutoff: adj-pvalue < 0.05</H5>
+					<div style="width:70%;padding:5px;">
+						<table cellpadding="0" cellspacing="0" border="1" class="pretty" word-wrap="break-word" id="tblDESummary" style='width:100%;border: 1px solid black;'>
+						</table>
+					</div>
+				</div>
+				@foreach ($de_files as $de_file)
+				<div id="DE_{{$de_file}}" title="{{$de_file}}">
+					<div id="tabGeneset{{$gsea_type}}" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:true" style="width:100%;height:100%;padding:0px;border-width:0px">
+						<div title="Table" id="Table{{$de_file}}">
+							<div id='loading{{$de_file}}'><img src='{{url('/images/ajax-loader.gif')}}'></img></div>
+							<div id='tableArea{{$de_file}}' style="display:none;width:80%;padding:5px;">
+								Log2FoldChange: 
+								<select class="form-control de_filter" id="selLFC{{$de_file}}" style="width:200px;display:inline">
+										<option value="all">All</option>
+										<option value="<-1">< -1</option>
+										<option value="<0">< 0</option>
+										<option value=">0">> 0</option>
+										<option value=">1">> 1</option>
+								</select>
+								AdjPvalue: 
+								<select class="form-control de_filter" id="selAdjP{{$de_file}}" style="width:200px;display:inline">
+										<option value="all">All</option>
+										<option value="0.001">0.001</option>
+										<option value="0.01">0.01</option>
+										<option value="0.05">0.05</option>
+										<option value="0.1">0.1</option>
+								</select>
+								<table cellpadding="0" cellspacing="0" border="1" class="pretty" word-wrap="break-word" id="tblDE{{$de_file}}" style='width:100%;border: 1px solid black;'>
+								</table>
+							</div>
+						</div>
+						<div title="MA plot">
+							<object data="{{url("/getAnalysisPlot/$patient_id/$case_id/expression/$de_file.MA.pdf")}}" type="application/pdf" style="width:98%;height:800px"></object>
+						</div>
+					</div>
+				</div>
+				@endforeach
+			</div>
+		</div>
+		@endif
+		@if (count($gsea_htmls)>0)
 		<div id="GSEA" title="GSEA" style="width:100%;padding:5px;">
 			<div id="tabGSEA" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:true" style="width:100%;height:100%;padding:0px;border-width:0px">				
-				@foreach ($gsea_files as $gsea_type => $gsea_data)
-				<div id="{{$gsea_type}}" title="{{$gsea_type}}">
-					<div id="tabGeneset" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:true" style="width:100%;height:100%;padding:0px;border-width:0px">
-						<div title="Summary">
+				@foreach ($gsea_htmls as $gsea_type => $groups)
+				<div id="GSEA{{$gsea_type}}" title="{{$gsea_type}}">
+					<div id="tabGeneset{{$gsea_type}}" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:true" style="width:100%;height:100%;padding:0px;border-width:0px">
+						<div title="Summary" id="summary{{$gsea_type}}">
 							<table cellpadding="0" cellspacing="0" border="1" class="pretty" word-wrap="break-word" id="tbl{{$gsea_type}}" style='width:100%;border: 1px solid black;'>
 							</table>
 						</div>
 						<div title="Report">
 							<select id="sel{{$gsea_type}}" class="form-control gsea_report" style="width:350px">
-							@foreach ($gsea_htmls[$gsea_type] as $group)								
+							@foreach ($groups as $group)								
 									<option value='{{$group}}'>{{$group}}</option>								
 							@endforeach
 							</select>
@@ -542,6 +655,7 @@ a.boxclose{
 				@endforeach
 			</div>
 		</div>
+		@endif
 	</div>
 </div>
 

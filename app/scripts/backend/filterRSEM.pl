@@ -10,15 +10,16 @@ use Cwd 'abs_path';
 my $script_dir = dirname(__FILE__);
 
 my $rsem_file=$ARGV[0];
-my $gene_list_file="${script_dir}/../../storage/data/RSEM_gene_list.txt";
-
+#my $gene_list_file="${script_dir}/../../storage/data/RSEM_gene_list.txt";
+my $gene_list_file="${script_dir}/../../ref/RSEM/gencode.v36lift37.annotation.txt";
 my %symbols = ();
 open (G_FILE, "$gene_list_file") or die "$gene_list_file not found";
 while(<G_FILE>) {
 	chomp;
 	my @fields = split(/\t/);
 	next if ($#fields < 0);
-	my $symbol = $fields[0];
+	next if ($fields[0] eq "seqname");
+	my $symbol = $fields[7];
 	$symbols{$symbol} = '';
 }
 close(G_FILE);

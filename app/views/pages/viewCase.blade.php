@@ -257,13 +257,15 @@ a.boxclose{
 		@if (!$has_expression_matrix)
 			sub_tabs['Expression'] = 'tabExp';
 		@endif
-		sub_tabs['Mixcr'] = 'tabMix';
+		sub_tabs['TCR/BCR'] = 'tabMixcr';
 		sub_tabs['CNV'] = 'tabCNV';
 		tab_urls['Circos'] = '{{url("/viewCircos/$patient_id/$case_name")}}';
 		console.log('{{url("/viewCircos/$patient_id/$case_name")}}');
 		tab_urls['QC'] = '{{url("/viewVarQC/$project_id/$patient_id/$case_name")}}';
 		tab_urls['GSEA'] = '{{url("/viewGSEA/$project_id/$patient_id/$case->case_id/".rand())}}';
 		tab_urls['MethylSeq']='{{url("/viewMethylSeq/$patient_id/$case->case_id")}}';
+		tab_urls['Stats'] = '{{url("/viewMixcr/$patient_id/$case->case_id/summary")}}';
+		tab_urls['Clones'] = '{{url("/viewMixcr/$patient_id/$case->case_id/clones")}}';
 		@foreach ($cnv_samples as $sample_name => $case_id)
 
 			tab_urls["{{$sample_name}}-Table-Sequenza"] = '{{url("/viewCNV/$project_id/$patient_id/$case_name/$sample_name/sequenza")}}';
@@ -280,25 +282,6 @@ a.boxclose{
 			var url = '{{url("/viewCNV/$project_id/$patient_id/$case_name/any/TSO")}}';
 			console.log(url);
 			tab_urls["CNV-TSO"] = url;
-		@endif
-		@if (count($mix_samples) > 0)
-			@foreach ($mix_samples as $sample_name => $case_id)				
-				var url = '{{url("/getmixcrTable/$patient_id/$sample_name/$case_id/clones")}}';
-				console.log(url);
-				$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {			json_data = parseJSON(json_data);
-					//console.log(json_data);
-					showTable(json_data, '{{$sample_name}}-clones_table');	
-						}
-					});
-				if (first_tab == null)
-					first_tab = "{{$sample_name}}-clones";
-				url = '{{url("/getmixcrTable/$patient_id/$sample_name/$case_id/summarystats")}}';
-				console.log(url);
-				$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {			json_data = parseJSON(json_data);
-					showTable(json_data, '{{$sample_name}}-summary_table');	
-						}
-					});
-			@endforeach
 		@endif
 		
 		@if (count($cnv_samples) > 0 && $merged)
@@ -1009,7 +992,7 @@ function drawLinePlot(div_id, title, sample_list, coverage_data ) {
 						</div>						
 						@foreach ($arriba_samples as $sample_name => $sample_id)
 						<div id="Arriba-{{$sample_id}}" title="Arriba-{{$sample_name}}">							
-						<embed type="application/pdf" src="{{url("/getArribaPDF/$path/$patient_id/$case_id/$sample_id/$sample_name")}}" style="width:98%;height:700;overflow:none"></embed>
+						<embed type="application/pdf" src="{{url("/getArribaPDF/$path/$patient_id/$case->case_id/$sample_id/$sample_name")}}" style="width:98%;height:700;overflow:none"></embed>
 
 						</div>
 						@endforeach
@@ -1099,7 +1082,33 @@ function drawLinePlot(div_id, title, sample_list, coverage_data ) {
 				</div>
 			  @endif
 			@endif
-			@if (count($mix_samples) > 0)
+			@if (count($mixcr_samples) > 0)			
+				<div id="TCR/BCR" title="TCR/BCR" style="width:98%;padding:0px;">
+					<div id="tabMixcr" class="easyui-tabs" data-options="tabPosition:top,fit:true,plain:true,pill:false" style="width:98%;padding:10px;overflow:auto;">
+						<div id="Stats" title="Stats">
+						</div>
+						<div id="Clones" title="Clones">
+						</div>
+						<div title="Plots">
+							<div id="tabMix" class="easyui-tabs" data-options="tabPosition:top,fit:true,plain:true,pill:false" style="width:98%;padding:10px;overflow:visible;">
+								@foreach ($mixcr_samples as $sample_name => $files)
+									<div id="Mixcr-{{$sample_name}}" title="{{$sample_name}}">
+										<div class="easyui-tabs" data-options="tabPosition:top,fit:true,plain:true,pill:false" style="width:98%;padding:10px;overflow:visible;">
+											@foreach ($files as $file)
+												<div id="{{$file}}" title="{{$file}}">
+													<object data="{{url("/getmixcrPlot/$patient_id/$sample_name/$case->case_id/$file")}}" type="application/pdf" width="100%" height="800px"></object>
+												</div>
+											@endforeach
+										</div>
+									</div>
+								@endforeach
+							</div>
+						</div>
+					</div>
+				</div>			
+			@endif
+		
+			@if (1==2)
 					<div id="Mixcr" title="Mixcr" style="width:98%;padding:0px;">
 						<div id="tabMix" class="easyui-tabs" data-options="tabPosition:top,fit:true,plain:true,pill:false" style="width:98%;padding:10px;overflow:visible;">
 							@foreach ($mix_samples as $sample_name => $case_id)

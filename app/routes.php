@@ -72,6 +72,8 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/viewSurvivalByExpression/{project_id}/{symbol}/{show_search?}/{include_header?}/{type?}/{diagnosis?}', 'ProjectController@viewSurvivalByExpression');
 	Route::get('/viewSurvivalListByExpression/{project_id}', 'ProjectController@viewSurvivalListByExpression');
 	Route::get('/getSurvivalListByExpression/{project_id}/{type}/{diagnosis}', 'ProjectController@getSurvivalListByExpression');
+	Route::get('/viewProjectMixcr/{project_id}/{type}'            , 'ProjectController@viewProjectMixcr'  );
+	Route::get('/getProjectMixcr/{project_id}/{type}/{format?}'            , 'ProjectController@getProjectMixcr'  );
 	
 });
 
@@ -96,10 +98,14 @@ Route::group(['before' => ['authorized_patient']], function () {
 	Route::get('/getCaseExpMatrixFile/{patient_id}/{case_id}','SampleController@getCaseExpMatrixFile'  );
 	Route::get('/getAnalysisPlot/{patient_id}/{case_id}/{type}/{name}','SampleController@getAnalysisPlot');
 	Route::get('/getGSEAReport/{patient_id}/{case_id}/{geneset}/{group}/{filename}'            , 'SampleController@getGSEAReport'  );
+	Route::get('/getGSEASummary/{patient_id}/{case_id}/{geneset}/{format?}','SampleController@getGSEASummary'  );
+	Route::get('/getDEResults/{patient_id}/{case_id}/{de_file}','SampleController@getDEResults');
 	Route::get('/getCNVPlot/{patient_id}/{sample_name}/{case_id}/{type}'            , 'VarController@getCNVPlot'  );
 	Route::get('/getCNVPlotByChromosome/{patient_id}/{sample_name}/{case_id}/{type}/{chromosome}'            , 'VarController@getCNVPlotByChromosome'  );	
 	Route::get('/getmixcrPlot/{patient_id}/{sample_name}/{case_id}/{type}'            , 'SampleController@getmixcrPlot'  );
 	Route::get('/getmixcrTable/{patient_id}/{sample_name}/{case_id}/{type}'            , 'SampleController@getmixcrTable'  );
+	Route::get('/viewMixcr/{patient_id}/{case_id}/{type}'            , 'SampleController@viewMixcr'  );
+	Route::get('/getMixcr/{patient_id}/{case_id}/{type}/{format?}'            , 'SampleController@getMixcr'  );
 
 	Route::get('/getCNV/{patient_id}/{case_id}/{sample_id}/{source?}/{gene_centric?}/{format?}'            , 'VarController@getCNV'  );	
 	Route::get('/getPatientExpression/{patient_id}/{gene}', 'SampleController@getPatientExpression' );
