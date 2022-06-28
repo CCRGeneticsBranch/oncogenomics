@@ -202,6 +202,7 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 	my $idx = 0;
 	my @detail_cols = ();
 	foreach my $header(@headers) {
+		$header =~ s/[\r\n]//g;
 		$header_idx{$header} = $idx++;
 		if (!exists($main_cols{$header})) {
 			push @detail_cols, $header;
@@ -221,7 +222,8 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 		for (my $i = 0; $i<=$#fields; $i++) {
 			$fields[$i] = "" unless defined($fields[$i]);
 			$fields[$i] =~ s/^\s+|\s+$//;
-			if ($fields[$i] eq '#N/A!' || $fields[$i] eq '#N/A' || $fields[$i] eq 'Unknown' || $fields[$i] eq '0') {
+			$fields[$i] =~ s/[\r\n]//g;
+			if ($fields[$i] eq '#N/A!' || $fields[$i] eq '#N/A' || $fields[$i] eq '0') {
 				$fields[$i] = '';
 			}
 		}
