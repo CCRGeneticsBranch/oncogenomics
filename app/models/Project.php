@@ -1154,6 +1154,16 @@ class Project extends Eloquent {
 		return ($rows[0]->cnt > 0);
 	}
 
+	public function getMixcrFiles() {
+		$fs = glob(storage_path()."/project_data/$this->id/mixcr/*.{zip,txt}", GLOB_BRACE);
+		$files = array();
+		foreach ($fs as $f) {
+			$files[] = basename($f);
+		}
+		return $files;
+
+	}
+
    	public function getMixcr($type="summary") {
 		$table = ($type == "summary")? "mixcr_summary": "mixcr";
 		$sql = "select m.* from project_cases p, $table m where p.project_id=$this->id and p.patient_id=m.patient_id and p.case_id=m.case_id and m.count >=3 and m.chain like 'TR%'";

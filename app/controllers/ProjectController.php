@@ -1285,6 +1285,13 @@ class ProjectController extends BaseController {
 		return Response::download($pathToFile);
 	}
 
+	public function downloadMixcrFile($project_id, $file) {
+		$pathToFile = storage_path()."/project_data/$project_id/mixcr/$file";
+		if (file_exists($pathToFile))
+			return Response::download($pathToFile);
+		return "File $file not found";
+	}
+
 	public function getQC($project_id, $type) {
 		if (!User::hasProject($project_id))
 			return "permission denied";

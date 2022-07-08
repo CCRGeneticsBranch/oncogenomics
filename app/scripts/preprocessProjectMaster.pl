@@ -17,6 +17,7 @@ my $include_pub=0;
 my $download_var=0;
 my $download_vcf=0;
 my $download_cnv=0;
+my $download_mixcr=0;
 my $no_exp=0;
 
 $ENV{'PATH'}=getConfig("R_PATH").$ENV{'PATH'};#Ubuntu16
@@ -43,6 +44,7 @@ options:
   -v           Download variants
   -c           Download CNVs
   -f           Download VCFs
+  -m           Download Mixcr
   
 __EOUSAGE__
 
@@ -57,7 +59,8 @@ GetOptions (
   'n'   => \$no_exp,
   'v'   => \$download_var,
   'f'   => \$download_vcf,
-  'c'   => \$download_cnv
+  'c'   => \$download_cnv,
+  'm'   => \$download_mixcr
 );
 
 if (!$project_id) {
@@ -109,9 +112,11 @@ my $all_start = time;
 foreach my $pid (keys %projects) {
 	print "Clean up old data...$sid";
 	my $start = time;
-	$dbh->do("delete from PROJECT_VALUES where project_id=$pid");	
-	$dbh->do("update PROJECTS set status=0 where id=$pid");	
-	$dbh->commit();
+	if (! $no_exp) {
+		$dbh->do("delete from PROJECT_VALUES where project_id=$pid");	
+		$dbh->do("update PROJECTS set status=0 where id=$pid");	
+		$dbh->commit();
+	}
 	my $duration = time - $start;
 	print "time: $duration s\n";
 
@@ -122,7 +127,9 @@ foreach my $pid (keys %projects) {
 	foreach my $type (@types) {
 		foreach my $level (@levels) {
 			#my $thr = threads->create(\&process, $pid, $type, $level);
-			process($pid, $type, $level);
+			if (! $no_exp) {
+				process($pid, $type, $level);
+			}
 			#push(@thrs, $thr);
 		}
 	}
@@ -143,6 +150,9 @@ foreach my $pid (keys %projects) {
 		system("$script_dir/downloadCNVTables.pl -p $pid");
 		system("$script_dir/generateCNVMatrix.pl -p $pid");
 		system("$script_dir/generateCNVMatrix.pl -p $pid -t cnvkit");
+	}
+	if ($download_mixcr) {
+		system("$script_dir/downloadMixcer.pl -p $pid");		
 	}
 	print "Total time for project $pid: $duration s\n";
 }

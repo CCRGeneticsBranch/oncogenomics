@@ -443,6 +443,12 @@ a.boxclose{
 			window.location.replace(url);	
 		});
 
+		$('#btnDownloadMixcr').on('click', function() {
+			var url = '{{url('/downloadMixcrFile')}}' + '/' + '{{$project->id}}' + '/' + $('#selMixcrFile').val();
+			console.log(url);
+			window.location.replace(url);	
+		});
+
 		$('#ckShowLabel').change(function() {
 			var value=$('#ckShowLabel').is(":checked");
 			pca_plot.series.forEach(function(s) {
@@ -453,8 +459,11 @@ a.boxclose{
 
 		$('.easyui-tabs').tabs({
 			onSelect:function(title) {
-				if (title == "Mutations" || title == "Expression" || title == "Survival" || title=="TCR")
-					tab = $('#tab' + title).tabs('getSelected');
+				if (title == "Mutations" || title == "Expression" || title == "Survival" || title=="TCR/BCR")
+					if (title == "TCR/BCR")
+						tab = $('#tabTCRBCR').tabs('getSelected');
+					else
+						tab = $('#tab' + title).tabs('getSelected');
 				else
 					tab = $(this).tabs('getSelected');				
 				var id = tab.panel('options').id;
@@ -900,10 +909,24 @@ a.boxclose{
 			</div>
 	@endif
 	@if ($project->hasMixcr())
-			<div id="TCR" title="TCR" style="width:98%;padding:5px;">
-				<div id="tabTCR" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false,border:false,headerWidth:100" style="width:100%;padding:0px;overflow:auto;border-width:0px">
-					<div id="Stats" title="Stats"></div>
-					<div id="Clones" title="Clones"></div>					
+			<div id="TCR" title="TCR/BCR" style="width:98%;padding:5px;">
+				<div id="tabTCRBCR" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false,border:false,headerWidth:100" style="width:100%;padding:0px;overflow:auto;border-width:0px">
+					<div id="Stats" title="TCR Stats"></div>
+					<div id="Clones" title="TCR Clones"></div>
+					@if (count($project->getMixcrFiles()) > 0)
+						<div title="Download">
+							<div style="padding:20px">
+							<H5>TCR/BCR file:&nbsp;
+								<select id="selMixcrFile" class="form-control" style="width:400px;display:inline">
+									@foreach ($project->getMixcrFiles() as $mixcr_file)
+										<option value="{{$mixcr_file}}">{{$mixcr_file}}</option>
+									@endforeach
+								</select>
+								<button id="btnDownloadMixcr" class="btn btn-info"><img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
+							</H5>
+							</div>
+						</div>
+					@endif
 				</div>
 			</div>
 	@endif

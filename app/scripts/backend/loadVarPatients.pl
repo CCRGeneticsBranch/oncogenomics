@@ -347,7 +347,7 @@ my %fusion_data = ();
 my %coding_genes = ();
 
 #get admin emails
-my @emails = ('NCI-FrederickAVIA@mail.nih.gov','khanjav@mail.nih.gov',  'vineela.gangalapudi@nih.gov', 'wenxi@mail.nih.gov', 'chouh@nih.gov', 'NCIBioinformatics_Oncogenomics@mail.nih.gov');
+my @emails = ('NCI-FrederickAVIA@mail.nih.gov','khanjav@mail.nih.gov',  'vineela.gangalapudi@nih.gov', 'wenxi@mail.nih.gov', 'chouh@nih.gov', 'erica.pehrsson@nih.gov', 'patrick.zhao@nih.gov', 'NCIBioinformatics_Oncogenomics@mail.nih.gov');
 my @compass_email_list = ('kristin.valdez@nih.gov','manoj.tyagi@nih.gov');
 #my @emails = ('chouh@nih.gov');
 #$sth_emails->execute();

@@ -60,6 +60,7 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/downloadProjectVCFs/{project_id}'            , 'ProjectController@downloadProjectVCFs'  );
 	Route::get('/getCNVSummary/{project_id}', 'ProjectController@getCNVSummary');
 	Route::get('/downloadCNVFiles/{project_id}/{file_type?}', 'ProjectController@downloadCNVFiles');
+	Route::get('/downloadMixcrFile/{project_id}/{file}', 'ProjectController@downloadMixcrFile');
 	Route::get('/getUserList/{project_id}', 'ProjectController@getUserList');
 	Route::get('/viewSplice/{project_id}/{patient_id}/{case_id}'            , 'VarController@viewSplice'  );
 	Route::get('/getSplice/{project_id}/{patient_id}/{case_id}'            , 'VarController@getSplice'  );
