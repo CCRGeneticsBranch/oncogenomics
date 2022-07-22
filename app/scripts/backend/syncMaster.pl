@@ -742,6 +742,9 @@ my $email_file = dirname(__FILE__)."/../../config/email_list.json";
 }
 my $data = decode_json($json);
 my $email_list=$data->{'master.all'};
+if ($database_name eq "development") {
+	$email_list=$data->{'master'};
+}
 my $modified_file_list = join(",", @modified_files);
 if ($#errors == -1) {
 	$content = "<H4>Upload to $database_name database successful!</H4><H4>The following files have been modified: <span style='color:red'>$modified_file_list</span></H4>";
