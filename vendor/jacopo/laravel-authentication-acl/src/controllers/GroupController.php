@@ -9,6 +9,7 @@ use Jacopo\Authentication\Presenters\GroupPresenter;
 use Jacopo\Library\Form\FormModel;
 use Jacopo\Authentication\Helpers\FormHelper;
 use Jacopo\Authentication\Models\Group;
+use Jacopo\Authentication\Models\User;
 use Jacopo\Authentication\Exceptions\UserNotFoundException;
 use Jacopo\Authentication\Validators\GroupValidator;
 use Jacopo\Library\Exceptions\JacopoExceptionsInterface;
@@ -41,6 +42,8 @@ class GroupController extends \Controller
     public function getList()
     {
         $groups = $this->group_repository->all(Input::all());
+        $logged_user = User::getCurrentUser();
+        $groups = DB::select("select * from projects p where exists(select * from project_groups g, project_group_managers m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id) order by name");
 
         return View::make('laravel-authentication-acl::admin.group.list')->with(["groups" => $groups]);
     }

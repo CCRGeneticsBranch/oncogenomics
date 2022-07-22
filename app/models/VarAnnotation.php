@@ -1714,7 +1714,7 @@ class VarAnnotation {
 						//$header_html .= "$icgc_donors DISTINCT DONORS ACROSS $total_projects CANCER PROJECTS</H3> ";
 						$tbl_html .= "</tbody></table>";
 						$detail_data[] = array("<pre>$col_text</pre>", "<pre>$icgc_donors</pre>", "$header_html"." ".$tbl_html);
-						Log::info("<pre>$col_text</pre>");
+						#Log::info("<pre>$col_text</pre>");
 					}	
 
 				}
@@ -1758,7 +1758,7 @@ class VarAnnotation {
 				$tcga_count = 0;
 				if ($value_str == "-" || $value_str == "")
 					continue;
-				Log::info("#### $col_name #####");
+				#Log::info("#### $col_name #####");
 				$values = (array)json_decode($value_str);
 				$count_header = "Count";				
 				$dtl_values = "";
@@ -1773,7 +1773,7 @@ class VarAnnotation {
 					$count_header = "Sample";											
 				}
 				$tbl_html = "<table class='var_dtl_info' width='100%' border=1><thead><tr color='#FFFFFF'><th>Tissue</th><th>Code</th><th>Main Type</th><th>NCI Thesaurus</th><th>UMLS</th><th>${count_header}</th></tr></thead><tbody>";
-				Log::info($dtl_values);
+				#Log::info($dtl_values);
 				foreach ($values as $cancer_type => $cancer_count) {
 					$samples = array();
 					if ($dtl_values != "") {
@@ -1812,10 +1812,10 @@ class VarAnnotation {
 					}
 				}
 				$tbl_html .= "</tbody></table>";
-				Log::info("tcga_count: $tcga_count");
+				#Log::info("tcga_count: $tcga_count");
 				if ($tcga_count > 0) {
 					$detail_data[] = array("<pre>$col_text</pre>", "<pre>$tcga_count</pre>", $tbl_html);
-					Log::info("--------------<pre>$col_text</pre>");
+					#Log::info("--------------<pre>$col_text</pre>");
 				}
 			}			
 		}

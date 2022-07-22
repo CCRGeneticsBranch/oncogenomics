@@ -117,15 +117,18 @@ while (my ($pid, $cid, $path, $sid) = $sth_smp_case_id->fetchrow_array) {
 $sth_smp_case_id->finish;
 
 if (!$keep_old) {	
-	my $num = $dbh->do("delete from sample_details d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1)");
+	my $num = $dbh->do("delete from sample_details d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1) or not exists(select * from project_sample_mapping s, projects p 
+where d.sample_id=s.sample_id)");
 	print "deleted $num from sample_details\n";
-	$num =$dbh->do("delete from samples d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1)");
+	$num =$dbh->do("delete from samples d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1) or not exists(select * from project_sample_mapping s, projects p 
+where d.sample_id=s.sample_id)");
 	print "deleted $num from samples\n";
-	$num=$dbh->do("delete from sample_case_mapping d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1)");
+	$num=$dbh->do("delete from sample_case_mapping d where exists(select * from project_sample_mapping s, projects p where d.sample_id=s.sample_id and s.project_id=p.id and p.user_id=1) or not exists(select * from project_sample_mapping s, projects p 
+where d.sample_id=s.sample_id)");
 	print "deleted $num from sample_case_mapping\n";
 	$num=$dbh->do("delete from project_sample_mapping s where exists(select * from projects p where s.project_id=p.id and p.user_id=1)");
 	print "deleted $num from project_samples\n";	
-	$num =$dbh->do("delete from patients d where exists(select * from project_patients s, projects p where d.patient_id=s.patient_id and s.project_id=p.id and p.user_id=1)");
+	$num =$dbh->do("delete from patients d where exists(select * from project_patients s, projects p where d.patient_id=s.patient_id and s.project_id=p.id and p.user_id=1) or not exists(select * from project_patients s, projects p where d.patient_id=s.patient_id and s.project_id=p.id)");
 	print "deleted $num from patients\n";
 	print "DELETED OLD on $sid\n";	
 	# $dbh->commit();	##20190903
@@ -138,7 +141,7 @@ my $sql_smp = "insert into samples values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 my $sql_pat = "insert into patients values(?,?,?,?,?,?,?)";
 my $sql_smp_dtl = "insert into sample_details values(?,?,?)";
 
-my $sql_prj = "insert into projects (name, description, updated_at, created_at, isstudy, status, user_id, version) values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, '1', '0', '1', '19')";
+my $sql_prj = "insert into projects (name, description, updated_at, created_at, project_group, status, user_id, version) values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, '1', '0', '1', '19')";
 my $sql_smp_case = "insert into sample_case_mapping(SAMPLE_ID,PATIENT_ID,CASE_NAME) values(?,?,?)";
 my $sql_prj_smp = "insert into project_sample_mapping values(?,?)";
 

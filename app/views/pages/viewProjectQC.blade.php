@@ -55,6 +55,10 @@
 
 <style>
 
+.textbox .textbox-text{
+	font-size: 14px;	
+}
+
 .block_details {
     display:none;
     width:90%;
@@ -96,6 +100,8 @@ th, td { white-space: nowrap; padding: 0px;}
 	var num_cols = {};
 	var plot_width;
 	var plot_height;
+	var genotyping_patients = [];
+	var tblPatientGenoTyping = null;
 		
 
 	$(document).ready(function() {
@@ -189,6 +195,69 @@ th, td { white-space: nowrap; padding: 0px;}
 				});
 			}
 		});
+		@endif
+		@if (count($genotyping_patients) > 0)
+			@foreach ($genotyping_patients as $genotyping_patient)
+				genotyping_patients.push({"id": '{{$genotyping_patient->patient_id}}', "text": "{{$genotyping_patient->patient_id}} ({{$genotyping_patient->diagnosis}})"});
+			@endforeach
+
+			$('#selGenotypingPatients').combobox({
+			        panelHeight: '400px',
+			        width: '400px',
+			        height: '30px',
+			        selectOnNavigation: false,
+			        selectOnLoad: true,
+			        valueField: 'id',
+			        textField: 'text',
+			        editable: true,
+			        filter: function (q, row) {
+			        	var opts = $(this).combobox('options');
+						return row[opts.textField].toUpperCase().indexOf(q.toUpperCase()) >= 0;
+			        },
+			        onSelect: function(d) {		        	
+			        	patient_id = d.id;
+			        	var url = '{{url("getProjectGenotypingByPatient/$project_id")}}' + '/' + patient_id;
+			        	console.log(url);
+			        	$.ajax({ url: url , async: true, dataType: 'text', success: function(data) {
+							data = JSON.parse(data);
+							if (tblPatientGenoTyping != null)
+								tblPatientGenoTyping.destroy();
+
+							tblPatientGenoTyping = $('#tblPatientGenoTyping').DataTable( 
+							{
+								"data": data.data,
+								"columns": data.cols,
+								"ordering":    true,
+								"deferRender": true,
+								"lengthMenu": [[25, 50, 100], [25, 50, 100]],
+								"pageLength":  50,
+								"pagingType":  "simple_numbers",
+								"dom": 'l<"toolbar">frtip',					
+								"columnDefs": [{
+				                			"render": function ( data, type, row ) {
+				                						if (isNaN(data))
+				                							return data;
+				                						else {
+				                							data = parseFloat(data);
+				                							if (data >= 0.9)
+				                								return data;
+				                							if (data < 0.9 & data >= 0.8)
+				                								return "<b><font color='purple' style='background-color:yellow'>" + data + '</font></b>';
+				                							if (data < 0.8)
+				                								return "<b><font color='red' style='background-color:yellow'>" + data + '</font></b>';
+				                							}
+				                						},
+				                			"targets": '_all'
+				            				}]					
+							});
+						}
+						});
+			        },
+			        data: genotyping_patients
+			});
+
+			$('#selGenotypingPatients').combobox('select', '{{$genotyping_patients[0]->patient_id}}');
+
 		@endif
 
 				
@@ -541,18 +610,30 @@ th, td { white-space: nowrap; padding: 0px;}
 								<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblDNAQCCutoff" style='width:95%;height:80%'></table>
 					</div>	 										
 			</div>
-			<div id="DNAQC" title="RNAQC" style="width:100%;padding:5px;border-width:0px">			
+			@if ($hasRNAseq)
+			<div id="RNAQC" title="RNAQC" style="width:100%;padding:5px;border-width:0px">			
 					<table cellpadding="0" cellspacing="0" border="0" class="order-column pretty" word-wrap="break-word" id="tblRNAQC" style='width:100%'></table>	
 			</div>
-			<div id="DNAQC" title="RNAQCv2" style="width:100%;padding:5px;border-width:0px">
+			<div id="RNAQC2" title="RNAQCv2" style="width:100%;padding:5px;border-width:0px">
 					<table cellpadding="0" cellspacing="0" border="0" class="order-column pretty" word-wrap="break-word" id="tblRNAQCv2" style='width:100%'></table>						
 			</div>
+			@endif
 		
 			@if ($genotyping_url != "")
 			<div id="Genotyping" title="Genotyping" style="width:100%;padding:5px;border-width:0px">
 				<button id="btnDownloadGenotyping" type="button" class="btn btn-default" style="font-size: 12px;">
 					<img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
 				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblGenoTyping" style='width:100%'>
+				</table>
+			</div>
+			@endif
+
+			@if (count($genotyping_patients) > 0)
+			<div id="Genotyping" title="Genotyping" style="width:100%;padding:5px;border-width:0px">
+				<H5>Patient: 
+				<input class="easyui-combobox" id="selGenotypingPatients" name="selGenotypingPatients" />
+				</H5>
+				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblPatientGenoTyping" style='width:100%'>
 				</table>
 			</div>
 			@endif

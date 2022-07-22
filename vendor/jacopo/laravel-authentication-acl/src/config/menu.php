@@ -42,7 +42,7 @@ return [
                  * will check for the permissions and throw a 401 error if the
                  * check fails (for example in this case every route named users.*)
                  */
-                "permissions" => ["_superadmin", "_user-editor"],
+                "permissions" => ["_projectmanager"],
                 /*
                  * if there is any route that you want to skip for the permission check
                  * put it in this array
@@ -53,7 +53,7 @@ return [
                     "name"        => "Groups",
                     "route"       => "groups",
                     "link"        => URL::route('groups.list'),
-                    "permissions" => ["_superadmin", "_group-editor"]
+                    "permissions" => ["_projectmanager"]
             ],
             [
                     "name"        => "Permission",

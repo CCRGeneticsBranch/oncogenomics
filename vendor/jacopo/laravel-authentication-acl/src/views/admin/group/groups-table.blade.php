@@ -3,7 +3,7 @@
         <a href="{{URL::action('Jacopo\Authentication\Controllers\GroupController@editGroup')}}" class="btn btn-info pull-right"><i class="fa fa-plus"></i> Add New</a>
     </div>
 </div>
-@if( ! $groups->isEmpty() )
+@if( count($groups) > 0 )
 <table class="table table-hover">
     <thead>
         <tr>

@@ -1154,6 +1154,13 @@ class ProjectController extends BaseController {
 		}
 	}
 
+	public function getProjectGenotypingByPatient($project_id, $patient_id) {
+		$project = Project::getProject($project_id);
+		$rows = $project->GenotypingByPatient($patient_id);
+		$data = $this->getDataTableJson($rows);
+		return json_encode($data);
+	}
+
 	public function getProjectGenotyping($project_id, $type="json") {
 		$geno_file = storage_path()."/project_data/$project_id/gt.txt";
 		if (!file_exists($geno_file))

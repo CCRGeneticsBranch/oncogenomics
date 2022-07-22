@@ -930,8 +930,10 @@ class SampleController extends BaseController {
 #					Log::info($cnv_data);
 					foreach ($dna_samples as $dna_sample_id => $dna_sample_name) {						
 						$cnt = "NA";
-						if (array_key_exists($symbol, $cnv_data[$dna_sample_id][$chr]))
-							$cnt = $cnv_data[$dna_sample_id][$chr][$symbol];						
+						if (array_key_exists($dna_sample_id, $cnv_data))
+							if (array_key_exists($chr, $cnv_data[$dna_sample_id]))
+								if (array_key_exists($symbol, $cnv_data[$dna_sample_id][$chr]))
+									$cnt = $cnv_data[$dna_sample_id][$chr][$symbol];
 						$value_url = $cnt;
 						if ($include_link)
 							$value_url = "<a id='cnv_$sample_id$gene' href='#' onclick=\"showCNV(this, '$symbol', '$dna_sample_name')\">".$cnt."</a>";

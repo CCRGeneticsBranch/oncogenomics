@@ -654,7 +654,8 @@ class User extends Model implements UserInterface {
 
 					// We will make sure that the merged permission does not
 					// exactly match our permission, but starts with it.
-					if ($checkPermission != $mergedPermission and starts_with($mergedPermission, $checkPermission) and $value == 1)
+					//if ($checkPermission != $mergedPermission and starts_with($mergedPermission, $checkPermission) and $value == 1)
+					if ($checkPermission != $mergedPermission and starts_with($mergedPermission, $checkPermission) )
 					{
 						$matched = true;
 						break;
@@ -673,7 +674,8 @@ class User extends Model implements UserInterface {
 
 					// We will make sure that the merged permission does not
 					// exactly match our permission, but ends with it.
-					if ($checkPermission != $mergedPermission and ends_with($mergedPermission, $checkPermission) and $value == 1)
+					//if ($checkPermission != $mergedPermission and ends_with($mergedPermission, $checkPermission) and $value == 1)
+					if ($checkPermission != $mergedPermission and ends_with($mergedPermission, $checkPermission) )
 					{
 						$matched = true;
 						break;
@@ -697,7 +699,8 @@ class User extends Model implements UserInterface {
 
 						// We will make sure that the merged permission does not
 						// exactly match our permission, but starts with it.
-						if ($checkMergedPermission != $permission and starts_with($permission, $checkMergedPermission) and $value == 1)
+						//if ($checkMergedPermission != $permission and starts_with($permission, $checkMergedPermission) and $value == 1)
+						if ($checkMergedPermission != $permission and starts_with($permission, $checkMergedPermission) )
 						{
 							$matched = true;
 							break;
@@ -706,7 +709,8 @@ class User extends Model implements UserInterface {
 
 					// Otherwise, we'll fallback to standard permissions checking where
 					// we match that permissions explicitly exist.
-					elseif ($permission == $mergedPermission and $mergedPermissions[$permission] == 1)
+					//elseif ($permission == $mergedPermission and $mergedPermissions[$permission] == 1)
+					elseif ($permission == $mergedPermission )
 					{
 						$matched = true;
 						break;

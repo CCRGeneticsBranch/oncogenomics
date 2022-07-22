@@ -1,10 +1,14 @@
 {{-- add group --}}
+<div id='loading' class='loading_img' style="display: none;">
+    <h4 style="display:inline">Processing...</h4><img width=30 height=30 src='{{url('/images/ajax-loader.gif')}}'></img>
+</div>
+<H5>( Select project and click <span class="glyphicon glyphicon-plus-sign add-input"></span> to add the project )</H5>
 {{Form::open(["action" => "Jacopo\Authentication\Controllers\UserController@addGroup", 'class' => 'form-add-group', 'role' => 'form'])}}
 <div class="form-group">
     <div class="input-group">
-        <span class="input-group-addon form-button button-add-group"><span class="glyphicon glyphicon-plus-sign add-input"></span></span>
-        {{Form::select('group_id', $group_values, '', ["class"=>"form-control"])}}
-        {{Form::hidden('id', $user->id)}}
+        <span class="input-group-addon form-button button-add-group"><span class="glyphicon glyphicon-plus-sign add-input"></span></span>        
+        {{Form::select('group_id', $projects, '', ["class"=>"form-control"])}}
+        {{Form::hidden('id', $user->id)}}        
     </div>
     <span class="text-danger">{{$errors->first('name')}}</span>
 </div>
@@ -18,6 +22,7 @@
 
 {{-- delete group --}}
 @if( ! $user->groups->isEmpty() )
+<H5>( Current projects granted. Click <span class="glyphicon glyphicon-minus-sign add-input"></span> to remove the project )</H5>
 @foreach($user->groups as $group)
     {{Form::open(["action" => "Jacopo\Authentication\Controllers\UserController@deleteGroup", "role"=>"form", 'name' => $group->id])}}
     <div class="form-group">
@@ -38,11 +43,13 @@
 @parent
 <script>
     $(".button-add-group").click( function(){
+        $("#loading").css("display","block");
         <?php if($user->exists): ?>
         $('.form-add-group').submit();
         <?php endif; ?>
     });
     $(".button-del-group").click( function(){
+        $("#loading").css("display","block");
         name = $(this).attr('name');
         $('form[name='+name+']').submit();
     });

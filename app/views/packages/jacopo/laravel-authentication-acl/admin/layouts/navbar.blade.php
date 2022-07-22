@@ -15,7 +15,9 @@
                 <li> <a href="{{url('/')}}">Home</a></li>
                 @if(isset($menu_items))
                     @foreach($menu_items as $item)
+                        @if ($item->getName() != "Permission" || User::isSuperAdmin())
                         <li class="{{Jacopo\Library\Views\Helper::get_active_route_name($item->getRoute())}}"> <a href="{{$item->getLink()}}">{{$item->getName()}}</a></li>
+                        @endif
                     @endforeach
                 @endif
             </ul>

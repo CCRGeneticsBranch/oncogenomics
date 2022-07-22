@@ -4,16 +4,18 @@
 class VarQCController extends BaseController {
 
 	public function viewProjectQC($project_id) {
-		if (!User::hasProject($project_id))
-			return View::make('pages/error_no_header', ['message' => 'Access denied or session timed out!']);
 		$cases = Project::getCases($project_id);
 		$plot_types = array('circos', 'coveragePlot', 'transcriptCoverage', 'hotspot');
+		$hasRNAseq = Project::hasRNAseq($project_id);
+		if (!$hasRNAseq)
+			$plot_types = array('circos', 'coveragePlot', 'hotspot');
 		//$plot_types = array();		
 		$gt_file = storage_path()."/project_data/$project_id/gt.txt";
 		$genotyping_url = "";
-		if (file_exists($gt_file))
-			$genotyping_url = url("/getProjectGenotyping/$project_id");
-		return View::make('pages/viewProjectQC', ['project_id' => $project_id, 'cases' => $cases, 'plot_types' => $plot_types, 'genotyping_url' => $genotyping_url]);
+		//if (file_exists($gt_file))
+		//	$genotyping_url = url("/getProjectGenotyping/$project_id");
+		$genotyping_patients = Project::getGenoTypingPatients($project_id);
+		return View::make('pages/viewProjectQC', ['project_id' => $project_id, 'cases' => $cases, 'plot_types' => $plot_types, 'genotyping_url' => $genotyping_url, 'genotyping_patients' => $genotyping_patients, 'hasRNAseq' => $hasRNAseq]);
 	}
 
 	public function viewVarQC($project_id, $patient_id, $case_name) {

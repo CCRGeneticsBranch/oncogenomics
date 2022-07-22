@@ -459,6 +459,25 @@ class Project extends Eloquent {
 
 	}	
 
+	static public function hasRNAseq($project_id) {
+		$sql = "select count(*) as cnt from project_samples where project_id=$project_id and exp_type='RNAseq'";
+		$rows = DB::select($sql);
+		return ($rows[0]->cnt > 0);
+
+	}
+
+	static public function getGenoTypingPatients($project_id) {
+		$sql="select distinct patient_id,diagnosis from project_samples p where exists(select * from genotyping g where p.sample_id=g.sample1 or p.sample_id=g.sample2) and project_id=$project_id order by patient_id";
+		return DB::select($sql);
+
+	}
+
+	public function GenotypingByPatient($patient_id) {
+		$sql="select s1.patient_id as Patient1,g.sample1, s1.tissue_type as Tissue1,s1.exp_type as exp_type1, s2.patient_id as Patient2,g.sample2, s2.tissue_type as Tissue2,s2.exp_type as exp_type2,percent_match  from genotyping g,project_samples p,samples s1,samples s2 where p.project_id=$this->id and p.patient_id='$patient_id' and (p.sample_id=g.sample1 or p.sample_id=g.sample2) and s1.sample_id=g.sample1 and s2.sample_id=g.sample2";
+		return DB::select($sql);
+
+	}
+
 	static public function getCount() {	
 		$logged_user = User::getCurrentUser();
 		if ($logged_user != null)

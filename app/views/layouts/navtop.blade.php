@@ -72,7 +72,7 @@
 		@if(null != User::getCurrentUser())
 			<li><a href="{{url('/viewSetting')}}" rel="nofollow"><img width="20" height="20" src="{{url('images/setting.png')}}"/>Setting</a></li>
 			<li><a href="{{URL::action('Jacopo\Authentication\Controllers\AuthController@getLogout')}}" rel="nofollow">Logout</a> </li>
-			@if (User::isSuperAdmin())
+			@if (User::isSuperAdmin() || User::isProjectManager())
 				<li><a href={{URL::route('users.list')}} rel="nofollow">{{User::getCurrentUser()->email}}</a></li>
 			@else
 				<li><a href='#' rel="nofollow">{{User::getCurrentUser()->email}}</a></li>

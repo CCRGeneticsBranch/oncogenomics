@@ -1,12 +1,6 @@
 <?php
 
-class User extends Jacopo\Authentication\Models\User{
-
-	static public function getCurrentUser() {
-		$auth = app::make('Jacopo\Authentication\Interfaces\AuthenticateInterface');		
-		$logged_user = $auth->getLoggedUser();
-		return $logged_user;
-	}
+class User extends Jacopo\Authentication\Models\User{	
 
 	static public function isCurrentUserEditor() {		
 		$logged_user = User::getCurrentUser();
@@ -15,37 +9,7 @@ class User extends Jacopo\Authentication\Models\User{
 				if ($group->name == 'editor')
 					return true;
 		return false;
-	}
-
-	
-	static public function accessAll() {
-		// return true;##hv added for testing
-		$logged_user = User::getCurrentUser();
-		if ($logged_user != null)
-			return $logged_user->hasPermission("_khanlab");
-		return false;
-	}
-	
-	static public function isSuperAdmin() {
-		$logged_user = User::getCurrentUser();
-		if ($logged_user != null)
-			return $logged_user->hasPermission("_superadmin");
-		return false;		
-	}
-
-	static public function isProjectManager() {
-		$logged_user = User::getCurrentUser();
-		if ($logged_user != null)
-			return $logged_user->hasPermission("_projectmanager");
-		return false;		
-	}
-
-	static public function isSignoutManager() {
-		$logged_user = User::getCurrentUser();
-		if ($logged_user != null)
-			return $logged_user->hasPermission("_signout_manager");
-		return false;		
-	}
+	}	
 
 	static public function hasPatient($patient_id) {
 		if (User::accessAll()) 

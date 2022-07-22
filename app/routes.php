@@ -49,6 +49,7 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getProjectQC/{project_id}/{type}', 'ProjectController@getQC' );
 	Route::get('/getCorrelationData/{project_id}/{gene_id}/{cufoff}/{target_type}/{method?}/{value_type?}' , 'ProjectController@getCorrelationData');
 	Route::get('/getProjectGenotyping/{project_id}/{type?}', 'ProjectController@getProjectGenotyping');
+	Route::get('/getProjectGenotypingByPatient/{project_id}/{patient_id}', 'ProjectController@getProjectGenotypingByPatient');
 	Route::get('/getExpMatrixFile/{project_id}/{target_type}/{data_type?}', 'ProjectController@getExpMatrixFile');
 	Route::get('/getVarAnnotation/{project_id}/{patient_id}/{sample_id}/{case_id}/{type}', 'VarController@getVarAnnotation'  );
 	Route::get('/getVarAnnotationByGene/{project_id}/{gene_id}/{type}'            , 'VarController@getVarAnnotationByGene'  );

@@ -8,6 +8,7 @@ use Cartalyst\Sentry\Users\Eloquent\User as CartaUser;
 use Jacopo\Library\Traits\OverrideConnectionTrait;
 use Cartalyst\Sentry\Users\UserExistsException;
 use Cartalyst\Sentry\Users\LoginRequiredException;
+use App,DB;
 
 class User extends CartaUser
 {
@@ -47,5 +48,47 @@ class User extends CartaUser
     public function user_profile()
     {
         return $this->hasMany('Jacopo\Authentication\Models\UserProfile');
+    }
+
+    static public function getCurrentUser() {
+        $auth = app::make('Jacopo\Authentication\Interfaces\AuthenticateInterface');        
+        $logged_user = $auth->getLoggedUser();
+        return $logged_user;
+    }
+
+    static public function accessAll() {
+        // return true;##hv added for testing
+        $logged_user = User::getCurrentUser();
+        if ($logged_user != null)
+            return $logged_user->hasPermission("_khanlab");
+        return false;
+    }
+    
+    static public function isSuperAdmin() {
+        $logged_user = User::getCurrentUser();
+        if ($logged_user != null)
+            return $logged_user->hasPermission("_superadmin");
+        return false;       
+    }
+
+    static public function isProjectManager() {
+        $logged_user = User::getCurrentUser();
+        if ($logged_user != null) {
+            if (array_key_exists("_projectmanager", $logged_user->permissions))
+                return true;
+
+        }
+        return false;       
+    }
+
+    static public function isSignoutManager() {
+        $logged_user = User::getCurrentUser();
+        if ($logged_user != null)
+            return $logged_user->hasPermission("_signout_manager");
+        return false;       
+    }
+
+    static function getProjectGroups() {
+        return DB::select("select * from project_groups");
     }
 } 
