@@ -18,6 +18,7 @@ my $download_var=0;
 my $download_vcf=0;
 my $download_cnv=0;
 my $download_mixcr=0;
+my $process_gt=0;
 my $no_exp=0;
 
 $ENV{'PATH'}=getConfig("R_PATH").$ENV{'PATH'};#Ubuntu16
@@ -45,6 +46,7 @@ options:
   -c           Download CNVs
   -f           Download VCFs
   -m           Download Mixcr
+  -g           Process genotyping
   
 __EOUSAGE__
 
@@ -60,7 +62,8 @@ GetOptions (
   'v'   => \$download_var,
   'f'   => \$download_vcf,
   'c'   => \$download_cnv,
-  'm'   => \$download_mixcr
+  'm'   => \$download_mixcr,
+  'g'   => \$process_gt
 );
 
 if (!$project_id) {
@@ -82,10 +85,10 @@ if ($project_id eq "all") {
 	}
 	$sth->finish();
 } elsif ($project_id =~ /^\d+$/) {
-	my $sql = "select id, name, isstudy from projects where id = $project_id";
+	my $sql = "select id, name from projects where id = $project_id";
 	my $sth = $dbh->prepare($sql);
 	$sth->execute();
-	if (my ($id, $name, $isstudy) = $sth->fetchrow_array) {
+	if (my ($id, $name) = $sth->fetchrow_array) {
 		$projects{$id} = $name;
 	} else {
 		$sth->finish();
@@ -152,7 +155,10 @@ foreach my $pid (keys %projects) {
 		system("$script_dir/generateCNVMatrix.pl -p $pid -t cnvkit");
 	}
 	if ($download_mixcr) {
-		system("$script_dir/downloadMixcer.pl -p $pid");		
+		system("$script_dir/downloadMixcer.pl -p $pid");
+	}
+	if ($process_gt) {
+		system("$script_dir/backend/scoreProjectGenotypes.pl -p $pid");
 	}
 	print "Total time for project $pid: $duration s\n";
 }

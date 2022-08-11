@@ -587,25 +587,7 @@ a.boxclose{
             		title: "{{$patient_id}}+'_'+fusion"
         		},
 
-   			],
-			"columnDefs": [{
-                			"render": function ( data, type, row ) {
-                						if (tblId != 'tblGenoTyping')
-                							return data;
-                						if (isNaN(data))
-                							return data;
-                						else {
-                							color_value = getColor(data);
-                    						return $("<div></div>", {"class": "bar-chart-cell"}).append(function () {
-                    													var bars = [];
-                    													bars.push($("<div></div>",{"class": "bar"}).text(Math.round((data * 100)) + '%').css({"width": (data * 100) + '%', "background-color" : color_value}));
-                    													return bars;
-                    											}).prop("outerHTML");
-                    								}
-
-                						},
-                			"targets": '_all'
-            				}]					
+   			]
 		} );		
 		tbls[tblId] = tbl;
 		var columns =[];

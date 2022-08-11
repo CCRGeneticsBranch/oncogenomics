@@ -70,7 +70,7 @@ rsync -aiz ${mnt_data_home}/ClinOmics_Sequencing_Master_File_db.txt $data_home/
 rsync -aiz ${mnt_data_home}/Sequencing_Tracking_Master_db.txt $data_home/
 rsync -aiz helix:/data/Compass/Analysis/ProcessedResults_NexSeq/OncoPilot/COMPASS_MasterFile.txt $data_home/
 rsync -aiz helix:/data/Compass/Analysis/ProcessedResults_NexSeq/OncoPilot/COMPASS_LIMS_MasterFile.txt $data_home/
-rsync -aiz helix:/data/khanlab3/Erica/gb_master_file.txt $data_home/
+rsync -aiz helix:/data/khanlab3/Erica/ngs_pipeline/gb_master_file.txt $data_home/
 #rsync -aiz biowulf2:/data/khanlab/ref/MasterFile/Sequencing_Tracking_Master_clinomics.txt $data_home/
 after_khanlab_modify_time=`stat --printf=%y $khanlab_master_file`
 after_clinomics_modify_time=`stat --printf=%y $clinomics_master_file`

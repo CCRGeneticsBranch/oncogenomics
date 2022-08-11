@@ -13,6 +13,7 @@
 {{ HTML::style('packages/w2ui/w2ui-1.4.min.css') }}
 {{ HTML::style('css/light-bootstrap-dashboard.css') }}
 {{ HTML::style('css/filter.css') }}
+{{ HTML::style('packages/bootstrap-switch-master/dist/css/bootstrap3/bootstrap-switch.min.css')}}
 
 {{ HTML::script('packages/DataTables-1.10.8/media/js/jquery.dataTables.min.js') }}
 {{ HTML::script('js/bootstrap.min.js') }}
@@ -23,7 +24,7 @@
 {{ HTML::script('packages/w2ui/w2ui-1.4.min.js')}}
 {{ HTML::script('packages/highchart/js/highcharts.js')}}
 {{ HTML::script('packages/highchart/js/highcharts-more.js')}}
-
+{{ HTML::script('packages/bootstrap-switch-master/dist/js/bootstrap-switch.min.js') }}
 
 <style>
 
@@ -80,9 +81,11 @@ a.boxclose{
 	var column_tbls = [];
 	var col_html = [];
 	var filter_list = {'Select filter' : -1}; 
+	var filter_gene_list = {{$filter_gene_list}};
 	var onco_filter;
 	var type_idx = 2;
 	var user_list_idx = 0;
+	var gene_idx = 0;
 	var target_type = null;
 	var patients;
 	
@@ -102,13 +105,15 @@ a.boxclose{
 				$('#exp_type').text(data.expression_type); 
 				$('#sum_type').text(data.count_type);    		
 				type_idx = data.type_idx;
+				/*
 				for (var i=user_list_idx;i<data.cols.length;i++) {
 					filter_list[data.cols[i].title] = i;
 					hide_cols.tblExp.push(i);
 				}
+				*/
 
 				showTable(data, 'tblExp');				
-				onco_filter = new OncoFilter(Object.keys(filter_list), null, function() {doFilter();});	
+				onco_filter = new OncoFilter(Object.keys(filter_gene_list), null, function() {doFilter();});	
 				doFilter();
 			}			
 		});
@@ -320,18 +325,22 @@ a.boxclose{
 				
 				var outer_comp_list = [];
 				filter_settings = [];
+				var gene = aData[gene_idx];
 				for (var filter in onco_filter.filters) {
 					var comp_list = [];
 					var filter_setting = [];				
 					for (var i in onco_filter.filters[filter]) {
 						var filter_item_setting = [];
 						var filter_name = onco_filter.getFilterName(filter, i);
+						currentEval =  (filter_gene_list[filter_name].hasOwnProperty(gene));
+						/*
 						var idx = filter_list[filter_name];
 						filter_item_setting.push(filter_name);
 						if (idx == -1)
 							currentEval = true;
 						else
 							currentEval = (aData[idx] != '');
+						*/
 	        			if (onco_filter.hasFilterOperator(filter, i)) {
 	        				var op = (onco_filter.getFilterOperator(filter, i))? "&&" : "||";
 	        				filter_item_setting.push(op);
@@ -420,7 +429,7 @@ a.boxclose{
 		
 	}
 
-	function showExp(d, gene_id, rnaseq_sample, target_type) {
+	function showExp(d, gene_id, rnaseq_sample, target_type="ensembl") {
 		//var url = '{{url("/getExpression/$project_id/")}}' + '/' + gene_id + '/' + target_type;
 		//target_type="refseq";
 		var url = '{{url("/getExpression/$project_id/")}}' + '/' + gene_id + '/' + target_type;
@@ -456,7 +465,7 @@ a.boxclose{
 				//console.log(JSON.stringify(exp_val));
 
 				values = getSortedScatterValues(log2_exp_val, data.samples, rnaseq_sample_names);
-
+				//console.log(JSON.stringify(exp_val));
 				var sample_idx = 0;
 				for (var i in data.samples) {
 					for (var j in rnaseq_sample_names) {
@@ -552,7 +561,7 @@ a.boxclose{
 					<span style="font-family: monospace; font-size: 20;float:right;">				
 							&nbsp;&nbsp;Genes:&nbsp;<span id="lblCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="lblCountTotal" style="text-align:left;" text=""></span>
 					</span>
-					<span id='filter' style='display:none;height:200px;width:80%'>
+					<span id='filter' style='height:200px;width:80%'>
 						<button id="btnAddFilter" class="btn btn-primary">Add filter</button>&nbsp;<a id="fb_filter_definition" href="#filter_definition" title="Filter definitions" class="fancybox mytooltip"><img src={{url("images/help.png")}}></img></a>&nbsp;						
 					</span>
 					<button id="btnClearFilter" type="button" class="btn btn-info" style="font-size: 12px;">Show all</button>		

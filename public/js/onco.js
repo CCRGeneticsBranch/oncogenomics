@@ -1101,7 +1101,10 @@
                 enabled: false
             },
             
-            plotOptions: {
+            plotOptions: {                
+                series: {
+                    turboThreshold: 10000,
+                },
                 scatter: {                    
                     marker: {
                         //radius: 8,

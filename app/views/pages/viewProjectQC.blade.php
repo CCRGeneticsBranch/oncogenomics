@@ -102,11 +102,12 @@ th, td { white-space: nowrap; padding: 0px;}
 	var plot_height;
 	var genotyping_patients = [];
 	var tblPatientGenoTyping = null;
+	var tblMatchedGenoTyping = null;
 		
 
 	$(document).ready(function() {
 		plot_width = $('#tabQC').width() * 0.8;
-		plot_height = $('#tabQC').height() * 0.80;
+		plot_height = $('#tabQC').height() * 0.80;		
 		
 		@foreach ($plot_types as $plot_type)
 			tables["{{$plot_type}}"] = document.getElementById("list-{{$plot_type}}");
@@ -162,6 +163,12 @@ th, td { white-space: nowrap; padding: 0px;}
 			}
 		});
 
+		$('#btnDownloadGenotyping').on("click", function(){
+			var url = '{{url('/getProjectGenotyping')}}' + '/' + '{{$project_id}}' + '/text';
+			window.location.replace(url);
+		});
+
+
 		@if ($genotyping_url != "")	
 		console.log('{{$genotyping_url}}');	
 		$.ajax({ url: '{{$genotyping_url}}' , async: true, dataType: 'text', success: function(data) {
@@ -201,6 +208,50 @@ th, td { white-space: nowrap; padding: 0px;}
 				genotyping_patients.push({"id": '{{$genotyping_patient->patient_id}}', "text": "{{$genotyping_patient->patient_id}} ({{$genotyping_patient->diagnosis}})"});
 			@endforeach
 
+			var url = '{{url("getMatchedGenotyping/$project_id")}}';
+			console.log(url);
+			$.ajax({ url: url , async: true, dataType: 'text', success: function(data) {
+				$("#loadingMatched").css("display","none");				
+				data = JSON.parse(data);
+				tblMatchedGenoTyping = $('#tblMatchedGenoTyping').DataTable( 
+				{
+								"data": data.data,
+								"columns": data.cols,
+								"ordering":    true,
+								"deferRender": true,
+								"lengthMenu": [[25, 50, 100], [25, 50, 100]],
+								"pageLength":  50,
+								"pagingType":  "simple_numbers",
+								"dom": 'l<"toolbar">frtip',					
+								"columnDefs": [{
+				                			"render": function ( data, type, row ) {
+				                						if (isNaN(data))
+				                							return data;
+				                						else {
+				                							data = parseFloat(data);
+				                							return data;
+				                							if (data >= 0.9)
+				                								return data;
+				                							if (data < 0.9 & data >= 0.8)
+				                								return "<b><font color='purple' style='background-color:yellow'>" + data + '</font></b>';
+				                							if (data < 0.8)
+				                								return "<b><font color='red' style='background-color:yellow'>" + data + '</font></b>';
+				                							}
+				                						},
+				                			"targets": '_all'
+				            				}]					
+							});
+				}
+			});
+
+			$('#selGenotypingCutoff').on('change', function() {
+				tblMatchedGenoTyping.draw();
+			});
+
+			$('#DiffPatientOnly').on('change', function() {
+				tblMatchedGenoTyping.draw();
+			});
+
 			$('#selGenotypingPatients').combobox({
 			        panelHeight: '400px',
 			        width: '400px',
@@ -218,7 +269,9 @@ th, td { white-space: nowrap; padding: 0px;}
 			        	patient_id = d.id;
 			        	var url = '{{url("getProjectGenotypingByPatient/$project_id")}}' + '/' + patient_id;
 			        	console.log(url);
+			        	$("#loadingPatient").css("display","block");
 			        	$.ajax({ url: url , async: true, dataType: 'text', success: function(data) {
+			        		$("#loadingPatient").css("display","none");
 							data = JSON.parse(data);
 							if (tblPatientGenoTyping != null)
 								tblPatientGenoTyping.destroy();
@@ -257,6 +310,19 @@ th, td { white-space: nowrap; padding: 0px;}
 			});
 
 			$('#selGenotypingPatients').combobox('select', '{{$genotyping_patients[0]->patient_id}}');
+
+			$.fn.dataTableExt.afnFiltering.push( function( oSettings, aData, iDataIndex ) {			
+			if (oSettings.nTable == document.getElementById('tblMatchedGenoTyping')) {
+				if (parseFloat(aData[8]) < parseFloat($('#selGenotypingCutoff').val()))
+					return false;
+				if ($('#DiffPatientOnly').is(':checked')) {
+					if (aData[0] == aData[4])
+						return false;
+				}
+				
+			}
+			return true;
+		});
 
 		@endif
 
@@ -551,13 +617,7 @@ th, td { white-space: nowrap; padding: 0px;}
 
 		$(document).on("click", ".popover .close" , function(){
 				$(this).parents(".popover").popover('hide');
-		});
-
-		$('#btnDownloadGenotyping').on("click", function(){
-			var url = '{{url('/getProjectGenotyping')}}' + '/' + '{{$project_id}}' + '/text';
-			window.location.replace(url);
-		});
-
+		});		
 		
 		$('body').on('change', 'input.data_column', function() {             				
 				var tblId = $(this).attr("id").substring($(this).attr("id").indexOf('data_column_') + 12);
@@ -574,7 +634,7 @@ th, td { white-space: nowrap; padding: 0px;}
 				}
 				tbl.column($(this).attr("value")).visible($(this).is(":checked"));
 				
-		});		
+		});
 
 	}
 
@@ -630,11 +690,46 @@ th, td { white-space: nowrap; padding: 0px;}
 
 			@if (count($genotyping_patients) > 0)
 			<div id="Genotyping" title="Genotyping" style="width:100%;padding:5px;border-width:0px">
-				<H5>Patient: 
-				<input class="easyui-combobox" id="selGenotypingPatients" name="selGenotypingPatients" />
-				</H5>
-				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblPatientGenoTyping" style='width:100%'>
-				</table>
+				<div id="out_container_gt" class="easyui-panel" data-options="border:false" style="width:100%;height:90%;padding:0px;border-width:0px">	
+					<div id="tabGT" class="easyui-tabs" data-options="tabPosition:'top',fit:true,plain:true,pill:false,border:false,headerWidth:160" style="width:100%;height:100%;padding:0px;overflow:hidden;border-width:0px">
+						<div id="matched" title="Matched" style="width:100%;padding:5px;border-width:0px">
+							<span>
+							<H5>Cutoff: 
+							<select class="form-control" id="selGenotypingCutoff" name="selGenotypingCutoff" style="width:200px;display:inline">
+								<option value="0.75">0.75</option>
+								<option value="0.8">0.8</option>
+								<option value="0.85">0.85</option>
+								<option value="0.9">0.9</option>
+								<option value="0.95">0.95</option>
+							</select>
+							<div id='loadingMatched' style="height:90%">
+    							<img src='{{url('/images/ajax-loader.gif')}}'></img>
+							</div>
+							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;					
+							<input type="checkbox" class="form-check-input" id="DiffPatientOnly" style="width: 1rem;height:1rem;margin-top:0.7rem">
+    						<label class="form-check-label" for="DiffPatientOnly">Different patient only</label>
+							</H5>
+							</span>
+							<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblMatchedGenoTyping" style='width:100%'>
+							</table>
+						</div>
+						<div id="by_patient" title="By Patient" style="width:100%;padding:5px;border-width:0px">
+							<H5>Patient:
+							<div id='loadingPatient' style="height:90%">
+    							<img src='{{url('/images/ajax-loader.gif')}}'></img>
+							</div> 
+							<input class="easyui-combobox" id="selGenotypingPatients" name="selGenotypingPatients" />
+							</H5>
+							<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblPatientGenoTyping" style='width:100%'>
+							</table>
+						</div>
+						<div id="downloadGT" title="Download" style="width:100%;padding:5px;border-width:0px">
+							<H5>Genotyping matrix: <button id="btnDownloadGenotyping" type="button" class="btn btn-default" style="font-size: 12px;">
+							<img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
+						</H5>
+						</div>
+					</div>
+				</div>
 			</div>
 			@endif
 		</div>	

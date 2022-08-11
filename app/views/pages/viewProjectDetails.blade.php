@@ -64,7 +64,14 @@ a.boxclose{
 	var survival_diags = {{$survival_diags}};
 	var attr_values = {};
 	var my_sp = null;
-
+	var tblSample = null;
+	var tblCase = null;
+	var exp_type_idx = 5;
+	var lib_type_idx = 6;
+	var tissue_cat_idx=7;
+	var tissue_type_idx=8;
+	var version_idx = 6;	
+	
 	$(document).ready(function() {
 		$("#loadingSummary").css("display","block");
 		var url='{{url("/getProjectSummary/".$project->id)}}';
@@ -432,9 +439,14 @@ a.boxclose{
     	});
 		
 		$('#btnDownloadMatrix').on('click', function() {
-			var url = '{{url('/getExpMatrixFile')}}' + '/' + '{{$project->id}}' + '/' + $('#selDownloadTargetType').val() + '/' + $('#selDownloadDataType').val();
-			console.log(url);
-			window.location.replace(url);	
+			if ($('#selDownloadDataType').val() == "sample_meta") {
+				var url = '{{url('/getProjectSamples')}}' + '/' + '{{$project->id}}' + '/text/RNAseq';
+				window.location.replace(url);
+			} else {
+				var url = '{{url('/getExpMatrixFile')}}' + '/' + '{{$project->id}}' + '/' + $('#selDownloadTargetType').val() + '/' + $('#selDownloadDataType').val();
+				console.log(url);
+				window.location.replace(url);
+			}
 		});
 		
 		$('#btnDownloadCNVFile').on('click', function() {
@@ -459,6 +471,14 @@ a.boxclose{
 
 		$('.easyui-tabs').tabs({
 			onSelect:function(title) {
+				if (title == "Samples") {
+					getSampleData();
+					return;
+				}
+				if (title == "Cases") {
+					getCaseData();
+					return;
+				}
 				if (title == "Mutations" || title == "Expression" || title == "Survival" || title=="TCR/BCR")
 					if (title == "TCR/BCR")
 						tab = $('#tabTCRBCR').tabs('getSelected');
@@ -470,7 +490,47 @@ a.boxclose{
 				console.log(id);
 				showFrameHtml(id);	
 		   }
-		});		
+		});
+
+		$.fn.dataTableExt.afnFiltering.push( function( oSettings, aData, iDataIndex ) {	
+			if (oSettings.nTable == document.getElementById('tblSamples')) {
+				if ($('#selExpTypes').val() != "All") {
+					if ($('#selExpTypes').val() != aData[exp_type_idx])
+						return false;
+				}
+				if ($('#selLibTypes').val() != "All") {
+					if ($('#selLibTypes').val() != aData[lib_type_idx])
+						return false;
+				}
+				if ($('#selTissueCats').val() != "All") {
+					if ($('#selTissueCats').val() != aData[tissue_cat_idx])
+						return false;
+				}
+				if ($('#selTissueTypes').val() != "All") {
+					if ($('#selTissueTypes').val() != aData[tissue_type_idx])
+						return false;
+				}
+				return true;
+			}
+			if (oSettings.nTable == document.getElementById('tblCases')) {
+				if ($('#selVersions').val() != "All") {
+					if ($('#selVersions').val() != aData[version_idx])
+						return false;
+				}
+				return true;
+			}
+			return true;
+		});	
+
+		$('#btnDownloadSamples').on("click", function(){
+			var url = '{{url('/getProjectSamples')}}' + '/' + '{{$project->id}}' + '/text';
+			window.location.replace(url);
+		});
+
+		$('#btnDownloadCases').on("click", function(){
+			var url = '{{url('/getCases')}}' + '/' + '{{$project->id}}' + '/text';
+			window.location.replace(url);
+		});
 		
 
 		patient_url = '{{url('/viewPatients/'.$project->id.'/any/0/project_details')}}'
@@ -510,9 +570,150 @@ a.boxclose{
 
 		//addTab('GSEA', '{{url('/viewGSEA/'.$project->id)}}');	
 		$('#tabDetails').tabs('select', 'Summary');
-		$('.mytooltip').tooltipster();	
-				
+		$('.mytooltip').tooltipster();				
 	});
+
+	function getCaseData() {
+		if (tblCase != null)
+			return;
+		$("#loadingCases").css("display","block");
+		var url = '{{url("/getCases/$project->id")}}';
+		console.log(url);
+       	$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {
+				$("#loadingCases").css("display","none");
+				$('#caseContent').css('display', 'block');
+				data = JSON.parse(json_data);
+				if (data.data.length == 0) {
+					alert('no data!');
+					return;
+				}
+				var versions = {};
+				
+				tblCase = $('#tblCases').DataTable( 
+				{				
+					"paging":   true,
+					"ordering": true,
+					"info":     true,
+					"dom": 'lfrtip',
+					"data": data.data,
+					"columns": data.cols,
+					"lengthMenu": [[15, 25, 50, -1], [15, 25, 50, "All"]],
+					"pageLength":  15,
+					"pagingType":  "simple_numbers",
+					"columnDefs": [{
+                			"render": function ( data, type, row, meta ) {
+                						if (meta.col == version_idx)
+                							versions[data] = ''; 
+                						return data;
+                						},
+                			"targets": '_all'
+            				}],
+				} );
+
+				versions = objAttrToArray(versions);
+				versions.sort().forEach(function(d){
+    				$('#selVersions').append($('<option>', {value: d, text: d}));	
+    			});
+    			
+
+				$('#lblCaseCountDisplay').text(tblCase.page.info().recordsDisplay);
+    			$('#lblCaseCountTotal').text(tblCase.page.info().recordsTotal);
+
+				$('#tblCases').on( 'draw.dt', function () {
+					$('#lblCaseCountDisplay').text(tblCase.page.info().recordsDisplay);
+    				$('#lblCaseCountTotal').text(tblCase.page.info().recordsTotal);
+    			});
+
+    			$('.caseFilter').on('change', function() {
+					tblCase.draw();
+					$('#lblCaseCountDisplay').text(tblCase.page.info().recordsDisplay);
+    				$('#lblCaseCountTotal').text(tblCase.page.info().recordsTotal);
+				});
+			}
+		});
+	}
+
+	function getSampleData() {
+		if (tblSample != null)
+			return;
+		$("#loadingSamples").css("display","block");
+		var url = '{{url("/getProjectSamples/$project->id")}}';
+		console.log(url);
+       	$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {
+				$("#loadingSamples").css("display","none");
+				$('#sampleContent').css('display', 'block');
+				data = JSON.parse(json_data);
+				if (data.data.length == 0) {
+					alert('no data!');
+					return;
+				}
+				var exp_types = {};
+				var lib_types = {};
+				var tissue_cats = {};
+				var tissue_types = {};
+
+				tblSample = $('#tblSamples').DataTable( 
+				{				
+					"paging":   true,
+					"ordering": true,
+					"info":     true,
+					"dom": 'lfrtip',
+					"data": data.data,
+					"columns": data.cols,
+					"lengthMenu": [[15, 25, 50, -1], [15, 25, 50, "All"]],
+					"pageLength":  15,
+					"pagingType":  "simple_numbers",
+					"columnDefs": [{
+                			"render": function ( data, type, row, meta ) {
+                						if (meta.col == exp_type_idx)
+                							exp_types[data] = ''; 
+                						if (meta.col == lib_type_idx)
+                							lib_types[data] = '';
+                						if (meta.col == tissue_cat_idx)
+                							tissue_cats[data] = '';
+                						if (meta.col == tissue_type_idx)
+                							tissue_types[data] = ''; 
+                						//	console.log(data);
+                						return data;
+                						},
+                			"targets": '_all'
+            				}],
+				} );
+
+				exp_types = objAttrToArray(exp_types);
+				exp_types.sort().forEach(function(d){
+    				$('#selExpTypes').append($('<option>', {value: d, text: d}));	
+    			});
+    			lib_types = objAttrToArray(lib_types);
+				lib_types.sort().forEach(function(d){
+    				$('#selLibTypes').append($('<option>', {value: d, text: d}));	
+    			});
+    			tissue_cats = objAttrToArray(tissue_cats);
+				tissue_cats.sort().forEach(function(d){
+    				$('#selTissueCats').append($('<option>', {value: d, text: d}));	
+    			});
+    			tissue_types = objAttrToArray(tissue_types);
+				tissue_types.sort().forEach(function(d){
+    				$('#selTissueTypes').append($('<option>', {value: d, text: d}));	
+    			});
+    			
+
+				$('#lblSampleCountDisplay').text(tblSample.page.info().recordsDisplay);
+    			$('#lblSampleCountTotal').text(tblSample.page.info().recordsTotal);
+
+				$('#tblSamples').on( 'draw.dt', function () {
+					$('#lblSampleCountDisplay').text(tblSample.page.info().recordsDisplay);
+    				$('#lblSampleCountTotal').text(tblSample.page.info().recordsTotal);
+    			});
+
+    			$('.sampleFilter').on('change', function() {
+					tblSample.draw();
+					$('#lblSampleCountDisplay').text(tblSample.page.info().recordsDisplay);
+    				$('#lblSampleCountTotal').text(tblSample.page.info().recordsTotal);
+				});
+			}
+		});
+	}
 
 	function setMetaVisible(visible=true) {
 			var meta_display = (visible)? "inline" : "none";
@@ -877,6 +1078,61 @@ a.boxclose{
 		</div>	
 		<div id="Patients" title="Patients" style="width:98%;border:1px">
 		</div>
+		<div id="Samples" title="Samples" style="height: 100%;width:98%;border:1px">
+			<div id='loadingSamples' class='loading_img'>
+				<img src='{{url('/images/ajax-loader.gif')}}'></img>
+			</div>
+			<div id="sampleContent" style="font-size: 14px;overflow: auto;display: none;margin:10px 0">				
+				Experiment Types: 
+				<select id="selExpTypes" class="form-control sampleFilter" style="width:150px;display: inline;">
+					<option value="All">All</option>												
+				</select>
+				&nbsp;
+				Library Types: 
+				<select id="selLibTypes" class="form-control sampleFilter" style="width:150px;display: inline;">
+					<option value="All">All</option>												
+				</select>
+				&nbsp;
+				Tissue Category: 
+				<select id="selTissueCats" class="form-control sampleFilter" style="width:150px;display: inline;">
+					<option value="All">All</option>												
+				</select>
+				&nbsp;
+				Tissue/Diagnosis: 
+				<select id="selTissueTypes" class="form-control sampleFilter" style="width:150px;display: inline;">
+					<option value="All">All</option>												
+				</select>
+				&nbsp;
+				<button id="btnDownloadSamples" type="button" class="btn btn-default" style="font-size: 12px;">
+					<img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
+				<span style="font-family: monospace; font-size: 20;float:right;">					
+				Samples: <span id="lblSampleCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="lblSampleCountTotal" style="text-align:left;" text=""></span>
+				</span>
+				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblSamples" style='white-space: nowrap;width:100%;overflow:auto'>
+				</table>				
+			</div>
+			
+		</div>
+		<div id="Cases" title="Cases" style="height: 100%;width:98%;border:1px">
+			<div id='loadingCases' class='loading_img'>
+				<img src='{{url('/images/ajax-loader.gif')}}'></img>
+			</div>
+			<div id="caseContent" style="font-size: 14px;overflow: auto;display: none;margin:10px 0">
+				Versions: 
+				<select id="selVersions" class="form-control caseFilter" style="width:150px;display: inline;">
+					<option value="All">All</option>												
+				</select>
+				&nbsp;
+				<button id="btnDownloadCases" type="button" class="btn btn-default" style="font-size: 12px;">
+					<img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
+				<span style="font-family: monospace; font-size: 20;float:right;">					
+				Cases: <span id="lblCaseCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="lblCaseCountTotal" style="text-align:left;" text=""></span>
+				</span>
+				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblCases" style='white-space: nowrap;width:100%;overflow:auto'>
+				</table>				
+			</div>
+			
+		</div>
 		@if ($project->hasMutation())
 		<div id="Mutations" title="Mutations" style="height:90%;width:100%;padding:10px;">
 			<div id="tabMutations" class="easyui-tabs" data-options="tabPosition:'top',plain:true,pill:false" style="width:98%;padding:0px;overflow:visible;border-width:0px">
@@ -1035,7 +1291,8 @@ a.boxclose{
 								<select id="selDownloadDataType" class="form-control pca-control">
 									<option value="count">Raw count</option>
 									<option value="tpm">TPM</option>
-									<option value="tmm-rpkm">TMM-RPKM (coding genes)</option>								
+									<option value="tmm-rpkm">TMM-RPKM (coding genes)</option>
+									<option value="sample_meta">Sample metadata</option>
 								</select>
 							</div>
 							<div class="col-md-3">

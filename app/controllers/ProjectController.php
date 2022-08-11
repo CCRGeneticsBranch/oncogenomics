@@ -1154,9 +1154,31 @@ class ProjectController extends BaseController {
 		}
 	}
 
+	public function getProjectSamples($project_id, $format="json", $exp_type="all") {
+		$project = Project::getProject($project_id);
+		$rows = $project->getProjectSamples(true, $exp_type);
+		if ($format == "json") {
+			$data = $this->getDataTableJson($rows, ["sample_alias","run_id","biomaterial_id", "relation", "platform", "project_id", "name", "diagnosis"]);
+			return json_encode($data);
+		}
+		$filename = $project->name."_samples.tsv";
+		$headers = array('Content-Type' => 'text/txt','Content-Disposition' => 'attachment; filename='.$filename);		
+		$data = $this->getDataTableJson($rows);
+		$content = $this->dataTableToTSV($data["cols"], $data["data"]);
+		return Response::make($content, 200, $headers);		
+		
+	}
+
 	public function getProjectGenotypingByPatient($project_id, $patient_id) {
 		$project = Project::getProject($project_id);
 		$rows = $project->GenotypingByPatient($patient_id);
+		$data = $this->getDataTableJson($rows);
+		return json_encode($data);
+	}
+
+	public function getMatchedGenotyping($project_id, $cutoff=0.75) {
+		$project = Project::getProject($project_id);
+		$rows = $project->getMatchedGenotyping($cutoff);
 		$data = $this->getDataTableJson($rows);
 		return json_encode($data);
 	}

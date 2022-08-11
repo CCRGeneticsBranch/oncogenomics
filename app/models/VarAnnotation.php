@@ -2352,7 +2352,8 @@ p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.
 				$has_gene = isset($gene_list[$var->gene])? $this->formatLabel("Y"):"";
 				if (strtolower($list_name) == "cosmic_cancer_genes" && $has_gene != "")
 					$cosmic_cancer_gene = "Y";
-				$var->{strtolower($list_name)} = $has_gene;
+				//if (strtolower($list_name) == "clinomics_gene_list" || strtolower($list_name) == "cgcensus_hereditary" || strtolower($list_name) == "tumor_suppressor_genes" || strtolower($list_name) == "loss_of_function_genes")
+					$var->{strtolower($list_name)} = $has_gene;
 			}
 
 			//add flag info

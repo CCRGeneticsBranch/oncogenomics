@@ -698,8 +698,12 @@ class SampleController extends BaseController {
 		$filter_lists = UserGeneList::getDescriptions('all');
 		foreach ($filter_lists as $list_name => $desc) {
 			$filter_definition[$list_name] = $desc;
+		}
+		$filter_gene_list = UserGeneList::getGeneList("all");				
+		foreach ($filter_gene_list as $list_name => $gene_list) {
+			$filter_gene_list[$list_name] = $gene_list;
 		}		
-		return View::make('pages/viewExpressionAnalysisByCase', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'filter_definition' => $filter_definition, 'files'=>$files, 'gsea_htmls' => $gsea_htmls, 'de_summary' => $de_summary, 'de_files' => $de_files]);
+		return View::make('pages/viewExpressionAnalysisByCase', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'filter_definition' => $filter_definition, 'filter_gene_list' => json_encode($filter_gene_list), 'files'=>$files, 'gsea_htmls' => $gsea_htmls, 'de_summary' => $de_summary, 'de_files' => $de_files]);
 	}
 
 	public function getCaseExpMatrixFile($patient_id, $case_id) {
@@ -727,8 +731,12 @@ class SampleController extends BaseController {
 				$fields = explode("\t", $line);
 				if (count($cols) == 0) {
 					$fields[0] = "Gene";
-					foreach ($fields as $field)
-						$cols[] = array("title" => $field);
+					foreach ($fields as $field) {
+						$sample_name = Sample::getSampleNameByID($field);
+						if ($sample_name == "")
+							$sample_name = $field;
+						$cols[] = array("title" => $sample_name);
+					}
 					
 					$user_list_idx = count($cols);
 					/*
@@ -739,8 +747,11 @@ class SampleController extends BaseController {
 					$symbol = $fields[0];
 					$row_data = array("<a target=_blank href='$junction_url/$symbol'>$symbol</a>");
 					#$row_data = array($fields[0]);
-					for ($i=1;$i<count($fields);$i++)
-						$row_data[] = round(log($fields[$i]+1,2),2);					
+					for ($i=1;$i<count($fields);$i++) {
+						$value = round(log($fields[$i]+1,2),2);
+						$sample_name = $cols[$i]["title"];
+						$row_data[] = "<a href='#' onclick=\"showExp(this, '$symbol', '$sample_name')\">$value</a>";
+					}
 					/*
 					foreach ($user_filter_list as $list_name => $gene_list) {
 						$has_gene = '';
@@ -763,11 +774,16 @@ class SampleController extends BaseController {
 
 	public function viewExpressionByCase($project_id, $patient_id, $case_id, $sample_id="null") {
 		$filter_definition = array();
+		$filter_gene_list = array();
 		$filter_lists = UserGeneList::getDescriptions('all');
+		$filter_gene_list = UserGeneList::getGeneList("all");				
+		foreach ($filter_gene_list as $list_name => $gene_list) {
+			$filter_gene_list[$list_name] = $gene_list;
+		}
 		foreach ($filter_lists as $list_name => $desc) {
 			$filter_definition[$list_name] = $desc;
 		}		
-		return View::make('pages/viewCaseExpression', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'sample_id' => $sample_id, 'filter_definition' => $filter_definition]);
+		return View::make('pages/viewCaseExpression', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'sample_id' => $sample_id, 'filter_definition' => $filter_definition, 'filter_gene_list' => json_encode($filter_gene_list)]);
 	}
 
 	public function getExpressionByCase($patient_id, $case_id, $target_type="all", $sample_id="all", $include_link=true) {
@@ -874,9 +890,12 @@ class SampleController extends BaseController {
 		}
 		$user_list_idx = count($cols);
 		Log::info($user_list_idx);
-		$user_filter_list = UserGeneList::getGeneList("all");				
-		foreach ($user_filter_list as $list_name => $gene_list)
-			$cols[] = array("title" => $list_name);
+		$add_gene_list_columns = false;
+		if ($add_gene_list_columns) {
+			$user_filter_list = UserGeneList::getGeneList("all");				
+			foreach ($user_filter_list as $list_name => $gene_list)
+				$cols[] = array("title" => $list_name);
+		}
 		foreach ($exp_data as $symbol => $exp) {
 			$row_data = array();
 			if (!$has_refseq) {
@@ -941,12 +960,14 @@ class SampleController extends BaseController {
 					}
 				}				 
 			}
-			foreach ($user_filter_list as $list_name => $gene_list) {
-				$has_gene = '';
-				if (array_key_exists($symbol, $gene_list)) {
-					$has_gene = 'Y';
+			if ($add_gene_list_columns) {
+				foreach ($user_filter_list as $list_name => $gene_list) {
+					$has_gene = '';
+					if (array_key_exists($symbol, $gene_list)) {
+						$has_gene = 'Y';
+					}
+					$row_data[] = $has_gene;
 				}
-				$row_data[] = $has_gene;
 			}
 			if ($non_na)
 				$data[] = $row_data;
@@ -1003,7 +1024,7 @@ class SampleController extends BaseController {
 		return Response::make($content, 200, $headers);
 	}
 
-	public function getCases($project_id) {
+	public function getCases($project_id, $format="json") {
 		$logged_user = User::getCurrentUser();
 		if ($logged_user == null) {
 			return "Please login first";
@@ -1015,11 +1036,20 @@ class SampleController extends BaseController {
 			}
 			else
 				$case_label=$case->case_name;
-			$case->case_name = "<a aria-label='".$case_label."' target=_blank href=".url("/viewPatient/$project_id/$case->patient_id/$case->case_name").">".$case->case_name."</a>";
-			$case->patient_id = "<a aria-label='".$case->patient_id."' target=_blank href=".url("/viewPatient/$project_id/".$case->patient_id).">".$case->patient_id."</a>";
+			if ($format == "json") {
+				$case->case_name = "<a aria-label='".$case_label."' target=_blank href=".url("/viewPatient/$project_id/$case->patient_id/$case->case_name").">".$case->case_name."</a>";
+				$case->patient_id = "<a aria-label='".$case->patient_id."' target=_blank href=".url("/viewPatient/$project_id/".$case->patient_id).">".$case->patient_id."</a>";
+			}
 		}
 		$tbl_results = $this->getDataTableJson($cases);
-		return json_encode($tbl_results);
+		if ($format == "json")
+			return json_encode($tbl_results);
+		$project = Project::getProject($project_id);
+		$filename = $project->name."_case.tsv";
+		$headers = array('Content-Type' => 'text/txt','Content-Disposition' => 'attachment; filename='.$filename);		
+		$content = $this->dataTableToTSV($tbl_results["cols"], $tbl_results["data"]);
+		return Response::make($content, 200, $headers);	
+		
 	}
 	
 	public function publishCase($patient_id, $case_id){

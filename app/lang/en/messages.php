@@ -25,7 +25,7 @@ return array(
 	"sample_num" => "Total Samples",
 	"sample_id" => "Sample ID",
 	"sample_name" => "Sample Name",
-	"sample_alias" => "Sample",
+	"sample_alias" => "Alias",
 	"biomaterial_id" => "Biomaterial ID",
 	"source_biomaterial_id" => "Source Biomaterial ID",
 	"custom_id" => "Custom ID",

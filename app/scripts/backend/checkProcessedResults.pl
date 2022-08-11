@@ -134,14 +134,14 @@ close(UNLOADED_CASES);
 
 #find missing bams
 print("4: checking missing bams\n");
-my $sth_smps = $dbh->prepare("select distinct v.patient_id,v.case_id,v.sample_id,v.sample_name,c.path,c.exp_type from var_samples v,sample_cases c where 
+my $sth_smps = $dbh->prepare("select distinct v.patient_id,v.case_id,c.case_name,v.sample_id,v.sample_name,c.path,c.exp_type from var_samples v,sample_cases c where 
 v.patient_id=c.patient_id and v.case_id=c.case_id and v.sample_id=c.sample_id and c.exp_type in ('Exome','Panel','RNAseq') order by v.patient_id,v.case_id,v.sample_id");
 $sth_smps->execute();
 
 open(MISSING_BAMS, ">$out_dir/missing_bams.txt");
-print MISSING_BAMS join("\t",("Patient_ID","Case_ID","Sample_ID","Sample_Name","Path","Source","Exp_Type","Case_Exist"))."\n";
+print MISSING_BAMS join("\t",("Patient_ID","Case_ID","Case_Name","Sample_ID","Sample_Name","Path","Source","Exp_Type","Case_Exist"))."\n";
 #check if bam files exist
-while (my ($patient_id,$case_id,$sample_id,$sample_name,$path,$exp_type) = $sth_smps->fetchrow_array) {
+while (my ($patient_id,$case_id,$case_name,$sample_id,$sample_name,$path,$exp_type) = $sth_smps->fetchrow_array) {
   my $bam_squeeze_ext = ($exp_type eq "RNAseq")? "star.final.squeeze.bam" : "bwa.final.squeeze.bam";
   my $bam_ext = ($exp_type eq "RNAseq")? "star.final.bam" : "bwa.final.bam";
   my $bam_path = "$bam_dir/$path/$patient_id/$case_id/$sample_id/$sample_id.$bam_squeeze_ext";
@@ -163,8 +163,8 @@ while (my ($patient_id,$case_id,$sample_id,$sample_name,$path,$exp_type) = $sth_
               $src_dir = $project_mapping{$path}."/$patient_id/$case_id/*/*.bam";
             }
           }
-          print MISSING_BAMS join("\t", ($patient_id,$case_id,$sample_id,$sample_name,$path,$src_dir,$exp_type,$case_exists))."\n";
-          push @{$report{"missing_bams"}{$path}}, join("\t", ($path,$src_root,$patient_id,$case_id,$sample_id,$sample_name));
+          print MISSING_BAMS join("\t", ($patient_id,$case_id,$case_name,$sample_id,$sample_name,$path,$src_dir,$exp_type,$case_exists))."\n";
+          push @{$report{"missing_bams"}{$path}}, join("\t", ($path,$src_root,$patient_id,$case_id,$case_name,$sample_id,$sample_name));
         }
       }
     }
@@ -180,20 +180,24 @@ my $sth_smp_cases = $dbh->prepare("select distinct patient_id,case_name,exp_type
 $sth_smp_cases->execute();
 open(UNPROCESSED_CASES, ">$out_dir/unprocessed_cases.txt");
 print UNPROCESSED_CASES join("\t",("Patient_ID","Case_Name","Path"))."\n";
+my %unprocessed_cases = ();
 while (my ($patient_id,$case_name, $exp_type) = $sth_smp_cases->fetchrow_array) {
-  my $path = "processed_DATA";
-  if ($patient_id =~ /CP0/) {
-    $path = ($exp_type eq "Panel")? "compass_tso500": "compass_exome";
+  if (! exists($unprocessed_cases{join("\t", ($patient_id,$case_name))})) {
+    $unprocessed_cases{join("\t", ($patient_id,$case_name))} = '';
+    my $path = "processed_DATA";
+    if ($patient_id =~ /CP0/) {
+      $path = ($exp_type eq "Panel")? "compass_tso500": "compass_exome";
+    }
+    print UNPROCESSED_CASES join("\t", ($patient_id,$case_name,$path))."\n";
+    $report{"unprocessed_cases"}{"$path"}{join("\t", ($patient_id,$case_name))} = '';  
   }
-  print UNPROCESSED_CASES join("\t", ($patient_id,$case_name,$path))."\n";
-  $report{"unprocessed_cases"}{"$path"}{join("\t", ($patient_id,$case_name))} = '';  
 }
 close(UNPROCESSED_CASES);
 $sth_smp_cases->finish;
 
 
 print("6: checking missing RSEM\n");
-my $sth_rna_smps = $dbh->prepare("select distinct patient_id,case_id,sample_id,sample_name,path from sample_cases where case_id is not null and exp_type='RNAseq' order by patient_id");
+my $sth_rna_smps = $dbh->prepare("select distinct patient_id,case_id,case_name,sample_id,sample_name,path from sample_cases where case_id is not null and exp_type='RNAseq' order by patient_id");
 my $sth_smp_status = $dbh->prepare("select distinct sample_id,attr_value from sample_details where attr_name='status'");
 $sth_smp_status->execute();
 my %smp_status = ();
@@ -205,9 +209,9 @@ $sth_smp_status->finish;
 $sth_rna_smps->execute();
 
 open(MISSING_RSEMS, ">$out_dir/missing_rsems.txt");
-print MISSING_RSEMS join("\t",("Patient_ID","Case_ID","Sample_ID","Sample_Name","Path"))."\n";
+print MISSING_RSEMS join("\t",("Patient_ID","Case_ID","Case_Name","Sample_ID","Sample_Name","Path"))."\n";
 #check if rsem files exist
-while (my ($patient_id,$case_id,$sample_id,$sample_name,$path) = $sth_rna_smps->fetchrow_array) {
+while (my ($patient_id,$case_id,$case_name,$sample_id,$sample_name,$path) = $sth_rna_smps->fetchrow_array) {
   my $ext = "rsem_ENS.genes.results";
   my $rsem_path = "$processed_data_dir/$path/$patient_id/$case_id/$sample_id/RSEM_ENS/${sample_id}.$ext";
   if ( ! -f $rsem_path ) {
@@ -220,8 +224,8 @@ while (my ($patient_id,$case_id,$sample_id,$sample_name,$path) = $sth_rna_smps->
           if (exists $smp_status{$sample_id}) {
             next if ($smp_status{$sample_id} ne "Completed");
           }          
-          print MISSING_RSEMS join("\t", ($patient_id,$case_id,$sample_id,$sample_name,$path))."\n";
-          push @{$report{"missing_rsems"}{$path}{join("\t", ($patient_id,$case_id))}}, join("\t", ($patient_id,$case_id,$sample_id,$sample_name));
+          print MISSING_RSEMS join("\t", ($patient_id,$case_id,$case_name,$sample_id,$sample_name,$path))."\n";
+          push @{$report{"missing_rsems"}{$path}{join("\t", ($patient_id,$case_id))}}, join("\t", ($patient_id,$case_id,$case_name,$sample_id,$sample_name));
         }
       }
     }

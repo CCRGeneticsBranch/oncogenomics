@@ -62,6 +62,12 @@ for (i in c(1:length(exp_list$file))) {
   data <- as.data.frame(data.table::fread(file, sep="\t", header = TRUE))
   count <- data %>% dplyr::select(gene_id, expected_count)
   tpm <- data %>% dplyr::select(gene_id, TPM)
+  if (count$gene_id[1] == ".") {
+    count <- data %>% dplyr::select(symbol, expected_count)
+    tpm <- data %>% dplyr::select(symbol, TPM)
+    colnames(count)[1] <- "gene_id"
+    colnames(tpm)[1] <- "gene_id"
+  }
   if (substr(data$gene_id[1], 1, 4) == "ENSG") {    
     #count$gene_id <- gsub("\\..*","",count$gene_id)
     count$gene_id <- gsub("\\.[0-9]*_[0-9]*","",count$gene_id)

@@ -473,7 +473,14 @@ class Project extends Eloquent {
 	}
 
 	public function GenotypingByPatient($patient_id) {
-		$sql="select s1.patient_id as Patient1,g.sample1, s1.tissue_type as Tissue1,s1.exp_type as exp_type1, s2.patient_id as Patient2,g.sample2, s2.tissue_type as Tissue2,s2.exp_type as exp_type2,percent_match  from genotyping g,project_samples p,samples s1,samples s2 where p.project_id=$this->id and p.patient_id='$patient_id' and (p.sample_id=g.sample1 or p.sample_id=g.sample2) and s1.sample_id=g.sample1 and s2.sample_id=g.sample2";
+		$sql="select s1.patient_id as Patient1,g.sample1, s1.tissue_type as Tissue1,s1.exp_type as exp_type1, s2.patient_id as Patient2,g.sample2, s2.tissue_type as Tissue2,s2.exp_type as exp_type2,percent_match from genotyping g,project_samples s1,project_samples s2 where g.sample1=s1.sample_id and g.sample2=s2.sample_id and s1.project_id=$this->id and s2.project_id=$this->id and (s1.patient_id='$patient_id' or s2.patient_id='$patient_id')";
+		return DB::select($sql);
+
+	}
+
+	public function getMatchedGenotyping($cutoff=0.75) {
+		$sql="select s1.patient_id as Patient1,g.sample1, s1.tissue_type as Tissue1,s1.exp_type as exp_type1, s2.patient_id as Patient2,g.sample2, s2.tissue_type as Tissue2,s2.exp_type as exp_type2,percent_match  from genotyping g,project_samples p,samples s1,samples s2 where p.project_id=$this->id and g.percent_match >= $cutoff and (p.sample_id=g.sample1 or p.sample_id=g.sample2) and s1.sample_id=g.sample1 and s2.sample_id=g.sample2";
+		$sql="select s1.patient_id as Patient1,g.sample1, s1.tissue_type as Tissue1,s1.exp_type as exp_type1, s2.patient_id as Patient2,g.sample2, s2.tissue_type as Tissue2,s2.exp_type as exp_type2,percent_match from genotyping g,project_samples s1,project_samples s2 where g.sample1=s1.sample_id and g.sample2=s2.sample_id and s1.project_id=$this->id and s2.project_id=$this->id and g.percent_match >= $cutoff";
 		return DB::select($sql);
 
 	}
@@ -1366,6 +1373,41 @@ class Project extends Eloquent {
 		$sql = "select distinct p.diagnosis,v.* from project_cases c, tcell_extrect v,patients p where c.project_id=$this->id and c.patient_id = v.patient_id and c.case_id=v.case_id and c.patient_id=p.patient_id";
 		$rows = DB::select($sql);
 		return $rows;
+	}
+
+	public function getProjectSamples($include_details=true, $exp_type="all") {
+		$exp_condition = "";
+		if ($exp_type != "all")
+			$exp_condition = " and exp_type='$exp_type'";		
+		$sql = "select * from project_samples where project_id=$this->id $exp_condition";
+		Log::info($sql);
+		$samples = DB::select($sql);
+		$sample_details_attrs = array();
+		$sample_details_values = array();
+		if ($include_details) {
+			$sql_details = "select * from project_samples s1, sample_details s2 where project_id=$this->id and s1.sample_id=s2.sample_id";
+			$sample_details = DB::select($sql_details);			
+			foreach ($sample_details as $sample_detail) {
+				$sample_details_attrs[$sample_detail->attr_name] = "";
+				$sample_details_values[$sample_detail->sample_id][$sample_detail->attr_name] = $sample_detail->attr_value;
+			}
+			$sample_details_attrs = array_keys($sample_details_attrs);
+		}
+		$rows = DB::select($sql);
+		$new_rows = array();
+		foreach($rows as $row) {
+			$new_row = $row;
+			foreach($sample_details_attrs as $attr) {
+				$new_row->{$attr} = "";
+				if (array_key_exists($row->sample_id, $sample_details_values))
+					if (array_key_exists($attr, $sample_details_values[$row->sample_id]))
+						$new_row->{$attr} = $sample_details_values[$row->sample_id][$attr];
+			}
+			$new_rows[] = $new_row;
+
+		}
+		return $new_rows;
+
 	}
 
 	public function saveClinicalDataType($data) {

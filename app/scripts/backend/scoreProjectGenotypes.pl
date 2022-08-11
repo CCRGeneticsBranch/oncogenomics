@@ -70,7 +70,7 @@ my %gt_db = ();
 print("reading current genotyping data...\n");
 $sth_gt_db->execute();
 while (my ($sample1, $sample2, $match) = $sth_gt_db->fetchrow_array) {
-	$gt_db{$sample1}{$sample2} = '';
+	$gt_db{$sample1}{$sample2} = $match;
 }
 $sth_gt_db->finish;
 print("done\n");
@@ -132,8 +132,7 @@ foreach my $sample1 (@sample_list) {
 	my $file1 = $new_list{$sample1};
 	foreach my $sample2 (@sample_list) {
 		my $file2 = $new_list{$sample2};
-		my $res = 0;
-		next if (exists($gt_db{$sample1}{$sample2}) || exists($gt_db{$sample2}{$sample1}));
+		my $res = -1;		
 		if ($sample1 eq $sample2) {
 			print OF "\t1";
 		} else {
@@ -142,14 +141,21 @@ foreach my $sample1 (@sample_list) {
 			} elsif (exists($sample_pairs{$sample1}{$sample2})) {
 				$res = $sample_pairs{$sample1}{$sample2};
 			} else {
-				$res = `perl $script_dir/scoreGenotypes.pl $file1 $file2`;
-				chomp $res;
-				$sample_pairs{$sample1}{$sample2} = $res;
-				$sth_gt_ins->execute($sample1, $sample2, $res);
-				$in_count++;
-				if (($in_count % 100) == 0) {
-					$dbh->commit();
-					print("commited\n");
+				if (exists($gt_db{$sample1}{$sample2})) {
+					$res = $gt_db{$sample1}{$sample2};
+				} elsif (exists($gt_db{$sample2}{$sample1})) {
+					$res = $gt_db{$sample2}{$sample1};
+				}
+				if ($res == -1) {
+					$res = `perl $script_dir/scoreGenotypes.pl $file1 $file2`;
+					chomp $res;
+					$sample_pairs{$sample1}{$sample2} = $res;
+					$sth_gt_ins->execute($sample1, $sample2, $res);
+					$in_count++;
+					if (($in_count % 100) == 0) {
+						$dbh->commit();
+						print("commited\n");
+					}
 				}
 			}			
 			chomp $res;

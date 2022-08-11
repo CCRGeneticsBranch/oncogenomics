@@ -38,7 +38,7 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getExpression/{project_id}/{gene_list}/{target_type?}/{library_type?}', 'ProjectController@getExpression');
 	Route::get('/getProjectCNV/{project_id}/{gene_list}', 'ProjectController@getCNV');
 	Route::get('/getExpressionByLocus/{project_id}/{patient_id}/{case_id}/{chr}/{start_pos}/{end_pos}/{target_type}/{library_type}', 'ProjectController@getExpressionByLocus');
-	Route::get('/getCases/{project_id}'                       , 'SampleController@getCases');
+	Route::get('/getCases/{project_id}/{format?}'                       , 'SampleController@getCases');
 	Route::get('/getProjectSummary/{project_id}', 'ProjectController@getProjectSummary');
 	Route::get('/getPCAData/{project_id}/{target_type}/{value_type?}' , 'ProjectController@getPCAData');
 	Route::get('/getMutationGenes/{project_id}/{type}/{meta_type?}/{meta_value?}/{maf?}/{min_total_cov?}/{vaf?}', 'ProjectController@getMutationGenes' );
@@ -50,6 +50,7 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getCorrelationData/{project_id}/{gene_id}/{cufoff}/{target_type}/{method?}/{value_type?}' , 'ProjectController@getCorrelationData');
 	Route::get('/getProjectGenotyping/{project_id}/{type?}', 'ProjectController@getProjectGenotyping');
 	Route::get('/getProjectGenotypingByPatient/{project_id}/{patient_id}', 'ProjectController@getProjectGenotypingByPatient');
+	Route::get('/getMatchedGenotyping/{project_id}/{cutoff?}', 'ProjectController@getMatchedGenotyping');
 	Route::get('/getExpMatrixFile/{project_id}/{target_type}/{data_type?}', 'ProjectController@getExpMatrixFile');
 	Route::get('/getVarAnnotation/{project_id}/{patient_id}/{sample_id}/{case_id}/{type}', 'VarController@getVarAnnotation'  );
 	Route::get('/getVarAnnotationByGene/{project_id}/{gene_id}/{type}'            , 'VarController@getVarAnnotationByGene'  );
@@ -76,6 +77,7 @@ Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getSurvivalListByExpression/{project_id}/{type}/{diagnosis}', 'ProjectController@getSurvivalListByExpression');
 	Route::get('/viewProjectMixcr/{project_id}/{type}'            , 'ProjectController@viewProjectMixcr'  );
 	Route::get('/getProjectMixcr/{project_id}/{type}/{format?}'            , 'ProjectController@getProjectMixcr'  );
+	Route::get('/getProjectSamples/{project_id}/{format?}/{exp_type?}', 'ProjectController@getProjectSamples'  );
 	
 });
 

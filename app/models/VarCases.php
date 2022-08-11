@@ -13,8 +13,30 @@ class VarCases extends Eloquent {
             return array();
         $condition = "and exists(select * from project_cases p2, user_projects u where p2.project_id=u.project_id and u.user_id=$logged_user->id and p2.patient_id=c.patient_id and p2.case_name=c.case_name)";
         if ($project_id != "any")
-            $condition = "and exists(select * from project_patients p2 where p.patient_id=p2.patient_id and p2.project_id=$project_id)";
+            $condition = "and exists(select * from project_cases p2 where p.patient_id=p2.patient_id and p2.project_id=$project_id and p2.case_name=c.case_name)";
         $rows = DB::select("select p.patient_id, p.diagnosis, c.case_id, c.case_name, c.finished_at as pipeline_finish_time, c.updated_at as upload_time, status,version from cases c, patients p where c.patient_id=p.patient_id $condition order by p.patient_id ASC, c.finished_at DESC");//Added ordering for download query
+
+        if ($project_id != "any") {
+            $cnts = DB::select("select p.patient_id,p.case_name,exp_type,count(*) as cnt from project_cases p, sample_cases c where p.project_id=$project_id and p.patient_id=c.patient_id and p.case_name=c.case_name group by p.patient_id,p.case_name,c.exp_type");
+            $exp_types = array();
+            $exp_type_counts = array();
+            foreach ($cnts as $cnt) {
+                $exp_types[$cnt->exp_type] = '';
+                $exp_type_counts["$cnt->patient_id,$cnt->case_name,$cnt->exp_type"] = $cnt->cnt;
+            }
+            $exp_types = array_keys($exp_types);
+            foreach ($rows as $row) {
+                unset($row->status);
+                foreach ($exp_types as $exp_type) {
+                    $value = "0";
+                    if (array_key_exists("$row->patient_id,$row->case_name,$exp_type", $exp_type_counts))
+                        $value = $exp_type_counts["$row->patient_id,$row->case_name,$exp_type"];
+                    $row->{$exp_type} = $value;
+                }
+
+            }
+        }
+        
         return $rows;
     }    
 
