@@ -739,6 +739,7 @@
             },
             plotOptions: {
                 series: {
+                    turboThreshold: 10000,
                     marker: {
                             radius: 6
                     },
