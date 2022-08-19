@@ -93,6 +93,12 @@ coding_ids <- tpm_coding$gene_id
 tpm_mats <- NULL
 tpm_coding <- tpm_coding[,10:ncol(tpm_coding)]
 rownames(tpm_coding) <- coding_ids
+write.table(tpm_coding, paste(out_dir,"/expression.tpm.coding.tsv", sep= ""), sep="\t",row.names = T, col.names=NA, quote = FALSE)
+tpm_coding_zscore <- round(t(scale(t(tpm_coding))),2)
+write.table(tpm_coding_zscore, paste(out_dir,"/expression.tpm.coding.zscore.tsv", sep= ""), sep="\t",row.names = T, col.names=NA, quote = FALSE)
+tpm_coding_rank <- as.data.frame(t(apply(tpm_coding, 1, function(x) rank(-x, ties.method="min"))))
+colnames(tpm_coding_rank) <- colnames(tpm_coding)
+write.table(tpm_coding_rank, paste(out_dir,"/expression.tpm.coding.rank.tsv", sep= ""), sep="\t",row.names = T, col.names=NA, quote = FALSE)
 saveRDS(tpm_coding, paste(out_dir,"/expression.coding.tpm.RDS", sep= ""))
 tpm_coding <- NULL
 gc()

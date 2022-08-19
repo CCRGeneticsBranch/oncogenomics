@@ -14,7 +14,7 @@ use Jacopo\Authentication\Exceptions\UserNotFoundException;
 use Jacopo\Authentication\Validators\GroupValidator;
 use Jacopo\Library\Exceptions\JacopoExceptionsInterface;
 use View, Input, Redirect, App, Config;
-use DB;
+use DB, Log;
 
 class GroupController extends \Controller
 {
@@ -43,7 +43,11 @@ class GroupController extends \Controller
     {
         $groups = $this->group_repository->all(Input::all());
         $logged_user = User::getCurrentUser();
-        $groups = DB::select("select * from projects p where exists(select * from project_groups g, project_group_managers m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id) order by name");
+        $sql = "select * from projects p where exists(select * from project_groups g, project_group_managers m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id) order by name";
+        if (User::isSuperAdmin())
+            $sql = "select * from projects order by name";
+        Log::info($sql);
+        $groups = DB::select($sql);
 
         return View::make('laravel-authentication-acl::admin.group.list')->with(["groups" => $groups]);
     }

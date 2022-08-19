@@ -93,7 +93,7 @@ Route::group(['before' => ['authorized_patient']], function () {
 	Route::get('/downloadAntigenData/{patient_id}/{case_id}/{sample_name}'            , 'VarController@downloadAntigenData'  );
 	Route::get('/downloadHLAData/{patient_id}/{case_id}/{sample_name}'            , 'VarController@downloadHLAData'  );
 	Route::get('/createReport'            , 'VarController@createReport'  );
-	Route::get('/getExpressionByCase/{patient_id}/{case_id}/{target_type?}/{sample_id?}'            , 'SampleController@getExpressionByCase'  );
+	Route::get('/getExpressionByCase/{project_id}/{patient_id}/{case_id}/{target_type?}/{sample_id?}'            , 'SampleController@getExpressionByCase'  );
 	Route::get('/getGSEA/{project_id}/{patient_id}/{case_id}/{sample_id}'            , 'SampleController@getGSEA'  );	
 	Route::post('/GSEAcalc/{project_id}/{patient_id}/{case_id}'            , 'SampleController@GSEAcalc'  );
 	Route::get('/getVarActionable/{patient_id}/{case_id}/{type}/{flag}', 'VarController@getVarActionable'  );

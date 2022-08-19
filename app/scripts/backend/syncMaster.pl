@@ -23,6 +23,7 @@ local $SIG{__WARN__} = sub {
 my $input_file_list;
 my $patient_mapping_file;
 my $modified_flag_list;
+my $project_group_list;
 my $keep_old = 0;
 my $update_case = 0;
 my $rm_orphan_prj = 0;
@@ -39,6 +40,7 @@ Options:
 
   -i  <string>  Input text files (comma separated)
   -m  <string>	Modified flags   (comma separated)
+  -g  <string>	Project groups   (comma separated)
   -u            Update case information and refresh views
   -n  <string>  Database name (default: $database_name)
   -p  <string>  Patient mapping file
@@ -51,6 +53,7 @@ __EOUSAGE__
 GetOptions (
   'i=s' => \$input_file_list,
   'm=s' => \$modified_flag_list,
+  'g=s' => \$project_group_list,
   'n=s' => \$database_name,
   'p=s' => \$patient_mapping_file,
   'u'   => \$update_case,
@@ -137,11 +140,12 @@ where d.sample_id=s.sample_id)");
 
 my @input_files = split(/,/, $input_file_list);
 my @input_flags = split(/,/, $modified_flag_list) if ($modified_flag_list);
+my @project_groups = split(/,/, $project_group_list) if ($project_group_list);
 my $sql_smp = "insert into samples values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 my $sql_pat = "insert into patients values(?,?,?,?,?,?,?)";
 my $sql_smp_dtl = "insert into sample_details values(?,?,?)";
 
-my $sql_prj = "insert into projects (name, description, updated_at, created_at, project_group, status, user_id, version) values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, '1', '0', '1', '19')";
+my $sql_prj = "insert into projects (name, description, updated_at, created_at, project_group, status, user_id, version) values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, ?, '0', '1', '19')";
 my $sql_smp_case = "insert into sample_case_mapping(SAMPLE_ID,PATIENT_ID,CASE_NAME) values(?,?,?)";
 my $sql_prj_smp = "insert into project_sample_mapping values(?,?)";
 
@@ -197,6 +201,10 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 	print "opening $input_file"  and <STDIN>  if ($verbose);
 	$input_file = basename($input_file);
 	push @modified_files, $input_file if ($modified_flag_list && $input_flags[$file_idx]);
+	my $project_group = "khanlab";
+	if ($project_group_list && $project_groups[$file_idx]) {
+		$project_group = $project_groups[$file_idx];
+	}
 
 	my $line = <IN_FILE>;
 	chomp $line;
@@ -531,7 +539,7 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 								$projects_in_master{$project_name} = '';
 								my $project_id = (exists $projects{$project_name})? $projects{$project_name} : -1;
 								if ($project_id == -1) {
-									$sth_prj->execute($project_name, $project_name);			
+									$sth_prj->execute($project_name, $project_name, $project_group);			
 									$sth_prj_id->execute($project_name);
 									if (my @row = $sth_prj_id->fetchrow_array) {
 										$project_id = $row[0];

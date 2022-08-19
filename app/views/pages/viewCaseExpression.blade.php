@@ -91,7 +91,7 @@ a.boxclose{
 	var filter_gene_list = {{$filter_gene_list}};
 	
 	$(document).ready(function() {		
-		var url = '{{url('/getExpressionByCase')}}' + '/' + '{{$patient_id}}' + '/' + '{{$case_id}}' + '/ensembl/' + '{{$sample_id}}';
+		var url = '{{url('/getExpressionByCase')}}' + '/' + '{{$project_id}}' + '/' + '{{$patient_id}}' + '/' + '{{$case_id}}' + '/ensembl/' + '{{$sample_id}}';
 		console.log(url);
 		$.ajax({ url: url, async: true, dataType: 'text', success: function(data) {
 				$("#loading").css("display","none");	
@@ -133,6 +133,10 @@ a.boxclose{
 
 		$('#btnClearFilter').on('click', function() {
 			showAll();		
+		});
+
+		$('#selMinTPM').on('change', function() {
+			doFilter();
 		});
 	});
 
@@ -238,6 +242,11 @@ a.boxclose{
 					return false;
 				}
 				*/
+
+				selMinTPM
+				if (parseFloat($('#selMinTPM').val()) > parseFloat(aData[2])) {
+					return false;
+				}
 				if (onco_filter == null)
 					return true;
 				
@@ -415,7 +424,7 @@ a.boxclose{
 				}
 				tpm = (sample_idx == -1)? "NA" : Math.round(log2_exp_val[sample_idx] * 100) / 100;
 				//fpkm = Math.log2(fpkm+1);
-				var title = gene_id + ', ' + rnaseq_sample_names[0] + ' <font color="red">(TPM: ' + tpm + ')</font>';
+				var title = gene_id + ', ' + rnaseq_sample_names[0] + ' <font color="red">(TPM: ' + tpm + ') Total ' + data.samples.length + ' Samples</font>';
 				//$(d).w2overlay('<div id="exp_plot" style="width:380px;height:260px"></div>', { css: { width: '400px', height: '250px', padding: '10px' } });				
 				$('#w2ui-popup #loading_plot').css('display', 'none');
 				drawScatterPlot('w2ui-popup #scatter_plot', title, values, 'Samples', 'log2(TPM+1)', click_handler);
@@ -509,6 +518,14 @@ a.boxclose{
 						</label>				
 					</span-->
 					<button id="btnDownload" class="btn btn-info"><img width=15 height=15 src={{url("images/download.svg")}}></img>&nbsp;Download</button>
+					Minimum log2TPM: 
+					<select id="selMinTPM" class="form-control" style="width:150px;display: inline;">
+						<option value="0">0</option>
+						<option value="0.5">0.5</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>												
+					</select>
 				</span><br><br>
 				<span style="font-family: monospace; font-size: 14">				
 						&nbsp;&nbsp;Annotation:&nbsp;<span id="exp_type" style="text-align:left;color:red;" text=""></span>

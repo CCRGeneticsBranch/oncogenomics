@@ -67,18 +67,18 @@ Admin area: edit user
                     {{Form::submit('Save', array("class"=>"btn btn-info pull-right "))}}
                     {{Form::close()}}
                     </div>
-                    <div class="col-md-6 col-xs-12">
+                    @if (User::isSuperAdmin() || User::isProjectManager())
+                    <div class="col-md-6 col-xs-12">                        
                         <h4>User: {{$user->email}}</h4>
                         <h4><i class="fa fa-users"></i> Projects</h4>
                         @include('laravel-authentication-acl::admin.user.groups')
 
-                        {{-- group permission form --}}
-                        @if (User::isSuperAdmin())
+                        {{-- group permission form --}}                        
                         <h4><i class="fa fa-lock"></i> Permission</h4>
                         {{-- permissions --}}
-                        @include('laravel-authentication-acl::admin.user.perm')
-                        @endif
+                        @include('laravel-authentication-acl::admin.user.perm')                        
                     </div>
+                    @endif
                 </div>
             </div>
       </div>

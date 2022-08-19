@@ -13,11 +13,6 @@ set $line
 	if [ ! -z $global_path ];then
 		path=$global_path
 	fi
-	if [ -z $path ]; then
-		echo "${d}/deleteCase.pl -p $patient_id -c $case_id -r -b"
-		${d}/deleteCase.pl -p $patient_id -c $case_id -r -b
-	else
-		echo "${d}/deleteCase.pl -p $patient_id -c $case_id -t $path -r -b"
-		${d}/deleteCase.pl -p $patient_id -c $case_id -t $path -r -b
-	fi	
+	echo "${d}/deleteCase.pl -p $patient_id -c $case_id -t $path -r -b"
+	${d}/deleteCase.pl -p $patient_id -c $case_id -t $path -r -b
 done < $input_file

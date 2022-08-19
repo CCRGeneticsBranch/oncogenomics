@@ -516,11 +516,13 @@ class Project extends Eloquent {
 		//if (User::accessAll()) 
 		//	$user_where = "";
 		//else {
+		if (!User::isSuperAdmin()) {
 			$logged_user = User::getCurrentUser();
 			if ($logged_user != null)
 				$user_where = " and exists (select * from user_projects u where u.project_id=p.id and u.user_id=". $logged_user->id.")";
 			else
 				$user_where = " and p.ispublic='1'";
+		}
 		//}
 		$sql .= $user_where;
 		Log::info($sql);
@@ -529,8 +531,24 @@ class Project extends Eloquent {
 
 	static public function getProject($project_id) {
 		if ($project_id == "any")
-			return null;	
+			return null;			
 		return Project::find($project_id);
+	}
+
+	static public function getProjectInfo($project_id) {
+		if ($project_id == "any")
+			return null;			
+		$projects = DB::select("select * from project_mview where id=$project_id");
+		if (count($projects) == 0)
+			return null;
+		return $projects[0];
+	}
+
+	static public function getProjectByName($name) {
+		$projects = DB::select("select * from projects where upper(name)='".strtoupper($name)."'");
+		if (count($projects) == 0)
+			return null;
+		return Project::getProject($projects[0]->id);
 	}
 
 	static public function getSamples($project_id) {

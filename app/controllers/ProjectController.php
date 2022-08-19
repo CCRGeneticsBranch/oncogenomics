@@ -10,7 +10,18 @@ class ProjectController extends BaseController {
 	}
 
 	public function viewProjectDetails($project_id) {
-		$project = Project::getProject($project_id);
+		$project = null;
+		if (is_numeric($project_id))
+			$project = Project::getProject($project_id);
+		if ($project == null) {
+			$project = Project::getProjectByName($project_id);
+			if ($project == null)
+				return View::make('pages/error', ['message' => "Project $project_id not found!"]);
+			$project_id = $project->id;
+		}
+		$project_info = Project::getProjectInfo($project_id);
+		if ($project_info == null)
+			return View::make('pages/error', ['message' => "Project $project_id not found!"]);
 		$ret = $this->saveAccessLog($project_id, $project_id, "project");
 		$survival_diags = $project->getSurvivalDiagnosis();
 		Log::info("Survival diagnosis: ".json_encode($survival_diags));
@@ -41,7 +52,7 @@ class ProjectController extends BaseController {
 		if (file_exists(storage_path()."/project_data/$project_id/cnv/$project_id.cnvkit.matrix.tsv"))
 			$cnv_files["CNVkit Matrix File (log2)"] = "cnvkit.matrix.tsv";		
 		Log::info("saving log. Results: ".json_encode($ret));
-		return View::make('pages/viewProjectDetails', ['project' =>$project, 'has_survival'=>$has_survival, 'has_survival_pvalues' => $has_survival_pvalues, 'has_cnv_summary' => $has_cnv_summary, 'cnv_files' =>$cnv_files, 'survival_diags' => json_encode($survival_diags), 'tier1_genes' => $tier1_genes, 'survival_meta_list' => json_encode($survival_meta_list), 'has_tcell_extrect_data' => $has_tcell_extrect_data]);
+		return View::make('pages/viewProjectDetails', ['project' =>$project, 'has_survival'=>$has_survival, 'has_survival_pvalues' => $has_survival_pvalues, 'has_cnv_summary' => $has_cnv_summary, 'cnv_files' =>$cnv_files, 'survival_diags' => json_encode($survival_diags), 'tier1_genes' => $tier1_genes, 'survival_meta_list' => json_encode($survival_meta_list), 'has_tcell_extrect_data' => $has_tcell_extrect_data, 'project_info'=>$project_info]);
 		
 	} 
 
@@ -52,7 +63,11 @@ class ProjectController extends BaseController {
 			$project->ispublic = ($project->ispublic == "1")? "Y" : "";
 			$project->ispublic = $this->formatLabel($project->ispublic);
 			$project->patients = $this->formatLabel($project->patients);
+			$project->cases = $this->formatLabel($project->cases);
+			$project->samples = $this->formatLabel($project->samples);
+			$project->version = $this->formatLabel("hg".$project->version);
 			$project->processed_patients = $this->formatLabel($project->processed_patients);
+			$project->processed_cases = $this->formatLabel($project->processed_cases);
 			$project->survival = $this->formatLabel($project->survival);
 			$project->exome = $this->formatLabel($project->exome);
 			$project->panel = $this->formatLabel($project->panel);

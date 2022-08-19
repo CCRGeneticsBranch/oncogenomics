@@ -1,0 +1,1 @@
+sbatch -o /mnt/projects/CCR-JK-oncogenomics/static/site_data/prod/slurm.o -e /mnt/projects/CCR-JK-oncogenomics/static/site_data/prod/slurm.e /mnt/projects/CCR-JK-oncogenomics/static/site_data/prod/submitPreprocessProject.sh $1 chouh@nih.gov https://oncogenomics.ccr.cancer.gov/production/public

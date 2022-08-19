@@ -6,17 +6,24 @@
 <div class="form-group">
     <div class="input-group">
         <span class="input-group-addon form-button button-add-perm"><span class="glyphicon glyphicon-plus-sign add-input"></span></span>
-        <select class="form-control permission-select" name="permissions">
+        <select class="form-control permission-select" name="permissions" id="selPermissions">
         @foreach ($permission_values as $permission_value => $permission_name)
             @if (! array_key_exists($permission_value, $user->permissions))
-            <option value="{{$permission_value}}">{{$permission_name}}</option>
+                @if (User::isSuperAdmin() || ($permission_value != "_superadmin"))
+                    <option value="{{$permission_value}}">{{$permission_name}}</option>                    
+                @endif
             @endif
         @endforeach
         </select>
-        <span id="project_group" class="form-control" style="display:none">&nbsp;Project groups: &nbsp;
-        @foreach($project_groups as $project_group)
-            <input type="checkbox" name="{{$project_group->project_group}}" value="{{$project_group->project_group}}" >&nbsp;{{$project_group->name}}&nbsp;</input>
-        @endforeach
+        <span id="project_group_managers" class="form-control" style="display:none">&nbsp;Project groups: &nbsp;
+        @foreach($project_group_managers as $project_group)
+            <input type="checkbox" name="manager_{{$project_group->project_group}}" value="{{$project_group->project_group}}" >&nbsp;{{$project_group->name}}&nbsp;</input>
+        @endforeach        
+        </span>
+        <span id="project_group_users" class="form-control" style="display:none">&nbsp;Project groups: &nbsp;
+        @foreach($project_group_users as $project_group)
+            <input type="checkbox" name="user_{{$project_group->project_group}}" value="{{$project_group->project_group}}" >&nbsp;{{$project_group->name}}&nbsp;</input>
+        @endforeach        
         </span>
     </div>
     <span class="text-danger">{{$errors->first('permissions')}}</span>
@@ -34,6 +41,7 @@
 {{-- remove permission --}}
 @if( $presenter->permissions )
 @foreach($presenter->permissions_obj as $permission)
+@if (User::isSuperAdmin() || ($permission->permission != "_superadmin"))
 {{Form::open(["route" => "users.edit.permission", "name" => $permission->permission, "role"=>"form"])}}
 <div class="form-group">
     <div class="input-group">
@@ -46,14 +54,33 @@
     </div>    
 </div>
 {{Form::close()}}
+@endif
 @if ($permission->permission == "_projectmanager")
     {{Form::open(["route" => "users.edit.permission", "name" => "edit_project_manager", "role"=>"form"])}}
     <div class="form-group">
         <div class="input-group">
-            <span class="input-group-addon form-button button-del-perm" name="{{$permission->permission}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fa fa-edit add-input" style="font-size: 1.5em;"></span></span>
-            <div id="project_group" class="form-control">&nbsp;Project groups: &nbsp;
-            @foreach($project_groups as $project_group)
-                <input type="checkbox" name="{{$project_group->project_group}}" value="{{$project_group->project_group}}" {{$project_group->checked}} >&nbsp;{{$project_group->name}}&nbsp;</input>
+            <span class="input-group-addon form-button button-del-perm" name="edit_project_manager">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fa fa-edit add-input" style="font-size: 1.5em;"></span></span>
+            <div id="project_group_managers" class="form-control">&nbsp;Project groups: &nbsp;
+            @foreach($project_group_managers as $project_group)
+                <input type="checkbox" name="manager_{{$project_group->project_group}}" value="{{$project_group->project_group}}" {{$project_group->checked}} >&nbsp;{{$project_group->name}}&nbsp;</input>
+            @endforeach
+            </div>
+        </div>
+    </div>
+    {{Form::hidden('permissions', $permission->permission)}}
+    {{Form::hidden('id', $user->id)}}
+    {{Form::hidden('operation', 2)}}
+    {{Form::close()}}
+@endif
+
+@if ($permission->permission == "_project-group-user")
+    {{Form::open(["route" => "users.edit.permission", "name" => "edit_project_user", "role"=>"form"])}}
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon form-button button-del-perm" name="edit_project_user">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fa fa-edit add-input" style="font-size: 1.5em;"></span></span>
+            <div id="project_group_managers" class="form-control">&nbsp;Project groups: &nbsp;
+            @foreach($project_group_users as $project_group)
+                <input type="checkbox" name="user_{{$project_group->project_group}}" value="{{$project_group->project_group}}" {{$project_group->checked}} >&nbsp;{{$project_group->name}}&nbsp;</input>
             @endforeach
             </div>
         </div>
@@ -72,11 +99,25 @@
 @section('footer_scripts')
 @parent
 <script>
+    $(document).ready(function() {
+        if ($('#selPermissions').val() == "_projectmanager")
+            $('#project_group_managers').css("display","block"); 
+        else
+            $('#project_group_managers').css("display","none");
+        if ($('#selPermissions').val() == "_project-group-user")
+            $('#project_group_users').css("display","block"); 
+        else
+            $('#project_group_users').css("display","none"); 
+    });
     $('select[name="permissions"').change(function() {
         if ($(this).val() == "_projectmanager")
-            $('#project_group').css("display","block"); 
+            $('#project_group_managers').css("display","block"); 
         else
-            $('#project_group').css("display","none"); 
+            $('#project_group_managers').css("display","none"); 
+        if ($('#selPermissions').val() == "_project-group-user")
+            $('#project_group_users').css("display","block"); 
+        else
+            $('#project_group_users').css("display","none"); 
     });
     $(".button-add-perm").click(function () {
         $("#loading_perm").css("display","block");
@@ -90,5 +131,6 @@
         name = $(this).attr('name');
         $('form[name='+name+']').submit();
     });
+
 </script>
 @stop

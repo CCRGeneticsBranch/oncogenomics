@@ -12,7 +12,7 @@ class User extends Jacopo\Authentication\Models\User{
 	}	
 
 	static public function hasPatient($patient_id) {
-		if (User::accessAll()) 
+		if (User::isSuperAdmin()) 
 			return true;
 		#Log::info("checking if user can access patient $patient_id");
 		$logged_user = User::getCurrentUser();
@@ -26,16 +26,20 @@ class User extends Jacopo\Authentication\Models\User{
 	}
 
 	static public function hasProject($project_id) {
-		//if (User::accessAll()) 
-		//	return true;
+		if (User::isSuperAdmin()) 
+			return true;
 		#Log::info("checking if user can access project $project_id");
 		$logged_user = User::getCurrentUser();
 		$cnt = 0;
 		if ($logged_user != null) {
 			if ($project_id == "any") return true;
-			$sql = "select count(*) as cnt from user_projects u where project_id=$project_id and u.user_id=".$logged_user->id;
-			#Log::info($sql);
-			$cnt = DB::select($sql)[0]->cnt;
+			if (is_numeric($project_id)) {
+				$sql = "select count(*) as cnt from user_projects u where project_id=$project_id and u.user_id=".$logged_user->id;			
+				$cnt = DB::select($sql)[0]->cnt;
+			} else {
+				$sql = "select count(*) as cnt from user_projects u where upper(project_name)='".strtoupper($project_id)."' and u.user_id=".$logged_user->id;
+				$cnt = DB::select($sql)[0]->cnt;
+			}
 		}
 		return ($cnt > 0);
 	}

@@ -786,7 +786,7 @@ class SampleController extends BaseController {
 		return View::make('pages/viewCaseExpression', ['project_id' => $project_id, 'patient_id' => $patient_id, 'case_id' => $case_id, 'sample_id' => $sample_id, 'filter_definition' => $filter_definition, 'filter_gene_list' => json_encode($filter_gene_list)]);
 	}
 
-	public function getExpressionByCase($patient_id, $case_id, $target_type="all", $sample_id="all", $include_link=true) {
+	public function getExpressionByCase($project_id, $patient_id, $case_id, $target_type="all", $sample_id="all", $include_link=true) {
 		set_time_limit(240);
 		ini_set('memory_limit', '2048M');
 		/*
@@ -817,16 +817,20 @@ class SampleController extends BaseController {
 				if (array_key_exists($gid, $gene_infos)) {
 					$g = $gene_infos[$gid];
 					$row->symbol = $g->symbol;
-					Log::info($g->symbol);
+					//$row->gene = $g->gene;
+					//Log::info($g->symbol);
 				}				
 			}
-			if (isset($gene_infos[$row->symbol])) {
+			if (isset($gene_infos[$row->symbol])) {				
 				$type = $gene_infos[$row->symbol]->type;
+				if ($row->symbol == $row->gene)
+					$row->gene = $gene_infos[$row->symbol]->gene;
 				if ($type != "protein-coding")
 					continue;		
 			}
 			$target_types[$row->target_type] = '';
-			$genes[$row->symbol][$row->target_type] = $row->gene;
+			$gene = preg_replace('/(.*)\.(.*)/', '$1', $row->gene);
+			$genes[$row->symbol][$row->target_type] = $gene;
 			$exp_data[$row->symbol][$row->sample_id][$row->target_type] = $row->value;
 		}
 
@@ -859,6 +863,36 @@ class SampleController extends BaseController {
 		$target_types = array_keys($target_types);
 		arsort($target_types);
 		
+		$tpm_rank_file = storage_path()."/project_data/$project_id/expression.tpm.coding.rank.tsv";
+		Log::info($tpm_rank_file);
+
+		$tpm_ranks = array();
+		if (file_exists($tpm_rank_file)) {
+			$output = shell_exec("head -n 1 $tpm_rank_file");
+			$rank_header = explode("\t", $output);
+			$sample_idx = array_search($sample_id, $rank_header);
+			Log::info($sample_idx);
+			if ($sample_idx) {
+				$cmd = "cut -f1,".($sample_idx+1)." $tpm_rank_file";
+				Log::info($cmd);
+				$output = shell_exec($cmd);
+				$lines = explode("\n", $output);
+				$test_count = 0;
+				foreach($lines as $line) {
+					$fields = explode("\t", $line);
+					if (count($fields) == 2) {
+						$tpm_ranks[$fields[0]] = $fields[1];
+						$test_count++;
+						if ($test_count < 10) {
+							Log::info("$fields[0] $fields[1]");
+							Log::info(count($fields));
+						}
+					}					
+
+				}
+			}
+		}
+
 		$has_refseq = false;
 		foreach ($target_types as $tt) {
 			if (strtolower($tt) == "refseq")
@@ -882,6 +916,8 @@ class SampleController extends BaseController {
 				$target_type_text = strtoupper($target_type);				
 				$cols[] = array("title" => "$sample_name-$target_type_text");
 			}
+			if (count($tpm_ranks) > 0)
+				$cols[] = array("title" => "$sample_name-TPM-Rank");
 			if (isset($sample_mappings[$sample_id])) {
 				$dna_samples = $sample_mappings[$sample_id];
 				foreach ($dna_samples as $dna_sample_id => $dna_sample_name) 
@@ -903,7 +939,7 @@ class SampleController extends BaseController {
 			}
 			$non_na = true;
 			foreach ($target_types as $target_type) {
-				$gene_ids = $genes[$symbol];
+				$gene_ids = $genes[$symbol];								
 				//Log::info($target_type);
 				//Log::info(json_encode($gene_ids));
 				if (array_key_exists($target_type, $gene_ids)) {
@@ -941,8 +977,14 @@ class SampleController extends BaseController {
 						if ($include_link && $count_type != "Feature Count")
 							//$value_url = round($value, 2);
 							$value_url = "<a id='$sample_id$gene' href='#' onclick=\"showExp(this, '$symbol', '$sample_name', '$target_type')\">".round($value, 2)."</a>";
-						$row_data[] = $value_url;
-					}					
+						$row_data[] = $value_url;						
+					}
+					if (count($tpm_ranks) > 0) {
+						$rank = "NA";
+						if (array_key_exists($gene, $tpm_ranks))
+							$rank = $tpm_ranks[$gene];
+						$row_data[] = $rank;
+					}
 				}
 				if (isset($sample_mappings[$sample_id])) {							
 					$dna_samples = $sample_mappings[$sample_id];
@@ -3085,7 +3127,7 @@ public function viewGSEA($project_id,$patient_id, $case_id,$token_id) {
 
 	public function viewDataIntegrityReport($target="Khanlab") {
 		$data_list = ($target == "Khanlab")? array("case_content_inconsistency", "case_name_inconsistency"):array();
-		$data_list = array_merge($data_list,array("cases_on_Biowulf_only", "cases_on_Frederick_only", "missing_bams", "missing_rsems", "no_successful_cases", "unloaded_cases","unprocessed_cases", "unused_cases"));
+		$data_list = array_merge($data_list,array("cases_on_Biowulf_only", "cases_on_Frederick_only", "missing_bams", "missing_rsems", "sample_inconsistency","no_successful_cases", "unloaded_cases","unprocessed_cases", "unused_cases"));
 		$root = storage_path()."/data_integrity_report";
 		$summary = $this->getDataIntegrityReportTable("$root/summary_${target}.txt", $target);
 		$detail_tables = array();

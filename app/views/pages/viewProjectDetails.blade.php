@@ -83,13 +83,14 @@ a.boxclose{
 				var row = null;
 				var num_cols = 3;
 				var width = $('#tabDetails').width() * 0.95;
+				//$('#summary_header').css('width', width);
 
 				var offset = 0;
 				if (summary_json.fusion.length > 0) {
 					row = table.insertRow(0);
 					var cell = row.insertCell(0);
 					var div_id = 'tier1fusion';
-					var chart_html = '<div class="card" style="height: 350px; width:' + parseInt(width/num_cols) + 'px; margin: 5 auto" id="' + div_id + '"></div>';
+					var chart_html = '<div class="card" style="height: 350px; width:' + parseInt(width/num_cols) + 'px; margin: 5 5 5 5" id="' + div_id + '"></div>';
 					cell.innerHTML = chart_html;
 					//console.log(JSON.stringify(summary_json.fusion));
 					var fusion_data = [];
@@ -146,7 +147,7 @@ a.boxclose{
 						}
 
 						var div_id = attr.replace(/[\s\(\)]/g, '');						
-						var chart_html = '<div class="card" style="height: 350px; width:' + chart_width + 'px; margin: 5 auto" id="' + div_id + '"></div>';
+						var chart_html = '<div class="card" style="height: 350px; width:' + chart_width + 'px; margin: 5 5 5 5" id="' + div_id + '"></div>';
 						cell.innerHTML = chart_html;
 						//console.log(attr);
 						var plotHist = isNumberArray(values);
@@ -1073,7 +1074,37 @@ a.boxclose{
 		<div title="Summary" style="width:98%;padding:5px;">
 			<div id='loadingSummary' class='loading_img'>
 				<img src='{{url('/images/ajax-loader.gif')}}'></img>
-			</div>			
+			</div>
+			<div id="summary_header" style="width:100%;padding:5 5 5 5px;">
+				<font size=3>
+						<div class="container-fluid card">
+							<div class="row">
+								<div class="col-md-2">Project ID: <font style="color:red">{{$project->id}}</font></div>
+								<div class="col-md-2">Version: <font style="color:red">hg{{$project->version}}</font></div>
+								<div class="col-md-2">Project Group: <font style="color:red">{{strtoupper($project->project_group)}}</font></div>
+								<div class="col-md-6">Project Name: <font style="color:red">{{$project->name}}</font></div>
+							</div>
+							<div class="row">
+								<div class="col-md-2">Patients: <font style="color:red">{{$project_info->patients}}</font></div>
+								<div class="col-md-2">Cases: <font style="color:red">{{$project_info->cases}}</font></div>
+								<div class="col-md-2">Samples: <font style="color:red">{{$project_info->samples}}</font></div>
+								<div class="col-md-3">Processed Patients: <font style="color:red">{{$project_info->processed_patients}}</font></div>
+								<div class="col-md-3">Processed Cases: <font style="color:red">{{$project_info->processed_cases}}</font></div>
+							</div>							
+							<div class="row">								
+								<div class="col-md-2">Survival: <font style="color:red">{{$project_info->survival}}</font></div>
+								<div class="col-md-2">Exomes: <font style="color:red">{{$project_info->exome}}</font></div>
+								<div class="col-md-2">Panels: <font style="color:red">{{$project_info->panel}}</font></div>
+								<div class="col-md-3">RNAseq: <font style="color:red">{{$project_info->rnaseq}}</font></div>
+								<div class="col-md-3">Whole Genome: <font style="color:red">{{$project_info->whole_genome}}</font></div>
+							</div>
+							<div class="row">
+								<div class="col-md-12">Description: <font style="color:red">{{$project->description}}</font></div>
+							</div>
+						</div>
+					
+				</font>
+			</div>
 			<table id="project_summary" style="width:100%;padding:5px;border:1px;"></table>
 		</div>	
 		<div id="Patients" title="Patients" style="width:98%;border:1px">

@@ -74,9 +74,8 @@ class User extends CartaUser
     static public function isProjectManager() {
         $logged_user = User::getCurrentUser();
         if ($logged_user != null) {
-            if (array_key_exists("_projectmanager", $logged_user->permissions))
-                return true;
-
+            $rows = DB::select("select * from project_groups g where exists(select * from project_group_users u where g.project_group=u.project_group and u.user_id=$logged_user->id and is_manager='Y')");
+            return (count($rows) > 0);
         }
         return false;       
     }
@@ -88,7 +87,20 @@ class User extends CartaUser
         return false;       
     }
 
-    static function getProjectGroups() {
-        return DB::select("select * from project_groups");
+    static function getProjectGroups() {        
+        if (User::isSuperAdmin())
+            return DB::select("select * from project_groups");
+        $logged_user = User::getCurrentUser();
+        return DB::select("select * from project_groups g where exists(select * from project_group_users u where g.project_group=u.project_group and u.user_id=$logged_user->id and is_manager='Y')");
+
+    }
+
+    static function getAllProjectGroups() {        
+        return DB::select("select * from project_groups");        
+    }
+
+    static function getManagedProjects() {
+        $logged_user = User::getCurrentUser();
+        return DB::select("select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id and m.is_manager='Y')");
     }
 } 

@@ -72,9 +72,12 @@ Route::filter('guest', function()
 
 Route::filter('authorized_project', function($route)
 {
+	$logged_user = User::getCurrentUser();
+	if ($logged_user == null)
+		return Redirect::to('/');
 	$project_id = $route->getParameter('project_id');
 	if (!User::hasProject($project_id)) {
-		return "AuthorizeFailed";
+		return View::make('pages/error', ['message' => "Project $project_id not found or unauthorized"]);
 	}
 	//Log::info("project_id: $project_id");
 	//return "OK";
@@ -84,7 +87,7 @@ Route::filter('authorized_patient', function($route)
 {
 	$patient_id = $route->getParameter('patient_id');
 	if (!User::hasPatient($patient_id)) {
-		return "AuthorizeFailed";
+		return View::make('pages/error', ['message' => "Patient_id $patient_id not found or unauthorized"]);
 	}
 	//Log::info("patient_id: $patient_id");
 	//return "OK";

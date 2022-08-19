@@ -69,14 +69,14 @@
 	<!--li><a href="{{url('/')}}" rel="nofollow">Tutorial</a></li-->
 	
 	<div class="navbar-right" style="margin-right:10px">
-		@if(null != User::getCurrentUser())
-			<li><a href="{{url('/viewSetting')}}" rel="nofollow"><img width="20" height="20" src="{{url('images/setting.png')}}"/>Setting</a></li>
-			<li><a href="{{URL::action('Jacopo\Authentication\Controllers\AuthController@getLogout')}}" rel="nofollow">Logout</a> </li>
+		@if(null != User::getCurrentUser())						
 			@if (User::isSuperAdmin() || User::isProjectManager())
+				<li><a href="{{url('/viewSetting')}}" rel="nofollow"><img width="20" height="20" src="{{url('images/setting.png')}}"/>Setting</a></li>
 				<li><a href={{URL::route('users.list')}} rel="nofollow">{{User::getCurrentUser()->email}}</a></li>
 			@else
 				<li><a href='#' rel="nofollow">{{User::getCurrentUser()->email}}</a></li>
 			@endif
+			<li><a href="{{URL::action('Jacopo\Authentication\Controllers\AuthController@getLogout')}}" rel="nofollow">Logout</a> </li>
 			<!--li><a href={{URL::route('users.selfprofile.edit')}} rel="nofollow">{{User::getCurrentUser()->email}}</a></li-->
 		@else
 			<li><a href={{url("/login")}}>Login</a></li><li>&nbsp;</li>

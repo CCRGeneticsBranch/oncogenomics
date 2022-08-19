@@ -148,6 +148,10 @@ th {
 			  <b>Description:</b> RSEM files not found<br>
 			  <b>Possible reasons:</b> Cases too old<br>
 			  <b>Actions:</b> Reprocess the cases<br>
+              <H4 style="color:red">Sample inconsistency</H4>
+              <b>Description:</b> Sample ID/name in processed data is different from master file<br>
+              <b>Possible reasons:</b> Flowcell ID has been added/changed after cases were uploaded<br>
+              <b>Actions:</b> Reprocess the cases<br>
 			  <H4 style="color:red">No successful cases</H4>
 			  <b>Description:</b> Cases has no successful.txt<br>
 			  <b>Possible reasons:</b> Old Cases<br>

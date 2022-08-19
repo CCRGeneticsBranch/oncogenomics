@@ -74,20 +74,35 @@ class UserController extends Controller {
             if (User::isSuperAdmin())
                 $rows = DB::select("select * from projects order by name");
             else
-                $rows = DB::select("select * from projects p where exists(select * from project_groups g, project_group_managers m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id) and not exists(select * from user_projects u where p.id=u.project_id and u.user_id=$user->id) order by name");
-            $project_groups = User::getProjectGroups();
-            $project_group_user_rows = DB::select("select * from project_group_managers where user_id=$user->id");
+                $rows = DB::select("select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id and m.is_manager='Y') and not exists(select * from user_projects u where p.id=u.project_id and u.user_id=$user->id) order by name");
+            $project_group_users = User::getProjectGroups();
+            $project_group_user_rows = DB::select("select * from project_group_users where user_id=$user->id and is_manager='N'");
             $project_group_user = array();
             foreach ($project_group_user_rows as $project_group_user_row)
                 $project_group_user[$project_group_user_row->project_group] = "";
-            foreach ($project_groups as $project_group) {
+            foreach ($project_group_users as $project_group) {
                 if (array_key_exists($project_group->project_group, $project_group_user))
+                    $project_group->checked = "checked";
+                else
+                    $project_group->checked = "";
+            }
+            $project_group_managers = User::getProjectGroups();
+            $project_group_manager_rows = DB::select("select * from project_group_users where user_id=$user->id and is_manager='Y'");
+            $project_group_manager = array();
+            foreach ($project_group_manager_rows as $project_group_manager_row)
+                $project_group_manager[$project_group_manager_row->project_group] = "";
+            foreach ($project_group_managers as $project_group) {
+                if (array_key_exists($project_group->project_group, $project_group_manager))
                     $project_group->checked = "checked";
                 else
                     $project_group->checked = "";
             }
             foreach ($rows as $row)
                 $projects[$row->id] = $row->name;
+            $mps = User::getManagedProjects();
+            $managed_projects = array();
+            foreach ($mps as $mp)
+                $managed_projects[$mp->name] = '';
 
         } catch(JacopoExceptionsInterface $e)
         {
@@ -95,7 +110,7 @@ class UserController extends Controller {
         }
         $presenter = new UserPresenter($user);        
 
-        return View::make('laravel-authentication-acl::admin.user.edit')->with(["user" => $user, "presenter" => $presenter, "projects" => $projects, 'project_groups' => $project_groups]);
+        return View::make('laravel-authentication-acl::admin.user.edit')->with(["user" => $user, "presenter" => $presenter, "projects" => $projects, 'project_group_users' => $project_group_users, 'project_group_managers' => $project_group_managers, 'managed_projects' => $managed_projects]);
     }
 
     public function postEditUser()
@@ -211,6 +226,7 @@ class UserController extends Controller {
         $operation = Input::get('operation');
         //0: delete, 1: add, 2: edit
         $perm = Input::get('permissions');
+
         if ($operation < 2)
             $this->form_helper->prepareSentryPermissionInput($input, $operation);        
         
@@ -221,13 +237,20 @@ class UserController extends Controller {
 
         try
         {
-            if ($perm == "_projectmanager") {
-                $project_groups = User::getProjectGroups();
-                DB::delete("delete from project_group_managers where user_id=?", [$id]);
+            if ($perm == "_projectmanager" || $perm == "_project-group-user") {
+                $project_groups = User::getAllProjectGroups();
+                $is_manager = "N";
+                $prefix = "user";
+                if ($perm == "_projectmanager") {
+                    $is_manager = "Y";
+                    $prefix = "manager";
+                }
+                DB::delete("delete from project_group_users where user_id=? and is_manager=?", [$id, $is_manager]);
                 foreach($project_groups as $project_group) {
-                    if (Input::get($project_group->project_group) != null) {
-                        Log::info($project_group->project_group); 
-                        DB::insert("insert into project_group_managers values(?, ?)", [$id, $project_group->project_group]);                       
+                    Log::info("looking for ".$prefix."_".$project_group->project_group); 
+                    if (Input::get($prefix."_".$project_group->project_group) != null) {
+                        Log::info("found ".$prefix."_".$project_group->project_group); 
+                        DB::insert("insert into project_group_users values(?, ?, ?)", [$id, $project_group->project_group, $is_manager]);
                     }
                 }
 

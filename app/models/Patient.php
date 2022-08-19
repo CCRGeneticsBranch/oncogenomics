@@ -534,7 +534,7 @@ class Patient extends Eloquent {
 				from sample_cases c1, cases c2, project_cases c3 where c1.patient_id = '$patient_id' and c1.patient_id=c2.patient_id and c1.case_id=c2.case_id and c1.patient_id=c3.patient_id and c1.case_name=c3.case_name";
 		if ($project_id != "any" ) 
 				$sql .= " and c3.project_id = $project_id";
-		if (!User::accessAll()) {
+		if (!User::isSuperAdmin()) {
 			$logged_user = User::getCurrentUser();
 			$sql .= " and exists(select * from user_projects u where u.project_id=c3.project_id and u.user_id = $logged_user->id";
 			if ($project_id != "any" ) 
@@ -592,7 +592,7 @@ class Patient extends Eloquent {
 	}
 	static function getProjects($patient_id) {
 		$sql = "select * from projects p1 where exists(select * from project_patients p2 where p1.id = p2.project_id and p2.patient_id='$patient_id')";
-		if (User::accessAll()) 
+		if (User::isSuperAdmin()) 
 			$user_where = " ";
 		else {
 			$logged_user = User::getCurrentUser();
@@ -623,6 +623,8 @@ class Patient extends Eloquent {
 		}
 		else
 			$user_where = " exists(select * from projects p2, project_patients p3 where p1.patient_id = p3.patient_id and p2.id = p3.project_id and p2.ispublic=1 $project_condition) and";
+		if (User::isSuperAdmin()) 
+			$user_where = "(1==1)";
 		$search_text = strtoupper($search_text);
 		$sql = "select '' as samples, '' as cases, p1.* from patients p1 where $user_where";
 		$cnt_processed_cases = DB::select("select patient_id, 'Processed_cases' as attr_name, count(distinct case_id) as attr_value from project_cases p3 where case_id is not null $project_condition group by patient_id");
@@ -707,6 +709,8 @@ class Patient extends Eloquent {
 		$patient_id = strtoupper($patient_id);
 		$logged_user = User::getCurrentUser();
 		if ($logged_user != null)
+			if (User::isSuperAdmin())
+				return DB::select("select name as project_name, id as project_id from projects"); 
 			return DB::select("select distinct u.project_name, u.project_id from user_projects u, project_cases c where u.project_id=c.project_id and UPPER(c.patient_id)='$patient_id' and u.user_id=$logged_user->id order by project_name");
 		return null;
 	}
