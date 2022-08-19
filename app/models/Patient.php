@@ -623,8 +623,6 @@ class Patient extends Eloquent {
 		}
 		else
 			$user_where = " exists(select * from projects p2, project_patients p3 where p1.patient_id = p3.patient_id and p2.id = p3.project_id and p2.ispublic=1 $project_condition) and";
-		if (User::isSuperAdmin()) 
-			$user_where = "(1==1)";
 		$search_text = strtoupper($search_text);
 		$sql = "select '' as samples, '' as cases, p1.* from patients p1 where $user_where";
 		$cnt_processed_cases = DB::select("select patient_id, 'Processed_cases' as attr_name, count(distinct case_id) as attr_value from project_cases p3 where case_id is not null $project_condition group by patient_id");

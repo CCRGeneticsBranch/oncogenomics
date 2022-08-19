@@ -514,7 +514,7 @@ class Project extends Eloquent {
 		else
 			$sql = "select * from projects p where (1=1)";
 		//if (User::accessAll()) 
-		//	$user_where = "";
+		$user_where = "";
 		//else {
 		if (!User::isSuperAdmin()) {
 			$logged_user = User::getCurrentUser();
