@@ -3,7 +3,7 @@
     <h4 style="display:inline">Processing...</h4><img width=30 height=30 src='{{url('/images/ajax-loader.gif')}}'></img>
 </div>
 @if (count($projects) > 0)
-<H5>( Select project and click <span class="glyphicon glyphicon-plus-sign add-input"></span> to add the project )</H5>
+<H5>( Select project and click <span class="glyphicon glyphicon-plus-sign add-input"></span> to add project )</H5>
 {{Form::open(["action" => "Jacopo\Authentication\Controllers\UserController@addGroup", 'class' => 'form-add-group', 'role' => 'form'])}}
 <div class="form-group">
     <div class="input-group">        

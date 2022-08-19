@@ -43,7 +43,7 @@ class GroupController extends \Controller
     {
         $groups = $this->group_repository->all(Input::all());
         $logged_user = User::getCurrentUser();
-        $sql = "select * from projects p where exists(select * from project_groups g, project_group_managers m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id) order by name";
+        $sql = "select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.is_manager='Y' and m.user_id=$logged_user->id) order by name";
         if (User::isSuperAdmin())
             $sql = "select * from projects order by name";
         Log::info($sql);

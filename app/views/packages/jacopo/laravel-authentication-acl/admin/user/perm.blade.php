@@ -2,6 +2,7 @@
 <div id='loading_perm' class='loading_img' style="display: none;">
     <h4 style="display:inline">Processing...</h4><img width=30 height=30 src='{{url('/images/ajax-loader.gif')}}'></img>
 </div>
+<H5>( Select permission and click <span class="glyphicon glyphicon-plus-sign add-input"></span> to add permission )</H5>
 {{Form::open(["route" => "users.edit.permission","role"=>"form", 'class' => 'form-add-perm'])}}
 <div class="form-group">
     <div class="input-group">
@@ -40,6 +41,7 @@
 
 {{-- remove permission --}}
 @if( $presenter->permissions )
+<H5>( Current permission granted. Click <span class="glyphicon glyphicon-minus-sign add-input"></span> to remove the permission. Click <span class="fa fa-edit add-input"></span> to modify the project group settings )</H5>
 @foreach($presenter->permissions_obj as $permission)
 @if (User::isSuperAdmin() || ($permission->permission != "_superadmin"))
 {{Form::open(["route" => "users.edit.permission", "name" => $permission->permission, "role"=>"form"])}}
