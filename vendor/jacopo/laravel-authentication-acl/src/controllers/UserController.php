@@ -237,6 +237,10 @@ class UserController extends Controller {
 
         try
         {
+            if ($operation == 0)
+               DB::delete("delete from users_permissions where user_id=? and perm=?", [$id, $perm]);
+            if ($operation == 1)
+                DB::insert("insert into users_permissions values(?,?)", [$id, $perm]);
             if ($perm == "_projectmanager" || $perm == "_project-group-user") {
                 $project_groups = User::getAllProjectGroups();
                 $is_manager = "N";

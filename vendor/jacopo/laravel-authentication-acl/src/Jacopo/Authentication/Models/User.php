@@ -58,16 +58,23 @@ class User extends CartaUser
 
     static public function accessAll() {
         // return true;##hv added for testing
-        $logged_user = User::getCurrentUser();
-        if ($logged_user != null)
-            return $logged_user->hasPermission("_khanlab");
-        return false;
+        //$logged_user = User::getCurrentUser();
+        //if ($logged_user != null)
+        //    return $logged_user->hasPermission("_khanlab");
+        return User::isSuperAdmin();
     }
     
     static public function isSuperAdmin() {
         $logged_user = User::getCurrentUser();
         if ($logged_user != null)
             return $logged_user->hasPermission("_superadmin");
+        return false;       
+    }
+
+    static public function isPipelineExecutor() {
+        $logged_user = User::getCurrentUser();
+        if ($logged_user != null)
+            return $logged_user->hasPermission("_pipelineexecutor");
         return false;       
     }
 
