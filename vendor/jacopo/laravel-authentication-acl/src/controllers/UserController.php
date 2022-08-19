@@ -72,9 +72,9 @@ class UserController extends Controller {
             $user = $this->user_repository->find(Input::get('id'));
             $logged_user = User::getCurrentUser();            
             if (User::isSuperAdmin())
-                $rows = DB::select("select * from projects p where not exists(select * from user_projects u where p.id=u.project_id and u.user_id=$user->id) order by name");
+                $rows = DB::select("select * from projects p where not exists(select * from users_groups u where p.id=u.group_id and u.user_id=$user->id) order by name");
             else
-                $rows = DB::select("select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id and m.is_manager='Y') and not exists(select * from user_projects u where p.id=u.project_id and u.user_id=$user->id) order by name");
+                $rows = DB::select("select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id and m.is_manager='Y') and not exists(select * from users_groups u where p.id=u.group_id and u.user_id=$user->id) order by name");
             $project_group_users = User::getProjectGroups();
             $project_group_user_rows = DB::select("select * from project_group_users where user_id=$user->id and is_manager='N'");
             $project_group_user = array();
