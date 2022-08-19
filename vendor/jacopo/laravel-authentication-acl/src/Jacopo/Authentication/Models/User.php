@@ -100,6 +100,8 @@ class User extends CartaUser
     }
 
     static function getManagedProjects() {
+        if (User::isSuperAdmin())
+            return DB::select("select * from projects");
         $logged_user = User::getCurrentUser();
         return DB::select("select * from projects p where exists(select * from project_groups g, project_group_users m where p.project_group=g.project_group and g.project_group=m.project_group and m.user_id=$logged_user->id and m.is_manager='Y')");
     }
