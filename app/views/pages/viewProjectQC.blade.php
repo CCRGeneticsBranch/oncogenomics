@@ -22,6 +22,7 @@
 
 {{ HTML::script('packages/jquery-easyui/jquery.easyui.min.js') }}
 {{-- HTML::script('js/bootstrap.min.js') --}}
+{{ HTML::script('js/popper.min.js') }}
 {{ HTML::script('packages/bootstrap-4.6.1-dist/js/bootstrap.min.js') }}
 {{ HTML::script('js/togglebutton.js') }}
 {{ HTML::script('packages/jquery-easyui/jquery.easyui.min.js') }}
@@ -213,35 +214,38 @@ th, td { white-space: nowrap; padding: 0px;}
 			$.ajax({ url: url , async: true, dataType: 'text', success: function(data) {
 				$("#loadingMatched").css("display","none");				
 				data = JSON.parse(data);
-				tblMatchedGenoTyping = $('#tblMatchedGenoTyping').DataTable( 
-				{
-								"data": data.data,
-								"columns": data.cols,
-								"ordering":    true,
-								"deferRender": true,
-								"lengthMenu": [[25, 50, 100], [25, 50, 100]],
-								"pageLength":  50,
-								"pagingType":  "simple_numbers",
-								"dom": 'l<"toolbar">frtip',					
-								"columnDefs": [{
-				                			"render": function ( data, type, row ) {
-				                						if (isNaN(data))
-				                							return data;
-				                						else {
-				                							data = parseFloat(data);
-				                							return data;
-				                							if (data >= 0.9)
-				                								return data;
-				                							if (data < 0.9 & data >= 0.8)
-				                								return "<b><font color='purple' style='background-color:yellow'>" + data + '</font></b>';
-				                							if (data < 0.8)
-				                								return "<b><font color='red' style='background-color:yellow'>" + data + '</font></b>';
-				                							}
-				                						},
-				                			"targets": '_all'
-				            				}]					
-							});
-				}
+				
+				if (data.data.length > 0) {
+					tblMatchedGenoTyping = $('#tblMatchedGenoTyping').DataTable( 
+					{
+									"data": data.data,
+									"columns": data.cols,
+									"ordering":    true,
+									"deferRender": true,
+									"lengthMenu": [[25, 50, 100], [25, 50, 100]],
+									"pageLength":  50,
+									"pagingType":  "simple_numbers",
+									"dom": 'l<"toolbar">frtip',					
+									"columnDefs": [{
+					                			"render": function ( data, type, row ) {
+					                						if (isNaN(data))
+					                							return data;
+					                						else {
+					                							data = parseFloat(data);
+					                							return data;
+					                							if (data >= 0.9)
+					                								return data;
+					                							if (data < 0.9 & data >= 0.8)
+					                								return "<b><font color='purple' style='background-color:yellow'>" + data + '</font></b>';
+					                							if (data < 0.8)
+					                								return "<b><font color='red' style='background-color:yellow'>" + data + '</font></b>';
+					                							}
+					                						},
+					                			"targets": '_all'
+					            				}]					
+								});
+					}
+				}				
 			});
 
 			$('#selGenotypingCutoff').on('change', function() {
