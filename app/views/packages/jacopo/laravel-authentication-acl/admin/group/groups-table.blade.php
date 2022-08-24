@@ -4,10 +4,11 @@
     </div>
 </div>
 @if( count($groups) > 0 )
-<table class="table table-hover">
+<table id="group_table" class="table table-hover">
     <thead>
         <tr>
             <th>Project name</th>
+            <th>Description</th>
             <th>Is public</th>
             <th>Operations</th>
         </tr>
@@ -15,9 +16,10 @@
     <tbody>
         @foreach($groups as $group)
         <tr>
-            <td style="width:90%">{{$group->name}}</td>
-            <td style="width:90%">{{($group->ispublic == 1)? 'Y' : 'N'}}</td>
-            <td style="width:10%">
+            <td style="width:20%;padding:0px">{{$group->name}}</td>
+            <td style="width:60%;padding:0px">{{$group->description}}</td>
+            <td style="width:10%;padding:0px">{{($group->ispublic == 1)? 'Y' : 'N'}}</td>
+            <td style="width:10%;padding:0px">
                 <a href="{{URL::action('Jacopo\Authentication\Controllers\GroupController@editGroup', ['id' => $group->id])}}"><i class="fa fa-edit fa-2x"></i></a>
                 <a href="{{URL::action('Jacopo\Authentication\Controllers\GroupController@deleteGroup',['id' => $group->id, '_token' => csrf_token()])}}" class="margin-left-5 delete"><i class="fa fa-trash-o fa-2x"></i></a>
                 <span class="clearfix"></span>

@@ -33,6 +33,10 @@ Admin area: edit project
                             {{Form::text('name', null, ['class' => 'form-control', 'placeholder' => 'project name','readonly' => 'true'])}}
                         </div>
                         <div class="form-group">
+                            {{Form::label('description','Description: *')}}
+                            {{Form::textarea('description', null, ['class' => 'form-control', 'placeholder' => 'project description'])}}
+                        </div>
+                        <div class="form-group">
                             {{Form::label("ispublic","Is public: ")}}
                             {{Form::select('ispublic', ["1" => "Yes", "0" => "No"], (isset($group->ispublic) && $group->ispublic) ? $group->ispublic : "0", ["class"=> "form-control"] )}}
                         </div>

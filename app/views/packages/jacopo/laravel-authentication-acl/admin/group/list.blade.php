@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="col-md-8">
+        <div class="col-md-12">
             {{-- print messages --}}
             <?php $message = Session::get('message'); ?>
             @if( isset($message) )
@@ -28,10 +28,7 @@
                     @include('laravel-authentication-acl::admin.group.groups-table')
                </div>
            </div>
-        </div>
-        <div class="col-md-4">
-            @include('laravel-authentication-acl::admin.group.search')
-        </div>
+        </div>        
     </div>
 </div>
 @stop
@@ -41,5 +38,6 @@
         $(".delete").click(function(){
             return confirm("Are you sure to delete this item?");
         });
+        $('#group_table').DataTable({"pageLength":  25});
     </script>
 @stop

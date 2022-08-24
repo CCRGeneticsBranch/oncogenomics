@@ -12,6 +12,7 @@
 |
 */
 
+Route::get('/viewSyncPublic',function() { return View::make('pages/viewSyncPublic'       ); });
 Route::get('/viewJunction/{patient_id}/{case_id}/{symbol?}','VarController@viewJunction');
 Route::get('/viewDataIntegrityReport/{target?}','SampleController@viewDataIntegrityReport');
 Route::get('/downloadDataIntegrityReport/{report_name}/{target?}','SampleController@downloadDataIntegrityReport');
@@ -31,6 +32,9 @@ Route::get ('getRNAseqSample/{sample_id}', 'SampleController@getRNAseqSample');
 Route::get('/getTierCount/{project_id}/{patient_id}/{case_id?}', 'SampleController@getTierCount');
 	Route::get('/getCoveragePlotData/{project_id}/{patient_id}/{case_name}/{samples}'            , 'VarQCController@getCoveragePlotData'  );
 
+Route::group(['before' => ['authorized_token']], function () {
+	Route::post('/getProjects'            , 'ProjectController@getProjectsByPost'  );
+});
 	
 Route::group(['before' => ['authorized_project']], function () {
 	Route::get('/getSurvivalData/{project_id}/{filter_attr_name1}/{filter_attr_value1}/{filter_attr_name2}/{filter_attr_value2}/{group_by1}/{group_by2}/{group_by_values?}' , 'ProjectController@getSurvivalData');

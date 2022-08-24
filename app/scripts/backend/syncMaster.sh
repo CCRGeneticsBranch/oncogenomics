@@ -46,7 +46,10 @@ if [[ $no_change = "N" ]];then
 	perl $script_home_production/syncMaster.pl -u -n production -i $file_list -m $flag_list -g $project_group_list
 	echo "Uploading development database..."
 	echo "$script_home_production/syncMaster.pl -u -n production -i $file_list -m $flag_list -g $project_group_list"
-	perl $script_home_dev/syncMaster.pl -u $file_list -m $flag_list -g $project_group_list
+	perl $script_home_production/runDBQuery.pl "select distinct patient_id,case_name from sample_case_mapping order by patient_id" > ${data_home}/case_list.txt
+	echo "$script_home_production/runDBQuery.pl \"select distinct patient_id,case_name from sample_case_mapping order by patient_id\" > ${data_home}/case_list.txt"
+	scp ${data_home}/case_list.txt helix:/data/Clinomics/MasterFiles/	
+	perl $script_home_dev/syncMaster.pl -u -n development -i $file_list -m $flag_list -g $project_group_list
 elif [[ $todaysdate =~ 090[0-6] ]]
 then 
 	# Run once a day so I know cron is running

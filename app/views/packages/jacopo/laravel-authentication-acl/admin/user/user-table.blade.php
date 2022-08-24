@@ -10,10 +10,12 @@
               <table id="user_table" class="table table-hover">
                       <thead>
                           <tr>
+                              <th>ID</th>
                               <th>Email</th>
                               <th class="hidden-xs">First name</th>
                               <th class="hidden-xs">Last name</th>
-                              <th>Active</th>
+                              <th class="hidden-xs">Permissions</th>
+                              <!--th>Active</th-->
                               <th class="hidden-xs">Last login</th>
                               <th>Operations</th>
                           </tr>
@@ -21,12 +23,14 @@
                       <tbody>
                           @foreach($users as $user)
                           <tr>
-                              <td>{{$user->email_address}}</td>
-                              <td class="hidden-xs">{{$user->first_name}}</td>
-                              <td class="hidden-xs">{{$user->last_name}}</td>
-                              <td>{{$user->activated ? '<i class="fa fa-circle green"></i>' : '<i class="fa fa-circle-o red"></i>'}}</td>
-                              <td class="hidden-xs">{{$user->last_login ? $user->last_login : 'not logged yet.'}}</td>
-                              <td>
+                              <td style="padding:0px">{{$user->id}}</td>
+                              <td style="padding:0px">{{$user->email_address}}</td>
+                              <td style="padding:0px" class="hidden-xs">{{$user->first_name}}</td>
+                              <td style="padding:0px" class="hidden-xs">{{$user->last_name}}</td>
+                              <td style="padding:0px" class="hidden-xs">{{$user->permissions}}</td>
+                              <!--td style="padding:0px" >{{$user->activated ? '<i class="fa fa-circle green"></i>' : '<i class="fa fa-circle-o red"></i>'}}</td-->
+                              <td style="padding:0px" class="hidden-xs">{{$user->last_login ? $user->last_login : 'not logged yet.'}}</td>
+                              <td style="padding:0px" >
                                   @if(! $user->protected)
                                       <a href="{{URL::action('Jacopo\Authentication\Controllers\UserController@editUser', ['id' => $user->id])}}"><i class="fa fa-pencil-square-o fa-2x"></i></a>
                                       <a href="{{URL::action('Jacopo\Authentication\Controllers\UserController@deleteUser',['id' => $user->id, '_token' => csrf_token()])}}" class="margin-left-5 delete"><i class="fa fa-trash-o fa-2x"></i></a>

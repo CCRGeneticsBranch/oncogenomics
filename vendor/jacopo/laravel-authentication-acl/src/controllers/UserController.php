@@ -47,6 +47,7 @@ class UserController extends Controller {
     public function __construct(UserValidator $v, FormHelper $fh, UserProfileValidator $vp, AuthenticateInterface $auth)
     {
         $this->user_repository = App::make('user_repository');
+        $this->perm_repository = App::make('permission_repository');
         $this->user_validator = $v;
         $this->f = App::make('form_model', [$this->user_validator, $this->user_repository]);
         $this->form_helper = $fh;
@@ -58,8 +59,27 @@ class UserController extends Controller {
     }
 
     public function getList()
-    {
+    {        
+
         $users = $this->user_repository->all(Input::except(['page']));
+
+        $perms = $this->perm_repository->all();
+
+        $perm_desc = array();
+
+        foreach($perms as $perm) {
+            $perm_desc[$perm->permission] = $perm->description;
+        }
+
+        foreach($users as $user) {
+            $perms = array_keys((array)json_decode($user->permissions));
+            $perm_label = array();
+            foreach ($perms as $perm) {
+                if (array_key_exists($perm, $perm_desc))
+                    $perm_label[] = "<span class='badge'>".$perm_desc[$perm]."</span>";
+            }
+            $user->permissions = implode("", $perm_label);
+        }        
 
         return View::make('laravel-authentication-acl::admin.user.list')->with(["users" => $users]);
     }

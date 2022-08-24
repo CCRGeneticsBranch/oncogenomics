@@ -56,6 +56,11 @@ class ProjectController extends BaseController {
 		
 	} 
 
+	public function getProjectsByPost()	{				
+		$projects = Project::All();
+		return json_encode($projects);
+
+	}
 	public function getProjects() {
 		$projects = Project::getAll();
 		foreach ($projects as $project) {

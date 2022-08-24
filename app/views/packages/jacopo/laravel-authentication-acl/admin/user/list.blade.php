@@ -31,6 +31,6 @@
         $(".delete").click(function(){
             return confirm("Are you sure to delete this item?");
         });
-        $('#user_table').DataTable({"pageLength":  50});
+        $('#user_table').DataTable({"pageLength":  25});
     </script>
 @stop
