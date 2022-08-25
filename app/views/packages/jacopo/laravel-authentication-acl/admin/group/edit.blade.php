@@ -42,7 +42,7 @@ Admin area: edit project
                         </div>
                         <span class="text-danger">{{$errors->first('name')}}</span>
                         {{Form::hidden('id')}}
-                        <a href="{{URL::action('Jacopo\Authentication\Controllers\GroupController@deleteGroup',['id' => $group->id, '_token' => csrf_token()])}}" class="btn btn-danger pull-right margin-left-5 delete">Delete</a>
+                        <!--a href="{{URL::action('Jacopo\Authentication\Controllers\GroupController@deleteGroup',['id' => $group->id, '_token' => csrf_token()])}}" class="btn btn-danger pull-right margin-left-5 delete">Delete</a-->
                         {{Form::submit('Save', array("class"=>"btn btn-info pull-right "))}}
                         {{Form::close()}}
                     </div>                    

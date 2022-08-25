@@ -71,11 +71,12 @@ class GroupController extends \Controller
     {
         $id = Input::get('id');
         $ispublic = Input::get('ispublic');
+        $desc = Input::get('description');
         
         try
         {
             #$obj = $this->f->process(Input::all());
-            DB::statement("update projects set ispublic=$ispublic where id=$id");
+            DB::statement("update projects set ispublic=$ispublic,description='$desc' where id=$id");
             DB::statement("BEGIN Dbms_Mview.Refresh('USER_PROJECTS','C');END;");
 
         }

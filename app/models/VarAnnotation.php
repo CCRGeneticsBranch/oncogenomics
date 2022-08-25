@@ -2705,6 +2705,11 @@ p.project_id=$project_id and q.patient_id=a.patient_id and q.type='$type' and a.
 			$ext_name = "bam";
 		}
 
+		if ($file_type == "fusion") {
+			$ext_squeeze_name = "star.fusions.bam";
+			$ext_name = "bam";
+		}
+
 		$cases = explode(',', $case_id);
 		foreach ($cases as $case_id) {
 			//check squeeze bam

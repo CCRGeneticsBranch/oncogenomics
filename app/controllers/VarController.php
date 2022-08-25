@@ -3140,6 +3140,8 @@ class VarController extends BaseController {
 		if ($case_id == "any")
 			$case_name = "All cases";
 		$sample_file = '';
+		$sample_file = VarAnnotation::findBAMfile($path, $patient_id, $case_id, $sample->sample_id, $sample->sample_name, 'fusion');
+		Log::info("Fusion bam file:".$sample_file);
 		if ($sample_file == '')
 			$sample_file = VarAnnotation::findBAMfile($path, $patient_id, $case_id, $sample->sample_id, $sample->sample_name, 'star');
 		if ($sample_file == '')
