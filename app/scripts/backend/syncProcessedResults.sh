@@ -154,7 +154,7 @@ do
 							LC_ALL="en_US.utf8" perl ${script_home}/updateVarCases.pl
 							#submit this to batch server
 							if [ -s ${update_list} ];then
-								sbatch -o ${batch_home}/slurm_log/${prefix}.preprocessProject.o -e ${batch_home}/slurm_log/${prefix}.preprocessProject.e ${batch_home}/submitPreprocessProject.sh ${update_list} $emails https://oncogenomics.ccr.cancer.gov/production/public
+								sbatch -o ${batch_home}/scripts/slurm/slurm_log/${prefix}.preprocessProject.o -e ${batch_home}/scripts/slurm/slurm_log/${prefix}.preprocessProject.e ${batch_home}/scripts/slurm/submitPreprocessProject.sh ${update_list} $emails https://oncogenomics.ccr.cancer.gov/production/public
 							fi
 							#LC_ALL="en_US.utf8" perl ${script_home}/../preprocessProjectMaster.pl -p ${update_list} -e $emails -u https://oncogenomics.ccr.cancer.gov/production/public
 						fi

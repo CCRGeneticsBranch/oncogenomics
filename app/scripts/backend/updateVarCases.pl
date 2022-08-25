@@ -15,8 +15,11 @@ require(dirname(abs_path($0))."/../lib/Onco.pm");
 
 my $default_case_name = "20160415";
 my $verbose = 0;
-my $out_path = dirname(abs_path($0))."/../../../site_data/slurm_log/";
+my $out_path = dirname(abs_path($0))."/../../../site_data/scripts/slurm/slurm_log/";
+$out_path = `realpath $out_path`;
+chomp $out_path;
 
+print("$out_path\n");
 my $usage = <<__EOUSAGE__;
 
 Usage:
@@ -81,6 +84,7 @@ while (my ($patient_id, $case_name, $sample_id) = $sth_sample_cases->fetchrow_ar
 $sth_sample_cases->finish;
 
 open(PERFECT_MATCH, ">$out_path/perfectly_matched_cases.txt");
+print("$out_path/perfectly_matched_cases.txt\n");
 open(PARTIAL_MATCH, ">$out_path/partial_matched_cases.txt");
 open(NOTMATCH, ">$out_path/notmatched_cases.txt");
 open(NOT_PIPELINE, ">$out_path/processed_not_pipeline_cases.txt");
