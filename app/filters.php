@@ -75,10 +75,10 @@ Route::filter('authorized_token', function($route)
 	//$token = $route->getParameter('token');
 	$data = Input::all();
 	if (!array_key_exists("token", $data))
-		return "token required";
+		return '{"status":"token required"}';
 	$token = $data["token"];
 	if ($token != Config::get("site.token"))
-		return "invalid token";	
+		return '{"status":"invalid token"}';
 });
 
 Route::filter('authorized_project', function($route)

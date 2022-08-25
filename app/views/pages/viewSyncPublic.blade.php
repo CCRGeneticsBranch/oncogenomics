@@ -3,6 +3,7 @@
 
 {{ HTML::style('css/bootstrap.min.css') }}
 {{ HTML::style('css/style.css') }}
+{{ HTML::style('css/font-awesome.min.css') }}
 {{ HTML::style('packages/smartmenus-1.0.0-beta1/css/sm-core-css.css') }}
 {{ HTML::style('packages/smartmenus-1.0.0-beta1/css/sm-blue/sm-blue.css') }}    
 {{ HTML::script('js/jquery-3.6.0.min.js') }}
@@ -43,16 +44,19 @@ th {
     color: #fff;
 }
 
+.modal-title{
+  font-size: 20px;
+}
+.modal-backdrop.in { z-index: auto;}
+
+.modal { z-index: 99999;}
+
 </style>
 <script type="text/javascript">
-	var tbl;	
-	var col_html = '';
-	var columns = [];
-	var project_list = [{"id":"any", "text" : "(ANY)"}];
-	var current_mode = 0; //0:insert, 1:edit, 2:delete
+	var tbls = [];	
 	$(document).ready(function() {
-		
-		//getData();
+		//$('.alert').alert('close');
+		getData();
 
 		$.fn.dataTableExt.afnFiltering.push( function( oSettings, aData, iDataIndex ) {
 			var status_idx = 6;
@@ -69,28 +73,72 @@ th {
 
 	function getData() {
 		$("#loadingMaster").css("display","block");
-		$('#onco_layout').css('visibility', 'hidden');
-		var url = '{{url("/getCases")}}' + '/' + project_id;
+		$('#onco_layout').css('visibility', 'hidden');		
+		var url = '{{Config::get("site.url_public")}}/getProjects';
+		var internal_url = '{{url("/")}}';
 		console.log(url);
-       	$.ajax({ url: url, async: true, dataType: 'text', success: function(json_data) {
-				$("#loadingMaster").css("display","none");
-				$('#onco_layout').css('visibility', 'visible');
-				data = JSON.parse(json_data);
-				if (data.data.length == 0) {
-					alert('no data!');
-					return;
-				}
-				showTable(data);
-			}
+    $.ajax({ url: url, async: true, dataType: 'text', data: '{"token":"{{Config::get("site.public_token")}}"}', method: 'post', headers: {'Accept': 'application/json','Content-Type': 'application/json'}, success: function(public_json_data) {					
+					public_data = JSON.parse(public_json_data);
+					public_data.cols = [{"title":"Action"},{"title":"Name"},{"title":"Description"}];
+					var rows = [];
+					public_data.forEach(function(d, i) {
+						rows.push(['<a href="javascript:sync(\'' + d.name + '\',\'resync\')"><i class="fa fa-history" aria-hidden="true"></i>&nbsp;Resync</a>', d.name, d.description]);
+					});
+					public_data.data = rows;
+					if (public_data.data.length == 0) {
+						alert('no data!');
+						return;
+					}
+					showTable(public_data, 'tblPublic');
+					var url = internal_url + '/getProjects';
+					console.log(url);
+
+	       	$.ajax({ url: url, async: true, dataType: 'text', data: '{"token":"{{Config::get("site.token")}}"}', method: 'post', headers: {'Accept': 'application/json','Content-Type': 'application/json'}, success: function(json_data) {
+	       		console.log(json_data);
+							$("#loadingMaster").css("display","none");
+							$('#onco_layout').css('visibility', 'visible');
+							data = JSON.parse(json_data);
+							data.cols = [{"title":"Action"},{"title":"Name"},{"title":"Description"}];
+							var rows = [];
+							data.forEach(function(d, i) {
+								rows.push(['<a href="javascript:sync(\'' + d.name + '\', \'sync\')"><i class="fa fa-exchange" aria-hidden="true"></i>&nbsp;Sync</a>', d.name, d.description]);
+
+							});
+							data.data = rows;
+							if (data.data.length == 0) {
+								alert('no data!');
+								return;
+							}
+							showTable(data, 'tblInternal');
+						}
+					});
+			}				
 		});
+		$('#button_yes').on('click', function (event) {
+  		var button = $(event.relatedTarget) // Button that triggered the modal  		
+  		var project_name = $('#project_name').text();
+  		console.log(project_name);
+  		$('#sync_modal').modal('hide');
+  		$('.alert').show();
+  		//$('.alert').css('display', 'block');
+  		/*
+  		$(".alert").delay(4000).slideUp(200, function() {
+    		$(this).alert('close');
+			});*/
+
+  	});
 	}
 
-	function showTable(data) {
+	function sync(name, action) {
+		$('#action').text(action);
+		$('#project_name').text(name);
+		$('#sync_modal').modal();
+	}
+	function showTable(data, tbl_ID) {
 		cols = data.cols;		
 
 		//hide_cols = data.hide_cols;
-		hide_cols = [];
-       	tbl = $('#tblOnco').DataTable( 
+		tbl = $('#' + tbl_ID).DataTable( 
 		{
 				"data": data.data,
 				"columns": cols,
@@ -101,64 +149,62 @@ th {
 				"pagingType":  "simple_numbers",			
 				"dom": 'lfrtip'
 		} );
+		tbls[tbl_ID] = tbl;
 
-		$('#lblCountDisplay').text(tbl.page.info().recordsDisplay);
-    	$('#lblCountTotal').text(tbl.page.info().recordsTotal);
+		$('#' + tbl_ID + 'CountDisplay').text(tbl.page.info().recordsDisplay);
+    $('#' + tbl_ID + 'CountTotal').text(tbl.page.info().recordsTotal);
 
-		$('#tblOnco').on( 'draw.dt', function () {
-			$('#lblCountDisplay').text(tbl.page.info().recordsDisplay);
-    		$('#lblCountTotal').text(tbl.page.info().recordsTotal);
-    	});
-
-		var html = '';
-		$("div.toolbar").html(html + '<button id="popover" data-toggle="popover" data-placement="bottom" type="button" class="btn btn-default" style="font-size: 12px;">Select Columns</button>');
-		tbl.columns().iterator('column', function ( context, index ) {
-				var show = (hide_cols.indexOf(index) == -1);
-				tbl.column(index).visible(show);
-				columns.push(tbl.column(index).header().innerHTML);
-				checked = (show)? 'checked' : '';
-				col_html += '<input type=checkbox ' + checked + ' class="onco_checkbox" id="data_column" value=' + index + '><font size=3>&nbsp;' + tbl.column(index).header().innerHTML + '</font></input><BR>';
-			});
-		
-
-		$('[data-toggle="popover"]').popover({
-				title: 'Select column <a href="#" class="close" data-dismiss="alert">×</a>',
-				placement : 'bottom',  
-				html : true,
-				content : function() {
-					return col_html;
-				}
-			});
-
-		
+    $('#' + tbl_ID).on( 'draw.dt', function () {
+			$('#' + tbl_ID + 'CountDisplay').text(tbls[tbl_ID].page.info().recordsDisplay);
+    	$('#' + tbl_ID + 'CountTotal').text(tbls[tbl_ID].page.info().recordsTotal);
+    });
 	}		
 
         
 
 	
 </script>
-
-<div class="easyui-panel" style="padding:0px;">
-	<div id='loadingMaster' style="height:90%">
-    		<img src='{{url('/images/ajax-loader.gif')}}'></img>
-	</div>	
-	<div id="onco_layout" class="easyui-layout" data-options="fit:true" style="height:100%;visibility:hidden">		
-		<div data-options="region:'center',split:true" style="width:100%;padding:10px;overflow:none;" >
-			<div style="margin:10px 0">				
-				Projects: 
-				<input class="easyui-combobox" id="selProjectList" name="selProjectList" />				
-				<span class="btn-group" id="interchr" data-toggle="buttons">
-			  		<label class="mut btn btn-default">
-							<input class="ck" id="ckPending" type="checkbox" autocomplete="off">Pending cases
-					</label>
-				</span>
-				<span style="font-family: monospace; font-size: 20;float:right;">					
-				Cases: <span id="lblCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="lblCountTotal" style="text-align:left;" text=""></span>
+<div id='loadingMaster' style="height:90%">
+	  		<img src='{{url('/images/ajax-loader.gif')}}'></img>
+</div>
+<div class="alert alert-success" role="alert" style="display:none">
+  The sync is launched
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+</div>
+<div class="row" style="padding:20px">
+				<div class="col-md-6">					
+					<span style="font-family: monospace; font-size: 20;float:right;">					
+					Internal site projects: <span id="tblInternalCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="tblInternalCountTotal" style="text-align:left;" text=""></span></span>				
+				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblInternal" style='white-space: nowrap;width:100%;'>
+				</table>
+				</div>
+				<div class="col-md-6">										
+					<span style="font-family: monospace; font-size: 20;float:right;">					
+					Public site projects: <span id="tblPublicCountDisplay" style="text-align:left;color:red;" text=""></span>/<span id="tblPublicCountTotal" style="text-align:left;" text=""></span></span>				
+				<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblPublic" style='white-space: nowrap;width:100%;'>
+				</table>
 			</div>
-			<table cellpadding="0" cellspacing="0" border="0" class="pretty" word-wrap="break-word" id="tblOnco" style='white-space: nowrap;width:100%;'>
-			</table> 			
-		</div>		
-	</div>
+</div>
+
+
+<div id="sync_modal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sync action</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to <span id="action" style="color:red">New message</span> project <span id="project_name" style="color:red">New message</span> to public site? This might take several hours. You will get an email when it is finished.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="button_yes" type="button" class="btn btn-primary">Yes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 @stop

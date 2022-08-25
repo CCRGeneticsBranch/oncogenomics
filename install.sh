@@ -20,6 +20,10 @@ do
             echo "cp $value $home/app/config"
             cp $value $home/app/config
         fi
+        if [ "$key" == "site_data" ];then
+            echo "ln -s $value $home/$key"
+            ln -s $value $home/$key
+        fi
         if [ "$key" == "project_data" ] || [ "$key" == "ProcessedResults" ] || [ "$key" == "GSEA" ] || [ "$key" == "signout" ];then
             echo "ln -s $value $home/app/storage/$key"
             ln -s $value $home/app/storage/$key
