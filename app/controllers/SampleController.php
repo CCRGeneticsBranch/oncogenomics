@@ -869,6 +869,7 @@ class SampleController extends BaseController {
 		$tpm_ranks = array();
 		if (file_exists($tpm_rank_file)) {
 			$output = shell_exec("head -n 1 $tpm_rank_file");
+			$output = chop($output);
 			$rank_header = explode("\t", $output);
 			$sample_idx = array_search($sample_id, $rank_header);
 			Log::info($sample_idx);
