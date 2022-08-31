@@ -65,6 +65,9 @@ my $dbh = getDBI();
 my @projects = split(/,/, $project_name);
 $project_name = join ("','", @projects);
 my $sql = "select distinct c.patient_id,c.case_id,c.patient_id as newpatient,c.case_id as newcase,c.path from projects p1, project_cases p2, cases c where p1.id=p2.project_id and p1.name in ('$project_name') and p2.patient_id=c.patient_id and p2.case_id=p2.case_id order by newpatient";
+if (!$patient_id_mapping_file) {
+	$sql = "select distinct c.patient_id,c.case_id,c.path from projects p1, project_cases p2, cases c where p1.id=p2.project_id and p1.name in ('$project_name') and p2.patient_id=c.patient_id and p2.case_id=p2.case_id order by patient_id";
+}
 #print($sql."\n");
 my $sth_prj = $dbh->prepare($sql);
 $sth_prj->execute();
