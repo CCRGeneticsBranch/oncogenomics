@@ -649,3 +649,7 @@ a.boxclose{
     color: white;
     border-radius: 1.5px 1.5px 1.5px 1.5px;
 }
+
+.w2ui-poput {
+    z-index: 9999;
+}

@@ -262,7 +262,7 @@ class Patient extends Eloquent {
 		}
 
 		if (count($samples) == 0)
-			return array(array(), $samples, "");
+			return array(array(), $samples, "", "", "");
 		
 		//if sample_id assigned, use expression file
 		$exp_file = "";
