@@ -1,4 +1,14 @@
 #/bin/bash
+
+# regular master file syncing:
+# ./syncMaster.sh
+#
+# sync specific project to public site:
+# ./syncMaster.sh <project name>
+#
+# e.g.
+# ./syncMaster.sh CRUK
+#
 export PATH=/mnt/nasapps/development/perl/5.28.1/bin:$PATH
 script_file=`realpath $0`
 script_path=`dirname $script_file`
@@ -67,7 +77,7 @@ if [ -z $projects ];then
 	fi
 else
 	echo "Uploading public database..."
-	echo "$script_home_public/syncMaster.pl -u -n public -i $file_list -m $flag_list -g $project_group_list -p $projects"
-	perl $script_home_public/syncMaster.pl -u -n public -i $file_list -m $flag_list -g $project_group_list -p $projects
+	echo "$script_home_public/syncMaster.pl -u -n public -i $file_list -m $flag_list -g $project_group_list -l $projects"
+	perl $script_home_public/syncMaster.pl -u -n public -i $file_list -m $flag_list -g $project_group_list -l $projects
 fi
 

@@ -22,6 +22,7 @@ local $SIG{__WARN__} = sub {
 
 my $input_file_list;
 my $patient_mapping_file;
+my $project_list;
 my $modified_flag_list;
 my $project_group_list;
 my $keep_old = 0;
@@ -44,6 +45,7 @@ Options:
   -u            Update case information and refresh views
   -n  <string>  Database name (default: $database_name)
   -p  <string>  Patient mapping file
+  -l  <string>  Project list (comma separated). Sync only these projects.
   -r            Remove orphan projects
   
 __EOUSAGE__
@@ -54,6 +56,7 @@ GetOptions (
   'i=s' => \$input_file_list,
   'm=s' => \$modified_flag_list,
   'g=s' => \$project_group_list,
+  'l=s' => \$project_list,
   'n=s' => \$database_name,
   'p=s' => \$patient_mapping_file,
   'u'   => \$update_case,
@@ -99,6 +102,19 @@ if ($patient_mapping_file) {
 		chomp;
 		my ($original_id, $new_id) = split(/\t/);
 		$patient_mapping{$original_id} = $new_id;
+	}
+}
+my %project_selected = ();
+if ($project_list) {
+	my $sth_prj_current = $dbh->prepare("select name from projects");
+	$sth_prj_current->execute();
+	while (my @row = $sth_prj_current->fetchrow_array) {
+		my $project_name = $row[0];
+		$project_selected{$project_name} = '';
+	}
+	my @projects_to_add = split(/\,/, $project_list);
+	foreach my $project_to_add (@projects_to_add) {
+		$project_selected{$project_to_add} = '';
 	}
 }
 my $sth_smp_groups = $dbh->prepare("select sample_id, attr_name, attr_value from sample_details where attr_name in ('ControlGroup','SampleGroup')");
@@ -466,8 +482,61 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 				$alternate_id = $cus_id;
 			}
 			$cus_id = $patient_mapping{$cus_id};
-		}
+		}		
+
 		try {
+			
+
+			#insert project information
+			my @prj_ids = ();
+
+			print "prj = $prj"  and <STDIN>  if ($verbose);
+			if ($prj ne "") {
+				my @prjs = split(/,/, $prj);
+				my %prj_names = ();
+				my $exclude = 1;
+				foreach my $project_name (@prjs) {
+					$project_name =~ s/^\s+|\s+$//g;
+					next if ($project_name eq "");
+					next unless (defined $project_name);
+					if ($project_name eq "ClinOmics") {
+						$project_name = "Clinomics";
+					}
+					# if project list is given, only select projects in the list
+					if ($project_list) {
+						if (exists($project_selected{$project_name})) {
+							$exclude = 0;
+						} else {
+							next;						
+						}
+					}
+
+					if (exists $prj_names{$project_name}) {
+						next;
+					}
+					$prj_names{$project_name} = '';
+
+					$projects_in_master{$project_name} = '';
+					my $project_id = (exists $projects{$project_name})? $projects{$project_name} : -1;
+					if ($project_id == -1) {
+						$sth_prj->execute($project_name, $project_name, $project_group);			
+						$sth_prj_id->execute($project_name);
+						if (my @row = $sth_prj_id->fetchrow_array) {
+							$project_id = $row[0];
+						}
+						$sth_prj_id->finish;			
+						$projects{$project_name} = $project_id;
+					}
+					push @prj_ids, $project_id;
+					#$sth_prj_smp->execute($project_id, $illumina_id);
+				}
+
+				# if project list is given and this library does not belong to the project list, skip this library
+				if ($project_list && $exclude) {
+					next;
+				}
+			}
+
 			if ($illumina_id ne "") {			
 				my @fcids = split(/\|\|/, $fcid);
 				if ($fcid eq "") {
@@ -521,35 +590,11 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 						}
 						$sample_id = $illumina_id;
 
-						#insert project information
-						if ($prj ne "") {
-							my @prjs = split(/,/, $prj);
-							my %prj_names = ();
-							foreach my $project_name (@prjs) {
-								$project_name =~ s/^\s+|\s+$//g;
-								next if ($project_name eq "");
-								next unless (defined $project_name);
-								if ($project_name eq "ClinOmics") {
-									$project_name = "Clinomics";
-								}
-								if (exists $prj_names{$project_name}) {
-									next;
-								}
-								$prj_names{$project_name} = '';
-								$projects_in_master{$project_name} = '';
-								my $project_id = (exists $projects{$project_name})? $projects{$project_name} : -1;
-								if ($project_id == -1) {
-									$sth_prj->execute($project_name, $project_name, $project_group);			
-									$sth_prj_id->execute($project_name);
-									if (my @row = $sth_prj_id->fetchrow_array) {
-										$project_id = $row[0];
-									}
-									$sth_prj_id->finish;			
-									$projects{$project_name} = $project_id;
-								}					
-								$sth_prj_smp->execute($project_id, $illumina_id);
-							}
+						foreach my $prj_id (@prj_ids) {
+							$sth_prj_smp->execute($prj_id, $illumina_id);
 						}
+
+						
 
 					} else {
 						#push(@errors, "$input_file\t$cus_id\tDuplicate sample ID: $illumina_id");
@@ -559,32 +604,7 @@ for (my $file_idx=0; $file_idx<=$#input_files; $file_idx++) {
 				print "No illumina_id\n"  and <STDIN>   if ($verbose);
 			}
 			
-			my @cases = split(/,/, $case_name);
-			#insert project information
-
-			print "proj = $prj"  and <STDIN>  if ($verbose);
-			if ($prj ne "") {
-				my @prjs = split(/,/, $prj);
-				foreach my $project_name (@prjs) {
-					$project_name =~ s/^\s+|\s+$//g;
-					next if ($project_name eq "");
-					next unless (defined $project_name);
-					if ($project_name eq "ClinOmics") {
-						$project_name = "Clinomics";
-					}
-					$projects_in_master{$project_name} = '';
-					my $project_id = (exists $projects{$project_name})? $projects{$project_name} : -1;
-					if ($project_id == -1) {
-						$sth_prj->execute($project_name, $project_name);			
-						$sth_prj_id->execute($project_name);
-						if (my @row = $sth_prj_id->fetchrow_array) {
-							$project_id = $row[0];
-						}
-						$sth_prj_id->finish;			
-						$projects{$project_name} = $project_id;
-					}
-				}
-			}
+			my @cases = split(/,/, $case_name);			
 
 			if ($sample_id ne "") {
 				foreach my $case (@cases) {
@@ -750,7 +770,7 @@ my $email_file = dirname(__FILE__)."/../../config/email_list.json";
 }
 my $data = decode_json($json);
 my $email_list=$data->{'master.all'};
-if ($database_name eq "development") {
+if ($database_name eq "development" || $database_name eq "public") {
 	$email_list=$data->{'master'};
 }
 my $modified_file_list = join(",", @modified_files);
