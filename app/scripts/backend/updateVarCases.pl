@@ -15,7 +15,7 @@ require(dirname(abs_path($0))."/../lib/Onco.pm");
 
 my $default_case_name = "20160415";
 my $verbose = 0;
-my $out_path = dirname(abs_path($0))."/../../../site_data/scripts/slurm/slurm_log/";
+my $out_path = dirname(abs_path($0))."/../../../site_data/storage/logs/";
 $out_path = `realpath $out_path`;
 chomp $out_path;
 
@@ -185,7 +185,7 @@ $dbh->do("update sample_case_mapping s set case_id=case_name, match_type='matche
 $dbh->do("update sample_case_mapping s set case_id='', match_type='not_matched' where exists(select * from processed_cases p where s.patient_id=p.patient_id and s.case_id=p.case_id and p.path like 'compass%') and case_id <> case_name");
 $dbh->commit();
 
-open(ORPHAN_CASE, ">orphan_cases.txt");
+open(ORPHAN_CASE, ">$out_path/orphan_cases.txt");
 $sth_orphan_cases->execute();
 while (my ($patient_id, $case_id, $path) = $sth_orphan_cases->fetchrow_array) {
 	print ORPHAN_CASE "$patient_id\t$case_id\t$path\n";

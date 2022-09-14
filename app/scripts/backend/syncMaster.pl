@@ -775,7 +775,10 @@ if ($database_name eq "development" || $database_name eq "public") {
 }
 my $modified_file_list = join(",", @modified_files);
 if ($#errors == -1) {
-	$content = "<H4>Upload to $database_name database successful!</H4><H4>The following files have been modified: <span style='color:red'>$modified_file_list</span></H4>";
+	$content = "<H4>Upload to $database_name database successful!</H4>";
+	if (scalar @modified_files > 0){
+		$content = $content."<H4>The following files have been modified: <span style='color:red'>$modified_file_list</span></H4>";
+	}
 	$dbh->commit();
 	&sendEmail($content, $database_name, $email_list);
 	

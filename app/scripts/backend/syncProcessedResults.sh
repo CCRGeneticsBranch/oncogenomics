@@ -7,7 +7,7 @@ E_BADARGS=65
 export PATH=/mnt/nasapps/development/perl/5.28.1/bin:$PATH
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` {target project} {process type: db/tier/bam} {prod/dev/all}"
+	echo "Usage: `basename $0` {target project} {process type: db/tier/bam} {prod/dev/pub/all}"
 	exit $E_BADARGS
 fi
 
@@ -17,9 +17,11 @@ script_file=`realpath $0`
 script_home=`dirname $script_file`
 html_home=`realpath ${script_home}/../../../..`
 script_home_dev=${html_home}/clinomics_dev/app/scripts/backend
-batch_home=`realpath ${script_home}/../../../site_data`
+batch_home=`realpath ${script_home}/../../../batch_home`
 echo "batch home = $batch_home"
 data_home=${script_home}/../../storage/ProcessedResults
+update_list_home=${script_home}/../../storage/update_list
+log_home=${script_home}/../../storage/logs
 bam_home=${script_home}/../../storage/bams
 script_lib_home=`realpath ${script_home}/../lib`
 url=`php ${script_lib_home}/getSiteConfig.php url`
@@ -30,11 +32,13 @@ url_dev=`php ${script_lib_home}/getSiteConfig.php url_dev`
 #projects=( "cmpc":"biowulf2:/data/Clinomics/Analysis/CMPC/" )
 db_name='production'
 db_name_dev='development'
+db_name_pub='public'
 url='https://fsabcl-onc01d.ncifcrf.gov/clinomics/public'
 url_dev='https://fsabcl-onc01d.ncifcrf.gov/clinomics_dev/public'
+url_pub='https://fsabcl-onc01d.ncifcrf.gov/clinomics_public/public'
 
 
-project_file=$script_home/project_mapping.txt
+project_file=$update_list_home/project_mapping.txt
 #project_file=$script_home_dev/project_mapping_wu.txt
 echo "project_file = $project_file";
 while IFS=$'\t' read -r -a cols
@@ -43,7 +47,6 @@ do
 	succ_list_path=${cols[1]}
 	source_path=${cols[2]}
 	project_desc=${cols[3]}
-	update_list_dir=${data_home}/update_list
 	prefix=${project}_${target_type}_`date +"%Y%m%d-%H%M%S"`
 	case_log=${prefix}_case.log
 	echo "working on $project ...."
@@ -52,14 +55,14 @@ do
 
 		project_home=${data_home}/${project}
 		project_bam_home=${bam_home}/${project}
-		log_file=${update_list_dir}/log/${prefix}.log
-		log_dev_file=${update_list_dir}/log/${prefix}.dev.log
+		log_file=${update_list_home}/log/${prefix}.log
+		log_dev_file=${update_list_home}/log/${prefix}.dev.log
 		update_list=""
 		sync_list=""
 		#if type is db, then sync update list from biowulf
 		if [ "$target_type" == "db" ];then
-			update_list=`realpath ${update_list_dir}/${prefix}_caselist.txt`
-			sync_list=`realpath ${update_list_dir}/${prefix}_sync.txt`
+			update_list=`realpath ${update_list_home}/new_list/${prefix}_caselist.txt`
+			sync_list=`realpath ${update_list_home}/new_list/${prefix}_sync.txt`
 			
 
 			if [ ! -d ${project_home} ]; then
@@ -68,28 +71,22 @@ do
 			date >> ${log_file}
 			echo "[ Processing project: $project ]" >> ${log_file}
 			echo "update_list=$update_list,sync_list=$sync_list, log_file=$log_file, project_home=$project_home"  >> ${log_file}
-	#		if [ "$target_type" == "all" ]
-	#		then
+			echo "rsync ${succ_list_path} ${update_list_home}/new_list" >> ${log_file}
+			rsync ${succ_list_path} ${update_list_home}/new_list 2>&1
 
-	#			rsync -tirm --include '*/' --include "*.txt" --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.bwa.loh" --include "*hotspot.depth" --include "*selfSM" --include 'db/*' --include "*tracking" --include "*exonExpression*" --include "TPM_ENS/*" --include "qc/rnaseqc/*" --include "TPM_UCSC/*" --include "RSEM_ENS/*" --include "RSEM_UCSC/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include '*fastqc/*' --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/" --exclude "calls/" --exclude '*' ${source_path} ${project_home} >>${log_file} 2>&1
-			rsync ${succ_list_path} ${data_home}/update_list 2>&1
-			echo "rsync ${succ_list_path} ${data_home}/update_list" >> ${log_file}
-			new_list=${data_home}/update_list/${prefix}_newList.txt
-			echo "mv ${data_home}/update_list/new_list_${project}.txt $new_list" >> ${log_file}
-			mv ${data_home}/update_list/new_list_${project}.txt $new_list
-				
-				#egrep '^>' ${new_list}| cut -d ' ' -f 1 > ${update_list}
-				#egrep '^>' ${new_list}| cut -f 1
-			awk -F" " '{print $1}' ${new_list} > ${sync_list}
-			touch ${update_list}
+			if [ -f ${update_list_home}/new_list/new_list_${project}.txt ];then
+				awk -F" " '{print $1}' ${update_list_home}/new_list/new_list_${project}.txt > ${sync_list}
+				rm ${update_list_home}/new_list/new_list_${project}.txt
+			fi
+			echo -n "" > ${update_list}
 		else
 			#if type is tier or bam, then use the last update/sync list
-			#echo "looking for ${update_list_dir}/${project}_db_*_caselist.txt"
-			if ls  ${update_list_dir}/${project}_db_*_caselist.txt 1> /dev/null 2>&1;then
-				update_list=`ls -tr ${update_list_dir}/${project}_db_*_caselist.txt | tail -n1`
+			#echo "looking for ${update_list_home}/${project}_db_*_caselist.txt"
+			if ls  ${update_list_home}/new_list/${project}_db_*_caselist.txt 1> /dev/null 2>&1;then
+				update_list=`ls -tr ${update_list_home}/new_list/${project}_db_*_caselist.txt | tail -n1`
 				update_list=`realpath $update_list`
 			fi			
-			sync_list=`ls -tr ${update_list_dir}/${project}_db_*_sync.txt | tail -n1`
+			sync_list=`ls -tr ${update_list_home}/${project}_db_*_sync.txt | tail -n1`
 			sync_list=`realpath $sync_list`
 			echo "sync_list: $sync_list"
 		fi
@@ -111,7 +108,8 @@ do
 						echo "deleteing old case..."
 						perl ${script_home}/deleteCase.pl -p ${pat_id} -c ${case_id} -t ${project} -r
 						echo "syncing ${source_path}${folder} ${project_home}/${pat_id}"
-						rsync -tirm --include '*/' --include "*.txt" --exclude "fusions.discarded.tsv" --include '*.SJ.out.tab' --include '*.SJ.out.bed.gz' --include '*.SJ.out.bed.gz.tbi' --include '*.star.final.bam.tdf' --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.gt" --include "*.bwa.loh" --include "*hotspot.depth" --include "*.tmb" --include "*.status" --include "*selfSM" --include 'db/*' --include "*tracking" --include "*exonExpression*" --include "TPM_ENS/*" --include "qc/rnaseqc/*" --include "TPM_UCSC/*" --include "RSEM*/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include 'cnvTSO/*' --include '*fastqc/*' --exclude "TPM_*/" --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/*" --exclude "calls/" --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} 2>&1
+						rsync -tirm --include '*/' --include "*.txt" --exclude "fusions.discarded.tsv" --include '*.SJ.out.tab' --include '*.SJ.out.bed.gz' --include '*.SJ.out.bed.gz.tbi' --include '*.star.final.bam.tdf' --include '*.tsv'  --include '*.vcf' --include "*.png" --include '*.pdf' --include "*.gt" --include "*.bwa.loh" --include "*hotspot.depth" --include "*.tmb" --include "*.status" --include "*selfSM" --include 'db/*' --include "*tracking" --include "qc/rnaseqc/*" --include "RSEM*/*" --include 'HLA/*' --include 'NeoAntigen/*' --include 'HLA/*' --include 'MHC_Class_I/*' --include 'sequenza/*' --include 'cnvkit/*' --include 'cnvTSO/*' --include '*fastqc/*' --exclude "TPM_*/" --exclude "log/" --exclude "igv/" --exclude "topha*/" --exclude "fusion/*" --exclude "calls/" --exclude '*' ${source_path}${folder} ${project_home}/${pat_id} 2>&1
+						chmod -R g+w ${project_home}/${pat_id}/${case_id}
 					fi
 					if [ "$target_type" == "bam" ];then
 						if [[ $project == "compass_tso500" ]];then
@@ -132,6 +130,7 @@ do
 				fi	
 
 		done < $sync_list
+		rm $sync_list
 		echo "done syncing writing to log file ${log_file}"
 		date >> ${log_file}
 		echo "update list file: ${update_list}"
@@ -148,13 +147,13 @@ do
 							emails="hsien-chao.chou@nih.gov,khanjav@mail.nih.gov,manoj.tyagi@nih.gov"
 						fi
 						echo "${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc $folder-l ${update_list} -d ${db_name} -u ${url}" >> ${log_file}
-						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name} -u ${url} 2>&1 1>>${log_file}			
+						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name} -u ${url} 2>&1 1>>${log_file}
 						if [ "$project" != "compass_tso500" ]
 						then
 							LC_ALL="en_US.utf8" perl ${script_home}/updateVarCases.pl
 							#submit this to batch server
 							if [ -s ${update_list} ];then
-								sbatch -D ${batch_home}/scripts/slurm -o ${batch_home}/scripts/slurm/slurm_log/${prefix}.preprocessProject.o -e ${batch_home}/scripts/slurm/slurm_log/${prefix}.preprocessProject.e ${batch_home}/scripts/slurm/submitPreprocessProject.sh ${update_list} $emails https://oncogenomics.ccr.cancer.gov/production/public
+								sbatch -D ${batch_home}/app/scripts/slurm -o ${batch_home}/app/scripts/slurm/slurm_log/${prefix}.preprocessProject.o -e ${batch_home}/app/scripts/slurm/slurm_log/${prefix}.preprocessProject.e ${batch_home}/app/scripts/slurm/submitPreprocessProject.sh ${update_list} $emails https://oncogenomics.ccr.cancer.gov/production/public
 							fi
 							#LC_ALL="en_US.utf8" perl ${script_home}/../preprocessProjectMaster.pl -p ${update_list} -e $emails -u https://oncogenomics.ccr.cancer.gov/production/public
 						fi
@@ -182,6 +181,22 @@ do
 					echo " done uploading" >> ${log_dev_file}
 					#LC_ALL="en_US.utf8" ${script_home_dev}/refreshViews.pl -c -p -h 2>&1 1>>${case_log} &
 			fi
+			if [ "$target_db" == "pub" ]
+			then
+					if [ "$target_type" == "db" ];then
+						echo "${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name_pub} -u ${url}" >> ${log_file}
+						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name_pub} -u ${url} -e chouh@nih.gov 2>&1 1>>${log_file}
+						LC_ALL="en_US.utf8" perl ${script_home}/loadVarPatients.pl -i ${project_home} -o $project_desc -l ${update_list} -d ${db_name_pub} -u ${url} -t tier 2>&1 1>>${log_file}
+						LC_ALL="en_US.utf8" perl ${script_home}/updateVarCases.pl
+						if [ -s ${update_list} ];then
+							echo "sbatch -D ${batch_home}/app/scripts -o ${batch_home}/app/storage/logs/slurm/${prefix}.preprocessProject.o -e ${batch_home}/app/storage/logs/slurm/${prefix}.preprocessProject.e ${batch_home}/app/scripts/submitPreprocessProject.sh ${update_list} hsien-chao.chou@nih.gov https://clinomics.ccr.cancer.gov/clinomics/public"
+							sbatch -D ${batch_home}/app/scripts -o ${batch_home}/app/storage/logs/slurm/${prefix}.preprocessProject.o -e ${batch_home}/app/storage/logs/slurm/${prefix}.preprocessProject.e ${batch_home}/app/scripts/submitPreprocessProject.sh ${update_list} hsien-chao.chou@nih.gov https://clinomics.ccr.cancer.gov/clinomics/public
+						fi
+					fi
+			fi
+		else
+			rm $update_list
+			rm $log_file
 		fi
 			#chmod -f -R 775 ${project_home}
 			
