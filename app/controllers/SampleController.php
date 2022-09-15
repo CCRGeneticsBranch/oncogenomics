@@ -869,6 +869,7 @@ class SampleController extends BaseController {
 		$tpm_ranks = array();
 		if (file_exists($tpm_rank_file)) {
 			$output = shell_exec("head -n 1 $tpm_rank_file");
+			$output = chop($output);
 			$rank_header = explode("\t", $output);
 			$sample_idx = array_search($sample_id, $rank_header);
 			Log::info($sample_idx);
@@ -935,7 +936,7 @@ class SampleController extends BaseController {
 		foreach ($exp_data as $symbol => $exp) {
 			$row_data = array();
 			if (!$has_refseq) {
-				$row_data[] = ($has_junction)? "<a target=_blank href='$junction_url/$symbol'>$symbol</a>" : $symbol;				
+				$row_data[] = ($has_junction && $include_link)? "<a target=_blank href='$junction_url/$symbol'>$symbol</a>" : $symbol;				
 			}
 			$non_na = true;
 			foreach ($target_types as $target_type) {
@@ -1026,7 +1027,8 @@ class SampleController extends BaseController {
 	}
 
 	public function downloadCaseExpression() {
-		$patient_id = Input::get('patient_id');		
+		$patient_id = Input::get('patient_id');
+		$project_id = Input::get('project_id');
 
 		if (!User::hasPatient($patient_id)) {
 			return View::make('pages/error', ['message' => 'Access denied!']);
@@ -1036,13 +1038,16 @@ class SampleController extends BaseController {
 		$gene_list = Input::get('gene_list');
 		$genes = explode(',', $gene_list);
 		$gene_hash = array();
+
+		Log::info("patient_id: $patient_id");
+		Log::info("case_id: $case_id");
 		
 		foreach ($genes as $gene) {
 			$gene_hash[$gene] = '';
 		}
 		
 
-		$json_data = $this->getExpressionByCase($patient_id, $case_id, "all", $sample_id, false);
+		$json_data = $this->getExpressionByCase($project_id, $patient_id, $case_id, "all", $sample_id, false);
 		
 		$data = json_decode($json_data);
 		$cols = $data->cols;

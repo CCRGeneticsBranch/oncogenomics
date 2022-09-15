@@ -310,8 +310,11 @@ a.boxclose{
 				var d = data[i];
 				var id = d[0];
 				if (id != undefined) {
-					if (typeof(id) == "string")
-						genes.push(id);					
+					if (typeof(id) == "string") {
+						var elem = document.createElement('a');						
+  						elem.innerHTML = id;  						
+						genes.push(elem.innerText);					
+					}
 				}
 			}
 			var gene_list = genes.join(',');
@@ -473,6 +476,7 @@ a.boxclose{
 </script>
 <form style="display: hidden" action='{{url('/downloadCaseExpression')}}' method="POST" target="_blank" id="downloadHiddenform">
 	<input type="hidden" id="patient_id" name="patient_id" value='{{$patient_id}}'/>
+	<input type="hidden" id="project_id" name="project_id" value='{{$project_id}}'/>
 	<input type="hidden" id="case_id" name="case_id" value='{{$case_id}}'/>
 	<input type="hidden" id="sample_id" name="sample_id" value='{{$sample_id}}'/>
 	<input type="hidden" id="gene_list" name="gene_list" value=""/>

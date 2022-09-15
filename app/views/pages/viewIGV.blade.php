@@ -5,7 +5,7 @@
 {{ HTML::style('https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css') }}
 {{ HTML::script('packages/jquery-ui-1.11.4/jquery-ui.min.js') }}
 {{HTML::script('packages/igv.js/igv.min.js')}}
-<!--script src="https://igv.org/web/release/2.10.1/dist/igv.min.js"></script-->
+<!--script src="https://igv.org/web/release/2.13.1/dist/igv.min.js"></script-->
 
 
 
@@ -22,6 +22,7 @@
 		track_infos['{{$bam->sample_name}}'] = track_info;
 	@endforeach
 	var track_hight = 350;
+    var samplingDepth = 1000;
 	var center = {{$center}};
     
     $(document).ready(function() {
@@ -38,26 +39,21 @@
                     locus: '{{$locus}}',
                     tracks: [ 
                     	{
-                            //url: '{{url('/ProcessedResults/')."/".$first_bam->sample_file}}',
                             url: '{{url('/getBAM/')."/".$first_bam->sample_file}}',
                             indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.bai',
                             //format: 'cram',
                             //indexURL: '{{url('/getBAM/')."/".$first_bam->sample_file}}' + '.crai',
                             //url: 'https://data.broadinstitute.org/igvdata/BodyMap/hg19/IlluminaHiSeq2000_BodySites/brain_merged/accepted_hits.bam',
                             //locus: "chr8:128,747,267-128,754,546",
+                            //url: '{{url('/CP01190_T1D_PS.bam')}}',
+                            //indexURL: '{{url('/CP01190_T1D_PS.bam.bai')}}',
                             name: '{{$first_bam->sample_name}}',
                             removable : true,
                             height : track_hight,
                             colorBy : 'strand',
-                            samplingDepth : Number.MAX_VALUE
+                            samplingDepth : samplingDepth
+                            //samplingWindowSize: 50
                         },
-                        /*
-					    {
-                            name: "Genes",
-                            url: "{{url('/ref/gencode.v18.collapsed.bed')}}",
-                            order: Number.MAX_VALUE,
-                            displayMode: "EXPANDED"
-                        },*/                        
                         {
                             //url: "{{url('/ref/06302016_refseq.gtf.gz')}}",
                             //indexURL: "{{url('/ref/06302016_refseq.gtf.gz.tbi')}}",                            
@@ -118,7 +114,7 @@
         	if ($(this).is(':checked')) {            	
             	track_info = track_infos[sample_name];
             	var url = '{{url('/getBAM/')}}' + '/' + track_info.sample_file;
-            	var track = igv.browser.loadTrack({url: url, name: sample_name, height: track_hight, colorBy : 'strand', samplingDepth : Number.MAX_VALUE}).then(function (newTrack) {
+            	var track = igv.browser.loadTrack({url: url, name: sample_name, height: track_hight, colorBy : 'strand', samplingDepth : samplingDepth}).then(function (newTrack) {
                     sort_center(); 
                 });;
             }
